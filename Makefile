@@ -29,10 +29,8 @@ wb40n wb45n:
 	echo "$@" > product.selected
 
 unpack.stamp: product.selected $(ARCHV)
-	# cleanup and unpack the sources
-	tar xf $(ARCHV) -k
-	# create a symbolic name for the buildroot folder for easy access
-	rm -f buildroot && ln -s $(PKG) buildroot
+	# unpack buildroot, rename the directory to 'buildroot' for easier management versions
+	tar xf $(ARCHV) --xform "s/^$(PKG)/buildroot/"
 	# patch buildroot to add the sdc packages
 	patch -p0 < buildroot-patches/sdc-package.patch
 	# buildroot patch to work with non-standard placement of wb40n bootstrap board directory
@@ -42,11 +40,11 @@ unpack.stamp: product.selected $(ARCHV)
 	# add uboot version 2011.09 as an option
 	test "$(VER)" = 2011.11 && patch -p0 < buildroot-patches/uboot-2011-09.patch
 	# backport of at91bootstrap3 package
-	patch -d $(PKG) -p1 < buildroot-patches/at91bootstrap3.patch
+	patch -d buildroot -p1 < buildroot-patches/at91bootstrap3.patch
 	# sync to dev_linux/buildroot/2011.11 rev 15835
-	patch -d $(PKG) -p1 < buildroot-patches/buildroot-2011.11-lt1.patch
+	patch -d buildroot -p1 < buildroot-patches/buildroot-2011.11-lt1.patch
 	# install the config file
-	cp $(PKG)/board/sdc/`cat product.selected`/configs/$(PKG).config buildroot/.config
+	cp buildroot/board/sdc/`cat product.selected`/configs/$(PKG).config buildroot/.config
 	# mark operation as done
 	touch unpack.stamp
 
@@ -54,12 +52,12 @@ $(ARCHV):
 	wget -c $(URL)$(ARCHV)
 
 clean:
-	$(MAKE) -C $(PKG) clean
+	$(MAKE) -C buildroot clean
 
 cleanall:
-	find $(PKG)/ -mindepth 1 -maxdepth 1 -not -name board -not -name package -not -name '.svn' \
+	find buildroot/ -mindepth 1 -maxdepth 1 -not -name board -not -name package -not -name '.svn' \
                 -exec rm -rf "{}" ";"
-	find $(PKG)/package $(PKG)/board  -mindepth 1 -maxdepth 1 \
+	find buildroot/package buildroot/board  -mindepth 1 -maxdepth 1 \
                 -not -name sdc -not -name sdc-closed-source -not -name '.svn' -exec rm -rf "{}" ";"
 	rm -f unpack.stamp product.selected buildroot
 
