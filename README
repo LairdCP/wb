@@ -36,3 +36,10 @@ HOW WE EXTEND BUILDROOT
 We extend buildroot by adding new boards (wb40n, wb40n) and new packages.
 The boards reside in the directories: buildroot/boards/sdc/wb4?n.
 The packages reside inside: buildroot/package/sdc
+
+TOOLCHAIN
+=========
+This package does not include a toolchain. A toolchain will be separately. It
+is expected that the toolchain 'bin' directory is included in the PATH. We
+expect to find toolchain tools that are prefixed with "arm-sdc-linux-gnueabi-".
+
