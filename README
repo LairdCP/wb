@@ -1,0 +1,38 @@
+
+PACKAGES REQUIRED
+=================
+The build system requires various packages installed on the development host.
+Because there are so many distros out there we cannot know what you distro
+calls the required packages and how they are organised. However, we can tell
+you that on the standard installation of Ubuntu or Linux Mint:
+bison
+flex
+msgfmt
+makeinfo
+patch
+rsync
+c++
+python-m2crypto
+
+HOW TO BUILD
+============
+cd to the top level directory and type:
+make
+
+ANATOMY
+=======
+The top level directory contains the folowing directories:
+* buildroot
+    this is where buildroot resides
+* archive
+    this is where buildroot packages reside
+* buildroot-patches
+    we store patches that alter the default behaviour of buildroot here
+* images
+    this is where the final built images are copied to
+
+HOW WE EXTEND BUILDROOT
+=======================
+We extend buildroot by adding new boards (wb40n, wb40n) and new packages.
+The boards reside in the directories: buildroot/boards/sdc/wb4?n.
+The packages reside inside: buildroot/package/sdc
