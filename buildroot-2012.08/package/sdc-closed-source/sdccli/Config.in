@@ -1,0 +1,5 @@
+config BR2_PACKAGE_SDCCLI
+	bool "SDC CLI"
+	help
+	  SDC CLI
+

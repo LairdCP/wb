@@ -1,0 +1,11 @@
+--- config_openssl	2012-11-13 01:43:56.833536077 +0000
++++ config_openssl.new	2012-11-13 01:45:03.957538569 +0000
+@@ -75,7 +75,7 @@
+ #CONFIG_DRIVER_RALINK=y
+ 
+ # Driver interface for generic Linux wireless extensions
+-CONFIG_DRIVER_WEXT=y
++#CONFIG_DRIVER_WEXT=y
+ 
+ # Driver interface for Linux drivers using the nl80211 kernel interface
+ CONFIG_DRIVER_NL80211=y

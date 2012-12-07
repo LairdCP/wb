@@ -1,0 +1,13 @@
+config BR2_PACKAGE_WBFS
+	bool "WB Platform Filesystem"
+	default y
+	help
+	  Customizes a wb-platform's rootfs.
+
+	  A tree of common files will be copied to the output/target rootfs, in
+	  addition to the fs/skeleton files.
+
+	  Depending on the string value of env variable WB_PLATFORM, also add a
+	  matching tree <directory-name> of specific files to the rootfs.
+	  And if a matching <script-name>.sh is found, will source it.
+

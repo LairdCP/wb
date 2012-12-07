@@ -1,0 +1,77 @@
+--- tests/sdc_cli/trunk/Makefile	2012-09-17 15:02:27.349131639 +0100
++++ Makefile	2012-09-19 23:59:39.218929143 +0100
+@@ -1,51 +1,13 @@
+-ifndef DEVROOT
+-	DEVROOT = $(HOME)/dev_linux
+-endif
+ #TOOLCHAIN and TCLIBRARY are target specific and will need to be set for each
+ #target.  
+ CLI=sdc_cli
+ SMU=smu_cli
+ 
+-ifeq ($(ARCH),arm)
+-		TARGET=arm-sdc-linux-gnueabi
+-		TCLIBRARY = $(DEVROOT)/wb40n/trunk/buildroot/output/build
+-		SDKPATH =   $(DEVROOT)/wb40n/trunk/basic/libraries/sdc_sdk
+-		TOOLCHAIN = $(DEVROOT)/wb40n/trunk/basic/toolchain/bin
+-		CC=$(TOOLCHAIN)/arm-sdc-linux-gnueabi-g++
+-else
+-	ifeq ($(ARCH),nk)
+-		INTLLIBS=-lintl
+-		TARGET=armv5l-timesys-linux
+-		TCLIBRARY = 
+-		SDKPATH =   
+-		TOOLCHAIN = $(HOME)/timesys/nkus_9g20/toolchain/bin
+-		CC=$(TOOLCHAIN)/armv5l-timesys-ddlinux-uclibcgnueabi-g++
+-	else
+-		ifeq ($(ARCH),witech)
+-			TARGET=arm-none-linux-gnueabi
+-			TCLIBRARY = 
+-			SDKPATH = 
+-			TOOLCHAIN=/usr/local/arm/arm-none-linux-gnueabi/bin
+-			CC=$(TOOLCHAIN)/arm-none-linux-gnueabi-g++
+-		else
+-			TARGET=x86-linux
+-			TCLIBRARY = 
+-			SDKPATH = 
+-			CC=g++
+-		endif
+-	endif 
+-endif
+-LDIR=lib/$(TARGET)
+ BDIR=bin/$(TARGET)
+ 
+-CFLAGS = -Isrc -I.
+-CFLAGS += -I$(SDKPATH)/include
++CFLAGS += -Isrc -I.
+ 
+-LIBS = -L$(LDIR) -L$(TCLIBRARY)/../target/usr/lib/ \
+-       -L$(SDKPATH)/lib
+-
+-LIBS += -lsdc_sdk $(LDIR)/libedit.a $(LDIR)/libncurses.a 
+-LIBS += -lnl-3 -lnl-genl-3 $(INITLIBS)
++LIBS += -lsdc_sdk -ledit -lncurses 
+ LIBS += -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+ SDIR=src
+ ODIR=obj
+@@ -133,16 +95,16 @@
+ 	@echo SDKpath:   $(SDKPATH)
+ 	@echo dev_linux: $(DEVROOT)
+ 	@echo ================================
+-	$(CC)  -s -o $@ $(CLI_OBJECTS) $(LIBS)
++	$(CXX)  -s -o $@ $(CLI_OBJECTS) $(LIBS)
+ 
+ $(SMU_EXE): $(SMU_OBJECTS)
+-	$(CC) -s -o $@ $(SMU_OBJECTS) $(LIBS)
++	$(CXX) -s -o $@ $(SMU_OBJECTS) $(LIBS)
+ 
+ %.o:%.cpp %.h
+-	$(CC) $(CFLAGS) -DLINUX -DCLI -c -o  $@ $<
++	$(CXX) $(CFLAGS) -DLINUX -DCLI -c -o  $@ $<
+ 
+ %.osmu:%.cpp %.h
+-	$(CC) $(CFLAGS) -DLINUX -DSMU -c -o  $@ $<
++	$(CXX) $(CFLAGS) -DLINUX -DSMU -c -o  $@ $<
+ 
+ clean:
+ 	rm -f $(CLI_EXE) $(SMU_EXE) src/*.o src/*.osmu src/profileProperties/*.o

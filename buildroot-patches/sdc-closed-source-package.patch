@@ -1,0 +1,11 @@
+--- buildroot/package/Config.in	2012-12-03 13:39:45.831134347 +0000
++++ buildroot/package/Config.in.new	2012-12-03 13:41:08.811137432 +0000
+@@ -700,4 +700,8 @@
+ source "package/sdc/Config.in"
+ endmenu
+ 
++menu "Laird (SDC) Closed Source Packages"
++source "package/sdc-closed-source/Config.in"
++endmenu
++
+ endmenu

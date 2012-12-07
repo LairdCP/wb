@@ -1,0 +1,6 @@
+source "package/sdc/macplus1/Config.in"
+source "package/sdc/patchram/Config.in"
+source "package/sdc/libedit/Config.in"
+source "package/sdc/wifireset/Config.in"
+source "package/sdc/sdcbins/Config.in"
+source "package/sdc/wbfs/Config.in"

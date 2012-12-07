@@ -1,0 +1,5 @@
+config BR2_PACKAGE_MACPLUS1
+	bool "MAC PLUS ONE"
+	help
+	  Increments a MAC address by 1.
+

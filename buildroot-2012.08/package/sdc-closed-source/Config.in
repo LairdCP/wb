@@ -1,0 +1,6 @@
+source "package/sdc-closed-source/sdcsdk/Config.in"
+source "package/sdc-closed-source/sdccli/Config.in"
+source "package/sdc-closed-source/sdcsupp/Config.in"
+source "package/sdc-closed-source/libtcmd/Config.in"
+source "package/sdc-closed-source/athtcmd/Config.in"
+source "package/sdc-closed-source/dhd/Config.in"

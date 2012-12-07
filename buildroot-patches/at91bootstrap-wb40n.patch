@@ -1,0 +1,20 @@
+Our changes to the bootstrap source code do not follow the layout that buildroot expects.
+It was easier to patch buildroot for now. We fix the problem better when we update the bootstrap.
+
+--- buildroot/boot/at91bootstrap/at91bootstrap.mk
++++ buildroot/boot/at91bootstrap/at91bootstrap.mk.copy
+@@ -8,9 +8,14 @@
+ AT91BOOTSTRAP_SOURCE = AT91Bootstrap$(AT91BOOTSTRAP_VERSION).zip
+ 
+ AT91BOOTSTRAP_BOARD = $(call qstrip,$(BR2_TARGET_AT91BOOTSTRAP_BOARD))
++ifeq ($(AT91BOOTSTRAP_BOARD),wb40n)
++AT91BOOTSTRAP_MAKE_SUBDIR = board/$(AT91BOOTSTRAP_BOARD)
++AT91BOOTSTRAP_BINARY = $(AT91BOOTSTRAP_MAKE_SUBDIR)/$(AT91BOOTSTRAP_BOARD).bin
++else
+ AT91BOOTSTRAP_MEMORY = $(call qstrip,$(BR2_TARGET_AT91BOOTSTRAP_MEMORY))
+ AT91BOOTSTRAP_MAKE_SUBDIR = board/$(AT91BOOTSTRAP_BOARD)/$(AT91BOOTSTRAP_MEMORY)
+ AT91BOOTSTRAP_BINARY = $(AT91BOOTSTRAP_MAKE_SUBDIR)/$(AT91BOOTSTRAP_MEMORY)_$(AT91BOOTSTRAP_BOARD).bin
++endif
+ 
+ AT91BOOTSTRAP_INSTALL_IMAGES = YES
+ AT91BOOTSTRAP_INSTALL_TARGET = NO

@@ -1,0 +1,5 @@
+config BR2_PACKAGE_LIBTCMD
+	bool "libtcmd"
+	help
+	  Atheros TCMD library.
+

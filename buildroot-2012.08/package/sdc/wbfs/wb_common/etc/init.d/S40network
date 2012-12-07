@@ -1,0 +1,188 @@
+#!/bin/sh
+# network - init script for controlling all interfaces, ksjonh_20120522
+#
+# This script may rely on other scripts in /etc/network/.
+# 1. ifrc.sh  ...interface-run-config handles de/configuration
+# 2. other driver scripts
+#
+# The /etc/network/interfaces file is checked for 'auto <iface>' stanzas,
+# to automatically configure interfaces.
+#
+# Otherwise, this script can be invoked with a specific interface to act on. 
+#
+# Some additional checks are made to determine whether a wired interface-phy
+# is really available to work with. This can be an issue with some hw setups.
+#
+eni=/etc/network/interfaces
+nowait=wait
+method=
+v=.
+
+# Check cmdln option.
+if [ "$1" == "-t" ]
+then
+  t=-t && v=. && T=echo && shift
+  echo \ \ $0 $@ [TESTING]
+fi
+
+
+# Check if there is a non- stop|start (command) value as 1st arg...
+# If there is, then shift into {dev} for a specific interface to act on.
+# Otherwise, we will check /e/n/i for what to do.
+case ${1:0:2} in
+  re)
+    ;;
+  st)
+    # no devices passed in, try /e/n/i file...
+    # maybe can look in /proc/net/dev too...
+    [ -f $eni ] \
+    && devls=$( sed -n 's/^auto \([a-z][a-z0-9]*\).*$/\1/p' $eni )
+    ;;
+  *)
+    #echo adding $1 to devices list
+    [ -n "$1" ] && devls=$1 && shift
+    ;;
+esac
+
+#
+# 1 - dev
+# 2 - updown
+# 3 - startstop
+bring()
+{
+  [ "${2:0:1}" == "u" ] && up=true && dn=false
+  [ "${2:0:1}" == "d" ] && up=false && dn=true
+  
+  [ -n "$v" ] && echo \ \ bring: $@
+  case "$1" in
+  
+    lo)
+      $T /etc/network/ifrc.sh $1 $2 &
+      $dn && wait && $T /sbin/ifconfig $1 $2
+      ;;
+    
+    eth*)
+      # re-execute for non-wired-ethernet devices
+      if grep -q "device $1" /var/log/wireless 2>/dev/null
+      then
+        { $T exec $0 wl $3; exit 0; }
+      fi
+
+      # check if wired-interface-phy is really there
+      if [ ! -f /sys/class/net/$1/uevent ] \
+      || grep -q Generic /sys/class/net/$1/*/uevent 2>/dev/null
+      then
+        # the phy should be identified... if not then probably floating hw
+        echo \ \ interface-phy $1 is not available
+      else
+        # ifrc script handles eth* up, config, or deconfig
+        $T /etc/network/ifrc.sh $1 $2 $method &
+      fi
+      
+      $dn && wait && $T /sbin/ifconfig $1 $2
+      ;;
+    
+    ppp*)
+      # point-to-point protocol support developmental... 
+      $T # call the pppd script first
+      $T /etc/init.d/opt/S??pppd $2
+      $T /etc/network/ifrc.sh $1 $2 &
+      ;;
+
+    usb*)
+      # usb g_ether support
+      $dn && $T /etc/network/ifrc.sh $1 $2
+      $T /etc/init.d/opt/S??g_ether $3
+      $up && $T /etc/network/ifrc.sh $1 $2 manual &
+      ;;
+
+    wl*)
+      # using 'wl' as alias for wireless
+      # the wireless script handles if up/down (and deconfig)
+      # and the ifrc script will handle config
+      $T /etc/network/wireless.sh $2 nowait
+      $up && $T /etc/network/ifrc.sh $1 $2 $method &
+      $dn && wait
+      ;;
+
+    br*)
+      # bridge mode support
+      # (de)config handled in bridge script as required
+      case $3 in
+        restart)
+          #$T /etc/network/ifrc.sh $1 dn
+          #$dn && wait && $T /sbin/ifconfig $1 $2
+          $T /etc/network/bridge.sh -x stop $1 
+          $T /etc/network/bridge.sh -x start $1
+          #$T /etc/network/ifrc.sh $1 up
+          ;;
+        start)
+          $T /etc/network/bridge.sh -x start $1
+          #$T /etc/network/ifrc.sh $1 up
+          ;;
+        stop)
+          #$T /etc/network/ifrc.sh $1 dn
+          #$dn && wait && $T /sbin/ifconfig $1 $2
+          $T /etc/network/bridge.sh -x stop $1
+          ;;
+      esac
+      ;;
+  esac
+}
+
+post()
+{
+  [ -z "`who`" ] \
+  && printf "\0337\033[2A\r$@\0338" >/dev/console
+}
+
+#
+# act on devices in list
+case $1 in
+    
+  stop)
+    echo Stopping network interfaces... $devls
+    for dev in $devls; do bring $dev down $1; $nowait; done
+    #rm -f /var/tmp/network-init-*
+    ;;
+  
+  start)
+    echo Starting network interfaces... $devls
+    
+    [ "$2" == "manual" ] && method=manual
+    # prevent general configurations when also doing bridge_mode
+    echo \ $devls |grep -q " br[i0-9]" && method=manual
+    
+    for dev in $devls
+    do
+      ( bring $dev up $1 $method >>/var/log/network )&
+#      $nowait
+    done
+    
+    #post "\tNetworking setup completed!"
+    #touch /var/tmp/network-init-ok
+    ;;
+    
+  restart)
+    echo Restarting: $devls
+    $0 $t $devls stop
+    $0 $t $devls start
+    ;;
+  
+  *)
+    echo "  flags: (for this network script)"
+    echo "   -t   testing"
+    echo "   -v   verbose"
+    echo 
+    echo "  args: (to pass to the called iface)"
+    echo
+    echo "Usage: $0 [<flags>] [-v] [<iface>] {stop|start|restart} [<args...>]"
+    exit 1
+esac
+
+# post-alert if the ifrc utility is disabled
+ifrc_=$( ls /etc/default/ifrc.disable 2>/dev/null )
+[ -n "$ifrc_" ] && echo \ \ $ifrc_
+
+exit 0
+

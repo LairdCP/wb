@@ -1,0 +1,5 @@
+config BR2_PACKAGE_SDCSUPP
+	bool "SDC Supplicant"
+	help 
+	  SDC Supplicant
+

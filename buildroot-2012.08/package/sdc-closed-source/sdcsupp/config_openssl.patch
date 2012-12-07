@@ -1,0 +1,42 @@
+--- sserver/supplicant/trunk/wpa_supplicant/wpa_supplicant/config_openssl	2012-09-19 03:59:58.048053976 +0100
++++ config_openssl	2012-09-20 01:55:35.038926067 +0100
+@@ -10,20 +10,6 @@
+ # to override previous values of the variables.
+ 
+ 
+-# Uncomment following two lines and fix the paths if you have installed OpenSSL
+-# or GnuTLS in non-default location
+-ifdef CROSS_COMPILE
+-#CFLAGS += -I../../support/$(patsubst %-,%,$(CROSS_COMPILE))/include
+-# static openssl libraries include files from linux-a
+-CFLAGS += -I../../support/linux/include$(SSLLIBSUFFIX)
+-LIBS += -L../../support/$(patsubst %-,%,$(CROSS_COMPILE))/lib
+-LIBS_p += -L../../support/$(patsubst %-,%,$(CROSS_COMPILE))/lib
+-else
+-CFLAGS += -I/usr/local/openssl/include
+-LIBS += -L/usr/local/openssl/lib
+-LIBS_p += -L/usr/local/openssl/lib
+-endif
+-
+ # Some Red Hat versions seem to include kerberos header files from OpenSSL, but
+ # the kerberos files are not in the default include path. Following line can be
+ # used to fix build issues on such systems (krb5.h not found).
+@@ -92,7 +78,8 @@
+ CONFIG_DRIVER_WEXT=y
+ 
+ # Driver interface for Linux drivers using the nl80211 kernel interface
+-#CONFIG_DRIVER_NL80211=y
++CONFIG_DRIVER_NL80211=y
++CONFIG_LIBNL32=y
+ 
+ # Driver interface for FreeBSD net80211 layer (e.g., Atheros driver)
+ #CONFIG_DRIVER_BSD=y
+@@ -262,7 +249,7 @@
+ #	path is given on command line, not here; this option is just used to
+ #	select the backend that allows configuration files to be used)
+ # winreg = Windows registry (see win_example.reg for an example)
+-CONFIG_BACKEND=file
++CONFIG_BACKEND=sdc
+ 
+ # Remove configuration write functionality (i.e., to allow the configuration
+ # file to be updated based on runtime configuration changes). The runtime

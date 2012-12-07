@@ -1,0 +1,5 @@
+config BR2_PACKAGE_SDCSDK
+	bool "SDC SDK"
+	help
+	  Summit SDK
+

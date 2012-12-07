@@ -1,0 +1,30 @@
+--- Makefile    2012-09-18 22:04:52.011891398 +0100
++++ Makefile	2012-09-18 22:05:48.295891373 +0100
+@@ -1,7 +1,3 @@
+-ifndef DEVROOT
+-	DEVROOT = $(HOME)/dev_linux
+-endif
+-
+ # Allow CROSS_COMPILE to specify compiler base
+ CC := $(CROSS_COMPILE)gcc
+ LD := $(CROSS_COMPILE)ld
+@@ -9,7 +5,7 @@
+ AR := $(CROSS_COMPILE)ar
+ 
+ IDIR=include
+-CFLAGS= -c -Wall -I$(IDIR) -fPIC
++CFLAGS+= -c -Wall -I$(IDIR) -fPIC
+ 
+ LIB = libsdc_sdk
+ _OBJS = iniparser.o confg_strings.o ezxml.o sdc_debug.o sdc_xml.o 
+@@ -18,10 +14,6 @@
+ _OBJS += nl80211_access.o nl80211_genl.o nl80211_event.o nl80211_util.o
+ _OBJS += nl80211_scan.o
+ 
+-#libnl stuff
+-CFLAGS += -I$(DEVROOT)/wb40n/trunk/buildroot/output/build/libnl-3.2.13/include
+-LIBS += -L$(LDIR) -L$(DEVROOT)/wb40n/trunk/buildroot/output/target/usr/lib/
+-
+ ifdef SDC_MEM_DEBUG
+ # debug malloc/free logging using <sdc_memdbg.c>
+ _OBJS += sdc_memdbg.o

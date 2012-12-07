@@ -1,0 +1,5 @@
+config BR2_PACKAGE_SDCBINS
+	bool "SDC Binaries"
+	help
+      SDC Binaries artefacts (sdcsupp, sdcsdk, sdc_cli, etc)
+

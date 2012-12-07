@@ -1,0 +1,80 @@
+#!/bin/sh
+# inetd super server initialization - nonblocking
+# Configures services enabled in inetd.conf and start inetd.
+# This uses TCPwrappers to respond to the requested/enabled protocols. 
+#
+
+inetd_daemon_check()
+{
+  for srv in `sed -n 's/^[#]*\([a-z]\+\).*/\1/p' /etc/inetd.conf 2>/dev/null`
+  do
+    daemon_exec=$( awk /^$srv/'{ print $6 }' /etc/inetd.conf )
+    daemon_name=${daemon_exec##*/}
+    daemon_init=/etc/init.d/opt/S??${daemon_name}
+    if [ -z "$daemon_exec" ]
+    then
+      echo "  $srv is disabled"
+    else
+      if [ -e $daemon_exec ]
+      then
+        if [ ! -e $daemon_init ]
+        then
+          echo "  $srv init n/a, disabled"
+        fi
+        echo "  $srv is setting up... $!"
+        ( wait $netpid; $daemon_init check >>$rcS_log; )&
+        inetd_pid="$inetd_pid $!"
+        # echo inetd: $1 service enabled >>$rcS_log
+        # echo inetd: $daemon_init failed >>$rcS_log
+      fi
+    fi
+  done
+}
+
+let netpid=$( ps |sed -n '/[S]..network/s/^\ *\([0-9]\+\).*/\1/p' )+0
+#let inetd_pid=$( ps |sed -n '/[S]..inetd/s/^\ *\([0-9]\+\).*/\1/p' )+0
+  
+rcS_log=${rcS_log:-/dev/null}
+
+case $1 in
+
+  reload)
+    echo "Reloading inetd configuration"
+    killall -s HUP inetd
+    ;;
+    
+  restart)
+    echo "Restarting inetd..."
+    killall inetd 2>/dev/null
+    inetd_daemon_check
+    ;;
+    
+  start)
+    echo "Starting inetd services..."
+    # config file is required
+    if [ ! -f /etc/inetd.conf ]
+    then
+      inetd_msg /etc/inetd.conf file missing, aborting
+      exit 1
+    fi
+    inetd_daemon_check
+      # this is to avoid conflict between wireless and key-gen calculations
+      #while ps |grep -q "[S]..network"; do sleep 4; done 
+      # check and enable services
+      #inetd_daemon_check ssh 
+      #inetd_daemon_check ftp
+
+    # wait in background to run super server 
+    ( wait $inetd_pid; /usr/sbin/inetd; echo "  inetd running" >>$rcS_log )&
+    ;;
+    
+  stop)
+    echo "Stopping inetd services"
+    killall inetd 2>/dev/null
+    ;;
+
+  *)
+    echo $"Usage: $0 {stop|start|restart|reload}"
+    ;;
+esac
+exit 0

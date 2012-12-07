@@ -1,0 +1,28 @@
+Synopsis:
+The wbfs.mk will copy files in wb_common tree and apply changes via wb_common.sh
+by default.  For further filesystem tuning, an env variable acts as switch.
+
+The env WB_PLATFORM name value should be like 'wbNNx' or 'wbNNx_description'.
+Examples are: 'wb40n' or 'wb40nbt_customer'.
+
+If it is set and there is no '_<label>' suffix, then '_basic' is assumed.
+
+For a matching wb-platform_name:
+  a directory tree will be copied to output/target.
+  a script with a '.sh' suffix will be run.
+
+Example:
+env WB_PLATFORM=wb44n
+
+  wbfs
+  |-- wb44n_basic
+  |   |-- etc
+  |   |   `-- foo.conf
+  |   `-- bin
+  |       `-- foo.sh
+  `-- wb44_basic.sh
+
+After processing wb_common...
+Then matching 'wb44n_basic' tree is copied.
+Then matching 'wb44n_basic.sh' script is run.
+
