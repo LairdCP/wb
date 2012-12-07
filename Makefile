@@ -59,7 +59,7 @@ cleanall:
                 -exec rm -rf "{}" ";"
 	find buildroot/package buildroot/board  -mindepth 1 -maxdepth 1 \
                 -not -name sdc -not -name sdc-closed-source -not -name '.svn' -exec rm -rf "{}" ";"
-	rm -f unpack.stamp product.selected buildroot
+	rm -f unpack.stamp product.selected
 
 .PHONY: default clean cleanall wb40n wb45n
 .NOTPARALLEL:
