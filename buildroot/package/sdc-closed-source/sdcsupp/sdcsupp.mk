@@ -12,7 +12,7 @@ SDCSUPP_TARGET_DIR = $(O)/sdcbins
 
 define SDCSUPP_CONFIGURE_CMDS
     patch -d $(@D)/wpa_supplicant < package/sdc-closed-source/sdcsupp/config_openssl.patch
-    #patch -d $(@D)/wpa_supplicant < package/sdc-closed-source/sdcsupp/config_openssl_remove_wext.patch
+    patch -d $(@D)/wpa_supplicant < package/sdc-closed-source/sdcsupp/config_openssl_remove_wext.patch
     patch -d $(@D)/src/drivers < package/sdc-closed-source/sdcsupp/undef_sdc_in_driver_nl80211.patch
 endef
 
