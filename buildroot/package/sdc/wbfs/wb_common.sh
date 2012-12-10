@@ -11,7 +11,7 @@ wbfs=$( pwd |grep /wbfs ) || { echo must run in sdc/wbfs; exit 2; }
 target=${TARGET_DIR:-$1}
 [ -d "$target" ] || { echo TARGET_DIR not set; exit 2; }
 
-brcfg=$target/../.config
+brcfg=$target/../../.config
 [ -f $brcfg ] || { echo cannot find buildroot output/.config; exit 2; } 
 
 
