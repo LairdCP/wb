@@ -1,0 +1,468 @@
+diff -Naur buildroot-2011.11/linux/Config.ext.in buildroot/linux/Config.ext.in
+--- buildroot-2011.11/linux/Config.ext.in	2011-11-30 23:08:44.000000000 +0000
++++ buildroot/linux/Config.ext.in	2012-11-14 13:25:31.194677000 +0000
+@@ -3,10 +3,18 @@
+ # Xenomai
+ config BR2_LINUX_KERNEL_EXT_XENOMAI
+ 	bool "Adeos/Xenomai Real-time patch"
++	depends on BR2_i386 || BR2_x86_64 || BR2_arm || \
++		   BR2_bfin || BR2_powerpc || BR2_sh4
+ 	select BR2_PACKAGE_XENOMAI
+ 	help
+ 	  Xenomai Kernel part.
+ 
++	  In the current version of Xenomai, the following kernel
++	  versions are supported: on Blackfin, 2.6.34 and 2.6.36.9, on
++	  SH4, 2.6.32.10, on x86, 2.6.35.9, 2.6.37.6, 2.6.38.8, on
++	  ARM, 2.6.35.9, 2.6.37.6, 2.6.38.8, on NIOS2, 2.6.35, on
++	  PowerPC, 2.6.35.7, 2.6.36.4, 3.0.8.
++
+ config BR2_LINUX_KERNEL_EXT_XENOMAI_ADEOS_PATCH
+ 	depends on BR2_LINUX_KERNEL_EXT_XENOMAI
+ 	string "Path for Adeos patch file"
+@@ -15,6 +23,18 @@
+ 	  Download it at http://download.gna.org/adeos/patches/v2.6/$(ARCH)/
+ 	  and verify that your kernel version in buildroot matches.
+ 
++# ocf-linux
++config BR2_LINUX_KERNEL_EXT_OCF_LINUX
++	bool "Open Cryptographic Framework (OCF)"
++	select BR2_PACKAGE_OCF_LINUX
++	help
++	  OCF-Linux Kernel part.
++
++	  Select this option to patch your kernel with OCF for
++	  hardware-accelerated crypto support for available drivers.
++	  Some libraries need to also have OCF enabled for them,
++	  for example OpenSSL.
++
+ # RTAI
+ config BR2_LINUX_KERNEL_EXT_RTAI
+        bool "RTAI Real-time patch"
+diff -Naur buildroot-2011.11/linux/Config.in buildroot/linux/Config.in
+--- buildroot-2011.11/linux/Config.in	2011-11-30 23:08:44.000000000 +0000
++++ buildroot/linux/Config.in	2012-12-03 21:38:12.787246000 +0000
+@@ -19,10 +19,9 @@
+ #
+ choice
+ 	prompt "Kernel version"
+-	default BR2_LINUX_KERNEL_3_1
+ 
+-config BR2_LINUX_KERNEL_3_1
+-	bool "3.1.4"
++config BR2_LINUX_KERNEL_3_6
++	bool "3.6.8"
+ 
+ config BR2_LINUX_KERNEL_SAME_AS_HEADERS
+ 	bool "Same as toolchain kernel headers"
+@@ -58,7 +57,6 @@
+ config BR2_LINUX_KERNEL_CUSTOM_VERSION_VALUE
+ 	string "Kernel version"
+ 	depends on BR2_LINUX_KERNEL_CUSTOM_VERSION
+-	default "3.1.4"
+ 
+ config BR2_LINUX_KERNEL_CUSTOM_TARBALL_LOCATION
+ 	string "URL of custom kernel tarball"
+@@ -70,11 +68,15 @@
+ 
+ config BR2_LINUX_KERNEL_CUSTOM_GIT_VERSION
+ 	string "Custom Git version"
++	default "HEAD"
+ 	depends on BR2_LINUX_KERNEL_CUSTOM_GIT
++	help
++	  Git revision to use in the format used by git rev-parse,
++	  E.G. a sha id, a tag, branch, ..
+ 
+ config BR2_LINUX_KERNEL_VERSION
+ 	string
+-	default "3.1.4" if BR2_LINUX_KERNEL_3_1
++	default "3.6.8" if BR2_LINUX_KERNEL_3_6
+ 	default BR2_DEFAULT_KERNEL_HEADERS if BR2_LINUX_KERNEL_SAME_AS_HEADERS
+ 	default BR2_LINUX_KERNEL_CUSTOM_VERSION_VALUE if BR2_LINUX_KERNEL_CUSTOM_VERSION
+ 	default "custom" if BR2_LINUX_KERNEL_CUSTOM_TARBALL
+@@ -112,8 +114,9 @@
+ 	string "Defconfig name"
+ 	depends on BR2_LINUX_KERNEL_USE_DEFCONFIG
+ 	help
+-	 Name of the defconfig file to use, without the trailing
+-	 _defconfig
++	 Name of the kernel defconfig file to use, without the
++	 trailing _defconfig.  The defconfig is located in
++	 arch/<arch>/configs in the kernel tree.
+ 
+ config BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE
+ 	string "Configuration file path"
+@@ -125,12 +128,23 @@
+ # Binary format
+ #
+ 
++config BR2_LINUX_KERNEL_UBOOT_IMAGE
++       bool
++
+ choice
+ 	prompt "Kernel binary format"
+ 
+ config BR2_LINUX_KERNEL_UIMAGE
+ 	bool "uImage"
+ 	depends on BR2_arm || BR2_armeb || BR2_bfin || BR2_powerpc || BR2_avr32 || BR2_sh || BR2_sh64
++	select BR2_LINUX_KERNEL_UBOOT_IMAGE
++
++config BR2_LINUX_KERNEL_APPENDED_UIMAGE
++	bool "uImage with appended DT"
++	depends on BR2_arm || BR2_armeb
++	select BR2_LINUX_KERNEL_DTS_SUPPORT
++	select BR2_LINUX_KERNEL_APPENDED_DTB
++	select BR2_LINUX_KERNEL_UBOOT_IMAGE
+ 
+ config BR2_LINUX_KERNEL_BZIMAGE
+ 	bool "bzImage"
+@@ -138,7 +152,35 @@
+ 
+ config BR2_LINUX_KERNEL_ZIMAGE
+ 	bool "zImage"
+-	depends on BR2_arm || BR2_armeb || BR2_powerpc || BR2_sparc || BR2_sh || BR2_sh64 || BR2_xtensa
++	depends on BR2_arm || BR2_armeb || BR2_powerpc || BR2_sparc || \
++		   BR2_sh || BR2_sh64 || BR2_xtensa
++
++config BR2_LINUX_KERNEL_APPENDED_ZIMAGE
++	bool "zImage with appended DT"
++	depends on BR2_arm || BR2_armeb
++	select BR2_LINUX_KERNEL_DTS_SUPPORT
++	select BR2_LINUX_KERNEL_APPENDED_DTB
++
++config BR2_LINUX_KERNEL_CUIMAGE
++	bool "cuImage"
++	depends on BR2_powerpc
++	select BR2_LINUX_KERNEL_UBOOT_IMAGE
++	select BR2_LINUX_KERNEL_DTS_SUPPORT
++	select BR2_LINUX_KERNEL_DTB_IS_SELF_BUILT
++
++config BR2_LINUX_KERNEL_SIMPLEIMAGE
++	bool "simpleImage"
++	depends on BR2_microblaze
++	select BR2_LINUX_KERNEL_UBOOT_IMAGE
++	select BR2_LINUX_KERNEL_DTS_SUPPORT
++	select BR2_LINUX_KERNEL_DTB_IS_SELF_BUILT
++
++config BR2_LINUX_KERNEL_LINUX_BIN
++	bool "linux.bin"
++	depends on BR2_microblaze
++	select BR2_LINUX_KERNEL_UBOOT_IMAGE
++	select BR2_LINUX_KERNEL_DTS_SUPPORT
++	select BR2_LINUX_KERNEL_DTB_IS_SELF_BUILT
+ 
+ config BR2_LINUX_KERNEL_VMLINUX_BIN
+ 	bool "vmlinux.bin"
+@@ -171,6 +213,68 @@
+ 	  Specify the kernel make target to build the kernel that you
+ 	  need.
+ 
++config BR2_LINUX_KERNEL_DTS_SUPPORT
++	bool "Device tree support"
++	help
++	  Compile a device tree source into a device tree blob.
++	  Select the dts file to compile in the options below.
++
++if BR2_LINUX_KERNEL_DTS_SUPPORT
++
++# We have mainly three cases when it comes to device tree support:
++#   1) We don't want any support at all. Then the ..DTS_SUPPORT
++#      variable won't be set
++#   2) We want device tree support, so we need the user to enter
++#      the device tree name or the the path to the custom device
++#      he uses, but the kernel abstracts this from us and only
++#      build an image that looks like a regular kernel image. In
++#      this case, we only need to derive the kernel image name from
++#      the given device tree name, and all the rest is as usual
++#   3) We want device tree support, but the kernel requires us to
++#      build the device tree blob separately. In this case, some
++#      more logic will be needed.
++# The variable below address the second case, were you only want
++# limited actions from buildroot.
++config BR2_LINUX_KERNEL_DTB_IS_SELF_BUILT
++	bool
++
++config BR2_LINUX_KERNEL_APPENDED_DTB
++	bool
++
++choice
++	prompt "Device tree source"
++	default BR2_LINUX_KERNEL_USE_INTREE_DTS
++
++config BR2_LINUX_KERNEL_USE_INTREE_DTS
++	bool "Use a device tree present in the kernel."
++	help
++	   Use a device tree source distributed with
++	   the kernel sources. The dts files are located
++           in the arch/<arch>/boot/dts folder.
++
++config BR2_LINUX_KERNEL_USE_CUSTOM_DTS
++	bool "Use a custom device tree file"
++	help
++	  Use a custom device tree file, i.e, a device
++	  tree file that does not belong to the kernel
++	  source tree.
++endchoice
++
++config BR2_LINUX_KERNEL_INTREE_DTS_NAME
++	string "Device Tree Source file name"
++	depends on BR2_LINUX_KERNEL_USE_INTREE_DTS
++	help
++	 Name of the device tree source file, without
++	 the trailing .dts
++
++config BR2_LINUX_KERNEL_CUSTOM_DTS_PATH
++	string "Device Tree Source file path"
++	depends on BR2_LINUX_KERNEL_USE_CUSTOM_DTS
++	help
++	  Path to the device tree source file
++
++endif
++
+ config BR2_LINUX_KERNEL_INSTALL_TARGET
+ 	bool "Install kernel image to /boot in target"
+ 	depends on !BR2_TARGET_ROOTFS_INITRAMFS
+diff -Naur buildroot-2011.11/linux/linux-ext-ocf-linux.mk buildroot/linux/linux-ext-ocf-linux.mk
+--- buildroot-2011.11/linux/linux-ext-ocf-linux.mk	1970-01-01 01:00:00.000000000 +0100
++++ buildroot/linux/linux-ext-ocf-linux.mk	2012-12-03 21:38:12.787246000 +0000
+@@ -0,0 +1,25 @@
++##################################################
++# Linux OCF extension
++#
++# Patch the linux kernel with OCF
++##################################################
++
++ifeq ($(BR2_LINUX_KERNEL_EXT_OCF_LINUX),y)
++LINUX_DEPENDENCIES += ocf-linux
++
++# Prepare kernel patch
++# The linux-3.2.1.patch is just the main inclusion, most of the code
++# resides in the ocf/ subdir.
++# It works for older kernel versions.
++# Run tested from 2.6.38+ and build tested from 2.6.35+
++define OCF_LINUX_PREPARE_KERNEL
++	support/scripts/apply-patches.sh $(LINUX_DIR) \
++		$(OCF_LINUX_DIR)/patches/ linux-3.2.1-ocf.patch ; \
++	grep -q __mix_pool_bytes $(LINUX_DIR)/drivers/char/random.c && \
++	$(SED) 's:wordcount\*4:&, NULL:' $(LINUX_DIR)/drivers/char/random.c ; \
++	cp -rf $(OCF_LINUX_DIR)/ocf $(LINUX_DIR)/crypto/ocf ;
++endef
++
++LINUX_PRE_PATCH_HOOKS += OCF_LINUX_PREPARE_KERNEL
++
++endif #BR2_LINUX_EXT_OCF_LINUX
+diff -Naur buildroot-2011.11/linux/linux.mk buildroot/linux/linux.mk
+--- buildroot-2011.11/linux/linux.mk	2011-11-30 23:08:44.000000000 +0000
++++ buildroot/linux/linux.mk	2012-12-10 10:03:52.244037118 +0000
+@@ -4,6 +4,8 @@
+ #
+ ###############################################################################
+ LINUX_VERSION=$(call qstrip,$(BR2_LINUX_KERNEL_VERSION))
++LINUX_LICENSE = GPLv2
++LINUX_LICENSE_FILES = COPYING
+ 
+ # Compute LINUX_SOURCE and LINUX_SITE from the configuration
+ ifeq ($(LINUX_VERSION),custom)
+@@ -34,33 +36,54 @@
+ LINUX_INSTALL_IMAGES = YES
+ LINUX_DEPENDENCIES  += host-module-init-tools
+ 
++ifeq ($(BR2_LINUX_KERNEL_UBOOT_IMAGE),y)
++	LINUX_DEPENDENCIES += host-uboot-tools
++endif
++
+ LINUX_MAKE_FLAGS = \
+ 	HOSTCC="$(HOSTCC)" \
+ 	HOSTCFLAGS="$(HOSTCFLAGS)" \
+ 	ARCH=$(KERNEL_ARCH) \
+ 	INSTALL_MOD_PATH=$(TARGET_DIR) \
+ 	CROSS_COMPILE="$(CCACHE) $(TARGET_CROSS)" \
+-	LZMA="$(LZMA)"
++	DEPMOD=$(HOST_DIR)/usr/sbin/depmod
+ 
+ # Get the real Linux version, which tells us where kernel modules are
+ # going to be installed in the target filesystem.
+ LINUX_VERSION_PROBED = $(shell $(MAKE) $(LINUX_MAKE_FLAGS) -C $(LINUX_DIR) --no-print-directory -s kernelrelease)
+ 
++ifeq ($(BR2_LINUX_KERNEL_USE_INTREE_DTS),y)
++KERNEL_DTS_NAME = $(BR2_LINUX_KERNEL_INTREE_DTS_NAME)
++else ifeq ($(BR2_LINUX_KERNEL_USE_CUSTOM_DTS),y)
++KERNEL_DTS_NAME = $(basename $(notdir $(BR2_LINUX_KERNEL_CUSTOM_DTS_PATH)))
++endif
++
++ifeq ($(BR2_LINUX_KERNEL_APPENDED_DTB),y)
++ifneq ($(words $(KERNEL_DTS_NAME)),1)
++$(error Kernel with appended device tree needs exactly one DTS source.\
++  Check BR2_LINUX_KERNEL_INTREE_DTS_NAME or BR2_LINUX_KERNEL_CUSTOM_DTS_PATH.)
++endif
++endif
++
+ ifeq ($(BR2_LINUX_KERNEL_IMAGE_TARGET_CUSTOM),y)
+ LINUX_IMAGE_NAME=$(call qstrip,$(BR2_LINUX_KERNEL_IMAGE_TARGET_NAME))
+ else
+ ifeq ($(BR2_LINUX_KERNEL_UIMAGE),y)
+-ifeq ($(KERNEL_ARCH),blackfin)
+-# a uImage, but with a different file name
+-LINUX_IMAGE_NAME=vmImage
+-else
+ LINUX_IMAGE_NAME=uImage
+-endif
+-LINUX_DEPENDENCIES+=host-uboot-tools
++else ifeq ($(BR2_LINUX_KERNEL_APPENDED_UIMAGE),y)
++LINUX_IMAGE_NAME=uImage
+ else ifeq ($(BR2_LINUX_KERNEL_BZIMAGE),y)
+ LINUX_IMAGE_NAME=bzImage
+ else ifeq ($(BR2_LINUX_KERNEL_ZIMAGE),y)
+ LINUX_IMAGE_NAME=zImage
++else ifeq ($(BR2_LINUX_KERNEL_APPENDED_ZIMAGE),y)
++LINUX_IMAGE_NAME=zImage
++else ifeq ($(BR2_LINUX_KERNEL_CUIMAGE),y)
++LINUX_IMAGE_NAME=cuImage.$(KERNEL_DTS_NAME)
++else ifeq ($(BR2_LINUX_KERNEL_SIMPLEIMAGE),y)
++LINUX_IMAGE_NAME=simpleImage.$(KERNEL_DTS_NAME)
++else ifeq ($(BR2_LINUX_KERNEL_LINUX_BIN),y)
++LINUX_IMAGE_NAME=linux.bin
+ else ifeq ($(BR2_LINUX_KERNEL_VMLINUX_BIN),y)
+ LINUX_IMAGE_NAME=vmlinux.bin
+ else ifeq ($(BR2_LINUX_KERNEL_VMLINUX),y)
+@@ -70,6 +93,12 @@
+ endif
+ endif
+ 
++ifeq ($(BR2_LINUX_KERNEL_APPENDED_DTB),y)
++LINUX_IMAGE_TARGET=zImage
++else
++LINUX_IMAGE_TARGET=$(LINUX_IMAGE_NAME)
++endif
++
+ # Compute the arch path, since i386 and x86_64 are in arch/x86 and not
+ # in arch/$(KERNEL_ARCH). Even if the kernel creates symbolic links
+ # for bzImage, arch/i386 and arch/x86_64 do not exist when copying the
+@@ -98,7 +127,7 @@
+ 	$(if $(LINUX_PATCHES),
+ 		@$(call MESSAGE,"Download additional patches"))
+ 	$(foreach patch,$(filter ftp://% http://%,$(LINUX_PATCHES)),\
+-		$(call DOWNLOAD,$(dir $(patch)),$(notdir $(patch)))$(sep))
++		$(call DOWNLOAD,$(patch))$(sep))
+ endef
+ 
+ LINUX_POST_DOWNLOAD_HOOKS += LINUX_DOWNLOAD_PATCHES
+@@ -148,16 +177,48 @@
+ 		$(call KCONFIG_ENABLE_OPT,CONFIG_DEVTMPFS_MOUNT,$(@D)/.config))
+ 	$(if $(BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_MDEV),
+ 		$(call KCONFIG_SET_OPT,CONFIG_UEVENT_HELPER_PATH,\"/sbin/mdev\",$(@D)/.config))
++	$(if $(BR2_PACKAGE_SYSTEMD),
++		$(call KCONFIG_ENABLE_OPT,CONFIG_CGROUPS,$(@D)/.config))
++	$(if $(BR2_LINUX_KERNEL_APPENDED_DTB),
++		$(call KCONFIG_ENABLE_OPT,CONFIG_ARM_APPENDED_DTB,$(@D)/.config))
+ 	yes '' | $(TARGET_MAKE_ENV) $(MAKE1) $(LINUX_MAKE_FLAGS) -C $(@D) oldconfig
+ endef
+ 
++ifeq ($(BR2_LINUX_KERNEL_DTS_SUPPORT),y)
++ifeq ($(BR2_LINUX_KERNEL_DTB_IS_SELF_BUILT),)
++define LINUX_BUILD_DTB
++	$(TARGET_MAKE_ENV) $(MAKE) $(LINUX_MAKE_FLAGS) -C $(@D) $(KERNEL_DTS_NAME).dtb
++endef
++define LINUX_INSTALL_DTB
++	cp $(KERNEL_ARCH_PATH)/boot/$(KERNEL_DTS_NAME).dtb $(BINARIES_DIR)/
++endef
++endif
++endif
++
++ifeq ($(BR2_LINUX_KERNEL_APPENDED_UIMAGE),y)
++define LINUX_APPEND_DTB
++	cat $(KERNEL_ARCH_PATH)/boot/$(KERNEL_DTS_NAME).dtb >> $(KERNEL_ARCH_PATH)/boot/zImage
++	# We need to generate the uImage here after that so that the uImage is
++	# generated with the right image size.
++	$(TARGET_MAKE_ENV) $(MAKE) $(LINUX_MAKE_FLAGS) -C $(@D) uImage
++endef
++else ifeq ($(BR2_LINUX_KERNEL_APPENDED_ZIMAGE),y)
++define LINUX_APPEND_DTB
++	cat $(KERNEL_ARCH_PATH)/boot/$(KERNEL_DTS_NAME).dtb >> $(KERNEL_ARCH_PATH)/boot/zImage
++endef
++endif
++
+ # Compilation. We make sure the kernel gets rebuilt when the
+ # configuration has changed.
+ define LINUX_BUILD_CMDS
+-	$(TARGET_MAKE_ENV) $(MAKE) $(LINUX_MAKE_FLAGS) -C $(@D) $(LINUX_IMAGE_NAME)
++	$(if $(BR2_LINUX_KERNEL_USE_CUSTOM_DTS),
++		cp $(BR2_LINUX_KERNEL_CUSTOM_DTS_PATH) $(KERNEL_ARCH_PATH)/boot/dts/)
++	$(TARGET_MAKE_ENV) $(MAKE) $(LINUX_MAKE_FLAGS) -C $(@D) $(LINUX_IMAGE_TARGET)
+ 	@if grep -q "CONFIG_MODULES=y" $(@D)/.config; then 	\
+ 		$(TARGET_MAKE_ENV) $(MAKE) $(LINUX_MAKE_FLAGS) -C $(@D) modules ;	\
+ 	fi
++	$(LINUX_BUILD_DTB)
++	$(LINUX_APPEND_DTB)
+ endef
+ 
+ 
+@@ -167,12 +228,22 @@
+ endef
+ endif
+ 
++
++define LINUX_INSTALL_HOST_TOOLS
++	# Installing dtc (device tree compiler) as host tool, if selected
++	if grep -q "CONFIG_DTC=y" $(@D)/.config; then 	\
++		$(INSTALL) -D -m 0755 $(@D)/scripts/dtc/dtc $(HOST_DIR)/usr/bin/dtc ;	\
++	fi
++endef
++
++
+ define LINUX_INSTALL_IMAGES_CMDS
+ 	cp $(LINUX_IMAGE_PATH) $(BINARIES_DIR)
+ endef
+ 
+ define LINUX_INSTALL_TARGET_CMDS
+ 	$(LINUX_INSTALL_KERNEL_IMAGE_TO_TARGET)
++	$(LINUX_INSTALL_DTB)
+ 	# Install modules and remove symbolic links pointing to build
+ 	# directories, not relevant on the target
+ 	@if grep -q "CONFIG_MODULES=y" $(@D)/.config; then 	\
+@@ -181,23 +252,25 @@
+ 		rm -f $(TARGET_DIR)/lib/modules/$(LINUX_VERSION_PROBED)/build ;		\
+ 		rm -f $(TARGET_DIR)/lib/modules/$(LINUX_VERSION_PROBED)/source ;	\
+ 	fi
++	$(LINUX_INSTALL_HOST_TOOLS)
+ endef
+ 
+ include linux/linux-ext-*.mk
+ 
+ $(eval $(call GENTARGETS))
+ 
+-linux-menuconfig linux-xconfig linux-gconfig linux-nconfig linux26-menuconfig linux26-xconfig linux26-gconfig linux26-nconfig: dirs $(LINUX_DIR)/.stamp_configured
++ifeq ($(BR2_LINUX_KERNEL),y)
++linux-menuconfig linux-xconfig linux-gconfig linux-nconfig linux26-menuconfig linux26-xconfig linux26-gconfig linux26-nconfig: dirs linux-configure
+ 	$(MAKE) $(LINUX_MAKE_FLAGS) -C $(LINUX_DIR) \
+ 		$(subst linux-,,$(subst linux26-,,$@))
+ 	rm -f $(LINUX_DIR)/.stamp_{built,target_installed,images_installed}
+ 
+-linux-savedefconfig linux26-savedefconfig: dirs $(LINUX_DIR)/.stamp_configured
++linux-savedefconfig linux26-savedefconfig: dirs linux-configure
+ 	$(MAKE) $(LINUX_MAKE_FLAGS) -C $(LINUX_DIR) \
+ 		$(subst linux-,,$(subst linux26-,,$@))
+ 
+ ifeq ($(BR2_LINUX_KERNEL_USE_CUSTOM_CONFIG),y)
+-linux-update-config linux26-update-config: $(LINUX_DIR)/.config
++linux-update-config linux26-update-config: linux-configure $(LINUX_DIR)/.config
+ 	cp -f $(LINUX_DIR)/.config $(BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE)
+ 
+ linux-update-defconfig linux26-update-defconfig: linux-savedefconfig
+@@ -206,6 +279,7 @@
+ linux-update-config linux26-update-config: ;
+ linux-update-defconfig linux26-update-defconfig: ;
+ endif
++endif
+ 
+ # Support for rebuilding the kernel after the cpio archive has
+ # been generated in $(BINARIES_DIR)/rootfs.cpio.
+@@ -215,6 +289,8 @@
+ 	$(TARGET_MAKE_ENV) $(MAKE) $(LINUX_MAKE_FLAGS) -C $(@D) $(LINUX_IMAGE_NAME)
+ 	# Copy the kernel image to its final destination
+ 	cp $(LINUX_IMAGE_PATH) $(BINARIES_DIR)
++	# If there is a .ub file copy it to the final destination
++	test ! -f $(LINUX_IMAGE_PATH).ub || cp $(LINUX_IMAGE_PATH).ub $(BINARIES_DIR)
+ 	$(Q)touch $@
+ 
+ # The initramfs building code must make sure this target gets called
