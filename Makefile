@@ -31,8 +31,8 @@ wb40n wb45n:
 unpack.stamp: product.selected $(ARCHV)
 	# unpack buildroot, rename the directory to 'buildroot' for easier management versions
 	tar xf $(ARCHV) --xform "s/^$(PKG)/buildroot/"
-	# patch buildroot to add the sdc packages
-	patch -p0 < buildroot-patches/sdc-package.patch
+	# patch buildroot to add the sdc properties
+	patch -p0 < buildroot-patches/buildroot-sdc-board-config.patch
 	# buildroot patch to work with non-standard placement of wb40n bootstrap board directory
 	patch -p0 < buildroot-patches/at91bootstrap-wb40n.patch
 	# backport custom patch config for at91bootstrap on 2011.11

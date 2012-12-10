@@ -1,0 +1,8 @@
+--- buildroot-2011.11/Config.in	2011-11-30 23:08:44.000000000 +0000
++++ buildroot/Config.in	2012-12-10 14:55:20.327710193 +0000
+@@ -361,3 +361,5 @@
+ source "boot/Config.in"
+ 
+ source "linux/Config.in"
++
++source "board/sdc/Config.in"
