@@ -43,6 +43,8 @@ unpack.stamp: product.selected $(ARCHV)
 	patch -d buildroot -p1 < buildroot-patches/at91bootstrap3.patch
 	# sync to dev_linux/buildroot/2011.11 rev 15835
 	patch -d buildroot -p1 < buildroot-patches/buildroot-2011.11-lt1.patch
+	# fix iproute parallel buiild race
+	cp buildroot-patches/iproute2-fix-parallel-build-yacc.patch buildroot/package/iproute2/
 	# install the config file
 	cp buildroot/board/sdc/`cat product.selected`/configs/$(PKG).config buildroot/.config
 	# mark operation as done
