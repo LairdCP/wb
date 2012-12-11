@@ -2,9 +2,10 @@
 PACKAGES REQUIRED
 =================
 The build system requires various packages installed on the development host.
-Because there are so many distros out there we cannot know what you distro
+Because there are so many distros out there we cannot know what your distro
 calls the required packages and how they are organised. However, we can tell
-you that on the standard installation of Ubuntu or Linux Mint:
+you that on the standard installation of Ubuntu or Linux Mint you'll need
+these extra packages:
 bison
 flex
 msgfmt
