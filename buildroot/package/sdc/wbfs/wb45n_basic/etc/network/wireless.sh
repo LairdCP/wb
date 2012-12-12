@@ -112,7 +112,7 @@ wifi_start()
   if ! ps |grep -q sdcsup[p]
   then
     msg "launching supplicant"
-    /usr/bin/sdcsupp $WIFI_DEBUG -i $WIFI_ETH >>$WIFI_LOG 2>&1 &
+    /usr/bin/sdcsupp $WIFI_DEBUG -D nl80211 -i $WIFI_ETH >>$WIFI_LOG 2>&1 &
   fi
 }
 
