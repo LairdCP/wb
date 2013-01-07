@@ -1,6 +1,6 @@
 diff -urN a/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c b/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c
---- a/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c	2012-10-27 12:22:15.000000000 -0400
-+++ b/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c	2012-11-17 10:27:32.000000000 -0500
+--- a/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c	2012-11-27 11:20:01.000000000 -0500
++++ b/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c	2012-12-23 15:05:28.208621705 -0500
 @@ -167,16 +167,16 @@
  #ifdef CONFIG_MACB
  void at91_macb_hw_init(void)
@@ -29,8 +29,8 @@ diff -urN a/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c b/arch/arm/cpu/arm926
  #ifndef CONFIG_RMII
  	at91_set_b_periph(AT91_PIO_PORTC, 25, 0);	/* ECRS */
 diff -urN a/board/atmel/at91sam9x5ek/at91sam9x5ek.c b/board/atmel/at91sam9x5ek/at91sam9x5ek.c
---- a/board/atmel/at91sam9x5ek/at91sam9x5ek.c	2012-10-27 12:22:15.000000000 -0400
-+++ b/board/atmel/at91sam9x5ek/at91sam9x5ek.c	2012-11-17 10:27:32.000000000 -0500
+--- a/board/atmel/at91sam9x5ek/at91sam9x5ek.c	2012-11-27 11:20:01.000000000 -0500
++++ b/board/atmel/at91sam9x5ek/at91sam9x5ek.c	2012-12-23 15:05:28.208621705 -0500
 @@ -61,11 +61,12 @@
  	/* Enable CS3 */
  	csa = readl(&matrix->ebicsa);
@@ -70,14 +70,14 @@ diff -urN a/board/atmel/at91sam9x5ek/at91sam9x5ek.c b/board/atmel/at91sam9x5ek/a
  #endif
  
 diff -urN a/board/atmel/at91sam9x5ek/config.mk b/board/atmel/at91sam9x5ek/config.mk
---- a/board/atmel/at91sam9x5ek/config.mk	2012-10-27 12:22:15.000000000 -0400
-+++ b/board/atmel/at91sam9x5ek/config.mk	2012-11-17 10:27:32.000000000 -0500
+--- a/board/atmel/at91sam9x5ek/config.mk	2012-11-27 11:20:01.000000000 -0500
++++ b/board/atmel/at91sam9x5ek/config.mk	2012-12-23 15:05:28.208621705 -0500
 @@ -1 +1 @@
 -CONFIG_SYS_TEXT_BASE = 0x26f00000
 +CONFIG_SYS_TEXT_BASE = 0x23f00000
 diff -urN a/boards.cfg b/boards.cfg
---- a/boards.cfg	2012-11-17 10:17:17.000000000 -0500
-+++ b/boards.cfg	2012-11-17 10:27:32.000000000 -0500
+--- a/boards.cfg	2012-12-23 14:59:43.000000000 -0500
++++ b/boards.cfg	2012-12-23 15:05:28.208621705 -0500
 @@ -96,6 +96,7 @@
  at91sam9m10g45ek_nandflash   arm         arm926ejs   at91sam9m10g45ek    atmel          at91        at91sam9m10g45ek:AT91SAM9M10G45,SYS_USE_NANDFLASH
  at91sam9rlek_dataflash       arm         arm926ejs   at91sam9rlek        atmel          at91        at91sam9rlek:AT91SAM9RL,SYS_USE_DATAFLASH
@@ -85,10 +85,21 @@ diff -urN a/boards.cfg b/boards.cfg
 +wb45n                        arm         arm926ejs   at91sam9x5ek        atmel          at91        wb45n:AT91SAM9X5,SYS_USE_NANDFLASH
  at91sam9x5ek_nandflash       arm         arm926ejs   at91sam9x5ek        atmel          at91        at91sam9x5ek:AT91SAM9X5,SYS_USE_NANDFLASH
  at91sam9x5ek_spiflash        arm         arm926ejs   at91sam9x5ek        atmel          at91        at91sam9x5ek:AT91SAM9X5,SYS_USE_SPIFLASH
- at91sam9xeek_dataflash_cs0   arm         arm926ejs   at91sam9260ek       atmel          at91        at91sam9260ek:AT91SAM9XE,SYS_USE_DATAFLASH_CS0
+ at91sam9x5ek_mmc             arm         arm926ejs   at91sam9x5ek        atmel          at91        at91sam9x5ek:AT91SAM9X5,SYS_USE_MMC
+diff -urN a/common/env_common.c b/common/env_common.c
+--- a/common/env_common.c	2012-12-23 14:53:15.000000000 -0500
++++ b/common/env_common.c	2012-12-23 15:05:28.209621705 -0500
+@@ -141,6 +141,7 @@
+ 		error("Environment import failed: errno = %d\n", errno);
+ 
+ 	gd->flags |= GD_FLG_ENV_READY;
++	saveenv();
+ }
+ 
+ 
 diff -urN a/drivers/mtd/nand/atmel_nand.c b/drivers/mtd/nand/atmel_nand.c
---- a/drivers/mtd/nand/atmel_nand.c	2012-10-27 12:22:16.000000000 -0400
-+++ b/drivers/mtd/nand/atmel_nand.c	2012-11-17 10:27:32.000000000 -0500
+--- a/drivers/mtd/nand/atmel_nand.c	2012-11-27 11:20:01.000000000 -0500
++++ b/drivers/mtd/nand/atmel_nand.c	2012-12-23 15:05:28.209621705 -0500
 @@ -720,10 +720,10 @@
   * several NAND_CMD_RNDOUT during read
   */
@@ -103,135 +114,10 @@ diff -urN a/drivers/mtd/nand/atmel_nand.c b/drivers/mtd/nand/atmel_nand.c
  	},
  };
  
-diff -urN a/fw_env_main-open.patch b/fw_env_main-open.patch
---- a/fw_env_main-open.patch	1969-12-31 19:00:00.000000000 -0500
-+++ b/fw_env_main-open.patch	2012-11-17 10:27:32.000000000 -0500
-@@ -0,0 +1,11 @@
-+--- tools/env/fw_env_main.c	2012-11-13 17:45:31.355096000 -0600
-++++ tools/env/fw_env_main.c	2012-11-13 17:45:06.919095045 -0600
-+@@ -94,7 +94,7 @@
-+ 	int lockfd = -1;
-+ 	int retval = EXIT_SUCCESS;
-+ 
-+-	lockfd = open(lockname, O_WRONLY | O_CREAT | O_TRUNC);
-++	lockfd = open(lockname, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-+ 	if (-1 == lockfd) {
-+ 		fprintf(stderr, "Error opening lock file %s\n", lockname);
-+ 		return EXIT_FAILURE;
-diff -urN a/include/configs/at91sam9x5ek.h b/include/configs/at91sam9x5ek.h
---- a/include/configs/at91sam9x5ek.h	2012-10-27 12:22:16.000000000 -0400
-+++ b/include/configs/at91sam9x5ek.h	2012-11-17 10:27:32.000000000 -0500
-@@ -42,7 +42,7 @@
- #define CONFIG_BOARD_EARLY_INIT_F
- #define CONFIG_DISPLAY_CPUINFO
- 
--#define CONFIG_OF_LIBFDT
-+/* #define CONFIG_OF_LIBFDT */
- 
- /* general purpose I/O */
- #define CONFIG_ATMEL_LEGACY		/* required until (g)pio is fixed */
-@@ -54,17 +54,17 @@
- #define CONFIG_USART_ID		ATMEL_ID_SYS
- 
- /* LCD */
--#define CONFIG_LCD
--#define LCD_BPP			LCD_COLOR16
--#define LCD_OUTPUT_BPP		24
--#define CONFIG_LCD_LOGO
--#undef LCD_TEST_PATTERN
--#define CONFIG_LCD_INFO
--#define CONFIG_LCD_INFO_BELOW_LOGO
--#define CONFIG_SYS_WHITE_ON_BLACK
--#define CONFIG_ATMEL_HLCD
--#define CONFIG_ATMEL_LCD_RGB565
--#define CONFIG_SYS_CONSOLE_IS_IN_ENV
-+#undef CONFIG_LCD
-+//#define LCD_BPP			LCD_COLOR16
-+//#define LCD_OUTPUT_BPP		24
-+//#define CONFIG_LCD_LOGO
-+//#undef LCD_TEST_PATTERN
-+//#define CONFIG_LCD_INFO
-+//#define CONFIG_LCD_INFO_BELOW_LOGO
-+//#define CONFIG_SYS_WHITE_ON_BLACK
-+//#define CONFIG_ATMEL_HLCD
-+//#define CONFIG_ATMEL_LCD_RGB565
-+//#define CONFIG_SYS_CONSOLE_IS_IN_ENV
- 
- #define CONFIG_BOOTDELAY	3
- 
-@@ -88,13 +88,14 @@
- #define CONFIG_CMD_PING
- #define CONFIG_CMD_DHCP
- #define CONFIG_CMD_NAND
--#define CONFIG_CMD_SF
-+#undef CONFIG_CMD_SF
- #define CONFIG_CMD_MMC
-+#define CONFIG_CMD_MII
- 
- /* SDRAM */
- #define CONFIG_NR_DRAM_BANKS		1
- #define CONFIG_SYS_SDRAM_BASE		0x20000000
--#define CONFIG_SYS_SDRAM_SIZE		0x08000000	/* 128 megs */
-+#define CONFIG_SYS_SDRAM_SIZE		0x04000000	/* 64 megs */
- 
- #define CONFIG_SYS_INIT_SP_ADDR \
- 	(CONFIG_SYS_SDRAM_BASE + 4 * 1024 - GENERATED_GBL_DATA_SIZE)
-@@ -102,8 +103,8 @@
- /* DataFlash */
- #ifdef CONFIG_CMD_SF
- #define CONFIG_ATMEL_SPI
--#define CONFIG_SPI_FLASH
--#define CONFIG_SPI_FLASH_ATMEL
-+#undef CONFIG_SPI_FLASH
-+#undef CONFIG_SPI_FLASH_ATMEL
- #define CONFIG_SF_DEFAULT_SPEED		30000000
- #endif
- 
-@@ -123,10 +124,12 @@
- #define CONFIG_SYS_NAND_ENABLE_PIN	AT91_PIN_PD4
- #define CONFIG_SYS_NAND_READY_PIN	AT91_PIN_PD5
- 
-+#define CONFIG_CMD_NAND_TRIMFFS
-+
- /* PMECC & PMERRLOC */
- #define CONFIG_ATMEL_NAND_HWECC		1
- #define CONFIG_ATMEL_NAND_HW_PMECC	1
--#define CONFIG_PMECC_CAP		2
-+#define CONFIG_PMECC_CAP		4
- #define CONFIG_PMECC_SECTOR_SIZE	512
- #define CONFIG_PMECC_INDEX_TABLE_OFFSET	0x8000
- 
-@@ -157,13 +160,14 @@
- #define CONFIG_SYS_LOAD_ADDR		0x22000000	/* load address */
- 
- #define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
--#define CONFIG_SYS_MEMTEST_END		0x26e00000
-+#define CONFIG_SYS_MEMTEST_END		0x23e00000
- 
- #ifdef CONFIG_SYS_USE_NANDFLASH
- /* bootstrap + u-boot + env + linux in nandflash */
- #define CONFIG_ENV_IS_IN_NAND
--#define CONFIG_ENV_OFFSET		0xc0000
--#define CONFIG_ENV_OFFSET_REDUND	0x100000
-+#define CONFIG_ENV_OFFSET		0xa0000
-+#define CONFIG_ENV_OFFSET_REDUND	0xc0000
-+/* #define CONFIG_ENV_RANGE 0x60000 */
- #define CONFIG_ENV_SIZE		0x20000		/* 1 sector = 128 kB */
- #define CONFIG_BOOTCOMMAND	"nand read " \
- 				"0x22000000 0x200000 0x300000; " \
-@@ -182,7 +186,7 @@
- #endif
- #endif
- 
--#define CONFIG_BOOTARGS		"mem=128M console=ttyS0,115200 " \
-+#define CONFIG_BOOTARGS		"mem=64M console=ttyS0,115200 " \
- 				"mtdparts=atmel_nand:" \
- 				"8M(bootstrap/uboot/kernel)ro,-(rootfs) " \
- 				"root=/dev/mtdblock1 rw " \
 diff -urN a/include/configs/wb45n.h b/include/configs/wb45n.h
 --- a/include/configs/wb45n.h	1969-12-31 19:00:00.000000000 -0500
-+++ b/include/configs/wb45n.h	2012-11-17 10:27:32.000000000 -0500
-@@ -0,0 +1,245 @@
++++ b/include/configs/wb45n.h	2012-12-23 15:05:28.210621705 -0500
+@@ -0,0 +1,286 @@
 +/*
 + * Copyright (C) 2012 Atmel Corporation
 + *
@@ -264,6 +150,9 @@ diff -urN a/include/configs/wb45n.h b/include/configs/wb45n.h
 + *
 + * tabs removed from whitespace, values column at 41
 + */
++//#define CONFIG_DYNAMIC_BOOTARGS
++
++
 +
 +#include <asm/hardware.h>
 +
@@ -361,8 +250,8 @@ diff -urN a/include/configs/wb45n.h b/include/configs/wb45n.h
 +#define CONFIG_SYS_MAX_NAND_DEVICE      1
 +#define CONFIG_SYS_NAND_BASE            0x40000000
 +#define CONFIG_SYS_NAND_DBW_8           1
-+#define CONFIG_SYS_NAND_MASK_ALE        (1 << 21)  /* AD21 */
-+#define CONFIG_SYS_NAND_MASK_CLE        (1 << 22)  /* AD22 */
++#define CONFIG_SYS_NAND_MASK_ALE        (1 << 21)  /* ALE is AD21 */
++#define CONFIG_SYS_NAND_MASK_CLE        (1 << 22)  /* CLE is AD22 */
 +#define CONFIG_SYS_NAND_ENABLE_PIN      AT91_PIN_PD4
 +#define CONFIG_SYS_NAND_READY_PIN       AT91_PIN_PD5
 +#define CONFIG_CMD_NAND_TRIMFFS         /* must trim 0xFFs for ubi rootfs */
@@ -397,7 +286,7 @@ diff -urN a/include/configs/wb45n.h b/include/configs/wb45n.h
 +#define CONFIG_RMII
 +#define CONFIG_NET_RETRY_COUNT          20
 +#define CONFIG_MACB_SEARCH_PHY
-+#define CONFIG_ETHADDR                  00:17:23:00:00:00
++#define CONFIG_ETHADDR                  00:17:23:00:00:45
 +
 +
 +
@@ -412,12 +301,24 @@ diff -urN a/include/configs/wb45n.h b/include/configs/wb45n.h
 +#define CONFIG_ENV_IS_IN_NAND
 +#define CONFIG_ENV_OFFSET               0xa0000
 +#define CONFIG_ENV_OFFSET_REDUND        0xc0000
-+/* #define CONFIG_ENV_RANGE 0x60000 */
++/* #define CONFIG_ENV_RANGE 0x40000 */
 +#define CONFIG_ENV_SIZE                 0x20000      /* 1 sector = 128 kB */
-+#define CONFIG_BOOTCOMMAND              "nand read " \
-+                                        "0x22000000 0x200000 0x300000; " \
-+                                        "bootm 0x22000000"
-+#else
++
++#define CONFIG_BOOTCOMMAND              "nand read 0x22000000 0x000e0000 0x280000; "\
++                                        "run _mtd; bootm"
++
++#define CONFIG_BOOTARGS                 "console=ttyS0,115200 loglevel=4 " \
++                                        "rw noinitrd mem=64M " \
++                                        "rootfstype=ubifs root=ubi0:rootfs ubi.mtd=6"
++/*
++#define CONFIG_BOOTARGS                 "mem=64M console=ttyS0,115200 " \
++                                        "mtdparts=atmel_nand:" \
++                                        "8M(bootstrap/uboot/kernel)ro,-(rootfs) " \
++                                        "root=/dev/mtdblock1 rw " \
++                                        "rootfstype=ubifs ubi.mtd=1 root=ubi0:rootfs"
++*/
++                                        
++#else /* not using nandflash */
 +#ifdef CONFIG_SYS_USE_SPIFLASH
 +   /* bootstrap + u-boot + env + linux in spi flash */
 +#define CONFIG_ENV_IS_IN_SPI_FLASH
@@ -430,19 +331,10 @@ diff -urN a/include/configs/wb45n.h b/include/configs/wb45n.h
 +            "bootm 0x22000000"
 +#endif
 +#endif
-+/*
-+#define CONFIG_BOOTARGS      "mem=64M console=ttyS0,115200 " \
-+            "mtdparts=atmel_nand:" \
-+            "8M(bootstrap/uboot/kernel)ro,-(rootfs) " \
-+            "root=/dev/mtdblock1 rw " \
-+            "rootfstype=ubifs ubi.mtd=1 root=ubi0:rootfs"
-+*/
++
 +/* Misc Environment Vars */
 +#define CONFIG_BOOTDELAY                1
-+
 +#define CONFIG_BAUDRATE                 115200
-+#define CONFIG_AUTOLOAD                 no
-+
 +#define CONFIG_SYS_PROMPT               "U-Boot> "
 +#define CONFIG_SYS_CBSIZE               256
 +#define CONFIG_SYS_MAXARGS              16
@@ -458,28 +350,63 @@ diff -urN a/include/configs/wb45n.h b/include/configs/wb45n.h
 +
 +#define MTDIDS_DEFAULT                  "nand0=atmel_nand"
 +#define MTDPARTS_DEFAULT                "mtdparts=atmel_nand:" \
-+                                        "128K(at91bootstrap)ro," \
++                                        "128K(at91bs)ro," \
 +                                        "512K(u-boot)ro," \
-+                                        "128K(u-boot-env1)ro," \
-+                                        "128K(u-boot-env2)ro," \
-+                                        "2M(kernel-a)," \
-+                                        "2M(kernel-b)," \
-+                                        "38M(rootfs-a)," \
-+                                        "38M(rootfs-b)," \
-+                                        "-(user)"
-+                                                                                                                        
++                                        "128K(u-boot-env)," \
++                                        "128K(redund-env)," \
++                                        "2560K(kernel-a)," \
++                                        "2560K(kernel-b)," \
++                                        "38912K(rootfs-a)," \
++                                        "38912K(rootfs-b)," \
++                                        "46848K(user)," \
++                                        "384K(logs)"
++
 +#ifdef CONFIG_USE_IRQ
 +#error CONFIG_USE_IRQ not supported
 +#endif
 +
++#ifdef CONFIG_DYNAMIC_BOOTARGS
++#undef CONFIG_BOOTCOMMAND
++#define CONFIG_BOOTCOMMAND              "run _kernel-a _rootfs-a _wbt _mtd _xargs && bootm"
++#undef CONFIG_BOOTARGS
++#define CONFIG_BOOTARGS                 "console=ttyS0,115200 loglevel=4 rw mem=64M"
++/*
++ * Setup the wb45n platform with a 'dynamic-bootargs' boot environment.
++ * The prefixed variables are used to support this feature.
++ */
++#define CONFIG_EXTRA_ENV_SETTINGS       \
++        "-msg=set -msg\; echo\; echo Initializing dynamic-bootargs support.\0" \
++        "-set=set -set\; set bootdelay 1\0" \
++        "-wb=run -set -msg\0" \
++        "_kernel-a=nand read 0x22000000 0x000e0000 0x280000; ki=a\0" \
++        "_kernel-b=nand read 0x22000000 0x00360000 0x280000; ki=b\0" \
++        "_mtd=test -n ${mtdparts} || mtdparts default\0" \
++        "_rootfs-a=fs=rootfstype=ubifs\\\\ root=ubi0:rootfs\\\\ ubi.mtd=6; ri=a\0" \
++        "_rootfs-b=fs=rootfstype=ubifs\\\\ root=ubi0:rootfs\\\\ ubi.mtd=7; ri=b\0" \
++        "_wbt=wbti=${wbtype}=${ki}/${ri}; if ${-wb}; then set -wb; save; fi\0" \
++        "_xargs=set bootargs ${bootargs} ${wbti} ${fs} ${mtdparts}\0" \
++        "autoload=no\0" \
++        "bootdelay=0\0" \
++        "wbtype=wb45nbt\0" \
++        "\0"
++#else
++/*
++ * Setup (default) minimal support for platform-init and fw_update/select
++ */
++#define CONFIG_EXTRA_ENV_SETTINGS       \
++        "_mtd=mtdparts default; set bootargs ${bootargs} ${wbti} ${mtdparts}\0" \
++        "autoload=no\0" \
++        "\0"
 +#endif
 +
++/* testing */
 +//#define CONFIG_HW_WATCHDOG              1
 +//#define CONFIG_AT91SAM9_WATCHDOG        1
++#endif
 +
 diff -urN a/tools/env/fw_env_main.c b/tools/env/fw_env_main.c
---- a/tools/env/fw_env_main.c	2012-10-27 12:22:16.000000000 -0400
-+++ b/tools/env/fw_env_main.c	2012-11-17 10:27:32.000000000 -0500
+--- a/tools/env/fw_env_main.c	2012-12-23 14:59:43.000000000 -0500
++++ b/tools/env/fw_env_main.c	2012-12-23 15:05:28.210621705 -0500
 @@ -94,7 +94,7 @@
  	int lockfd = -1;
  	int retval = EXIT_SUCCESS;
@@ -491,7 +418,7 @@ diff -urN a/tools/env/fw_env_main.c b/tools/env/fw_env_main.c
  		return EXIT_FAILURE;
 diff -urN a/tools/env/wb45n-fw_env.config b/tools/env/wb45n-fw_env.config
 --- a/tools/env/wb45n-fw_env.config	1969-12-31 19:00:00.000000000 -0500
-+++ b/tools/env/wb45n-fw_env.config	2012-11-17 10:27:32.000000000 -0500
++++ b/tools/env/wb45n-fw_env.config	2012-12-23 15:05:28.210621705 -0500
 @@ -0,0 +1,6 @@
 +# Configuration file for fw_(printenv/saveenv) utility.
 +# Up to two entries are valid, in this case the redundant
