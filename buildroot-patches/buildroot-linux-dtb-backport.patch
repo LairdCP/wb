@@ -338,15 +338,6 @@ diff -Naur buildroot-2011.11/linux/linux.mk buildroot/linux/linux.mk
  # Compute the arch path, since i386 and x86_64 are in arch/x86 and not
  # in arch/$(KERNEL_ARCH). Even if the kernel creates symbolic links
  # for bzImage, arch/i386 and arch/x86_64 do not exist when copying the
-@@ -98,7 +127,7 @@
- 	$(if $(LINUX_PATCHES),
- 		@$(call MESSAGE,"Download additional patches"))
- 	$(foreach patch,$(filter ftp://% http://%,$(LINUX_PATCHES)),\
--		$(call DOWNLOAD,$(dir $(patch)),$(notdir $(patch)))$(sep))
-+		$(call DOWNLOAD,$(patch))$(sep))
- endef
- 
- LINUX_POST_DOWNLOAD_HOOKS += LINUX_DOWNLOAD_PATCHES
 @@ -148,16 +177,48 @@
  		$(call KCONFIG_ENABLE_OPT,CONFIG_DEVTMPFS_MOUNT,$(@D)/.config))
  	$(if $(BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_MDEV),
