@@ -102,7 +102,7 @@ new file mode 100644
 index 0000000..74f08e8
 --- /dev/null
 +++ b/boot/at91bootstrap3/at91bootstrap3.mk
-@@ -0,0 +1,67 @@
+@@ -0,0 +1,73 @@
 +#############################################################
 +#
 +# at91bootstrap3
@@ -150,8 +150,14 @@ index 0000000..74f08e8
 +	$(MAKE) $(AT91BOOTSTRAP3_MAKE_OPT) -C $(@D)
 +endef
 +
++AT91BOOTSTRAP3_BIN_FILE = $(call qstrip,$(BR2_SDC_PLATFORM))-nandflashboot-uboot-3.4.4.bin
++ifeq ($(call qstrip,$(BR2_SDC_PLATFORM)),wb45n)
++AT91BOOTSTRAP3_BIN_FILE = at91sam9x5ek-nandflashboot-uboot-3.4.4.bin
++endif
++
 +define AT91BOOTSTRAP3_INSTALL_IMAGES_CMDS
-+	$(INSTALL) -m 644 $(@D)/binaries/at91sam9x5ek-nandflashboot-uboot-3.4.4.bin $(BINARIES_DIR)/wb45n.bin
++	$(INSTALL) -m 644 $(@D)/binaries/$(AT91BOOTSTRAP3_BIN_FILE) \
++	                  $(BINARIES_DIR)/$(call qstrip,$(BR2_SDC_PLATFORM)).bin
 +endef
 +
 +$(eval $(call GENTARGETS))
