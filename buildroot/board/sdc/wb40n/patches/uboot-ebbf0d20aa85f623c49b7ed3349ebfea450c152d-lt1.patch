@@ -1,6 +1,6 @@
-diff -urN u-boot-2011.09/arch/arm/config.mk u-boot-2011.09-sdc1/arch/arm/config.mk
---- u-boot-2011.09/arch/arm/config.mk	2011-09-29 15:11:15.000000000 -0400
-+++ u-boot-2011.09-sdc1/arch/arm/config.mk	2011-12-15 09:46:09.544154074 -0500
+diff -urN a/arch/arm/config.mk b/arch/arm/config.mk
+--- a/arch/arm/config.mk	2012-11-27 11:20:01.072534449 -0500
++++ b/arch/arm/config.mk	2012-12-23 15:32:07.934785794 -0500
 @@ -21,7 +21,7 @@
  # MA 02111-1307 USA
  #
@@ -10,9 +10,29 @@ diff -urN u-boot-2011.09/arch/arm/config.mk u-boot-2011.09-sdc1/arch/arm/config.
  
  ifndef CONFIG_STANDALONE_LOAD_ADDR
  ifeq ($(SOC),omap3)
-diff -urN u-boot-2011.09/board/atmel/wb40n/Makefile u-boot-2011.09-sdc1/board/atmel/wb40n/Makefile
---- u-boot-2011.09/board/atmel/wb40n/Makefile	1969-12-31 19:00:00.000000000 -0500
-+++ u-boot-2011.09-sdc1/board/atmel/wb40n/Makefile	2011-12-15 10:50:31.138999429 -0500
+diff -urN a/arch/arm/cpu/arm926ejs/at91/reset.c b/arch/arm/cpu/arm926ejs/at91/reset.c
+--- a/arch/arm/cpu/arm926ejs/at91/reset.c	2012-11-27 11:20:01.077534454 -0500
++++ b/arch/arm/cpu/arm926ejs/at91/reset.c	2012-12-23 15:32:07.934785794 -0500
+@@ -26,11 +26,16 @@
+ #include <asm/io.h>
+ #include <asm/arch/hardware.h>
+ #include <asm/arch/at91_rstc.h>
++#include <asm/arch/at91sam9_sdramc.h>
+ 
+ /* Reset the cpu by telling the reset controller to do so */
+ void reset_cpu(ulong ignored)
+ {
+ 	at91_rstc_t *rstc = (at91_rstc_t *) ATMEL_BASE_RSTC;
++	void *lpr = (void *) AT91_SDRAMC_LPR;
++
++	/* Ensure that nothing is accessing the SDRAM, as this will inhibit a reset */
++	writel(AT91_SDRAMC_LPCB_DISABLE, lpr);
+ 
+ 	writel(AT91_RSTC_KEY
+ 		| AT91_RSTC_CR_PROCRST	/* Processor Reset */
+diff -urN a/board/atmel/wb40n/Makefile b/board/atmel/wb40n/Makefile
+--- a/board/atmel/wb40n/Makefile	1969-12-31 19:00:00.000000000 -0500
++++ b/board/atmel/wb40n/Makefile	2012-12-23 15:32:07.934785794 -0500
 @@ -0,0 +1,54 @@
 +#
 +# (C) Copyright 2003-2008
@@ -68,12 +88,13 @@ diff -urN u-boot-2011.09/board/atmel/wb40n/Makefile u-boot-2011.09-sdc1/board/at
 +sinclude $(obj).depend
 +
 +#########################################################################
-diff -urN u-boot-2011.09/board/atmel/wb40n/wb40n.c u-boot-2011.09-sdc1/board/atmel/wb40n/wb40n.c
---- u-boot-2011.09/board/atmel/wb40n/wb40n.c	1969-12-31 19:00:00.000000000 -0500
-+++ u-boot-2011.09-sdc1/board/atmel/wb40n/wb40n.c	2011-12-15 10:49:29.456999540 -0500
-@@ -0,0 +1,210 @@
+diff -urN a/board/atmel/wb40n/wb40n.c b/board/atmel/wb40n/wb40n.c
+--- a/board/atmel/wb40n/wb40n.c	1969-12-31 19:00:00.000000000 -0500
++++ b/board/atmel/wb40n/wb40n.c	2012-12-23 15:32:07.934785794 -0500
+@@ -0,0 +1,206 @@
 +/*
-+ * Copyright (c) 2010-2011, Summit Data Communications, Inc.
++ * Copyright (c) 2010-2012, Laird Technologies
++ * Christopher Cole <chris.cole@lairdtech.com>
 + *
 + * This program is free software; you can redistribute it and/or
 + * modify it under the terms of the GNU General Public License as
@@ -168,19 +189,18 @@ diff -urN u-boot-2011.09/board/atmel/wb40n/wb40n.c u-boot-2011.09-sdc1/board/atm
 +	 *	RXDV (PA17) => PHY normal mode (not Test mode)
 +	 *	ERX0 (PA14) => PHY ADDR0
 +	 *	ERX1 (PA15) => PHY ADDR1
-+	 *	ERX2 (PA25) => PHY ADDR2
-+	 *	ERX3 (PA26) => PHY ADDR3
-+	 *	ECRS (PA28) => PHY ADDR4  => PHYADDR = 0x0
 +	 *
 +	 * PHY has internal pull-down
 +	 */
 +	writel(pin_to_mask(AT91_PIN_PA14) |
 +		pin_to_mask(AT91_PIN_PA15) |
-+		pin_to_mask(AT91_PIN_PA17) |
-+		pin_to_mask(AT91_PIN_PA25) |
-+		pin_to_mask(AT91_PIN_PA26) |
-+		pin_to_mask(AT91_PIN_PA28),
++		pin_to_mask(AT91_PIN_PA17),
 +		&pioa->pudr);
++
++	/* Ensure that PHY ADR bits are zero during PHY reset */
++	at91_set_gpio_output(AT91_PIN_PA14, 0);
++	at91_set_gpio_output(AT91_PIN_PA15, 0);
++	at91_set_gpio_output(AT91_PIN_PA17, 0);
 +
 +	erstl = readl(&rstc->mr) & AT91_RSTC_MR_ERSTL_MASK;
 +
@@ -201,10 +221,7 @@ diff -urN u-boot-2011.09/board/atmel/wb40n/wb40n.c u-boot-2011.09-sdc1/board/atm
 +	/* Re-enable pull-up */
 +	writel(pin_to_mask(AT91_PIN_PA14) |
 +		pin_to_mask(AT91_PIN_PA15) |
-+		pin_to_mask(AT91_PIN_PA17) |
-+		pin_to_mask(AT91_PIN_PA25) |
-+		pin_to_mask(AT91_PIN_PA26) |
-+		pin_to_mask(AT91_PIN_PA28),
++		pin_to_mask(AT91_PIN_PA17),
 +		&pioa->puer);
 +
 +	/* Initialize EMAC=MACB hardware */
@@ -251,11 +268,10 @@ diff -urN u-boot-2011.09/board/atmel/wb40n/wb40n.c u-boot-2011.09-sdc1/board/atm
 +	/* Set BT_RST_L LOW */
 +	at91_set_gpio_output(AT91_PIN_PC11, 0);
 +
-+	/* Take Ethernet PHY out of reset */
-+	/* Not required for H+W board since the system reset line is OC'ed to the 
-+	 * PHY reset line through a couple FETs */
-+//	at91_set_gpio_output(AT91_PIN_PC18, 1); /* Rev. 2 Hardware */
-+//	at91_set_gpio_output(AT91_PIN_PC2, 1); /* Rev. 3 Hardware */
++#ifdef CONFIG_USB_ATMEL
++	/* Enable USB host ports */
++	at91_set_gpio_output(AT91_PIN_PC0, 0);
++#endif
 +
 +	return 0;
 +}
@@ -282,28 +298,39 @@ diff -urN u-boot-2011.09/board/atmel/wb40n/wb40n.c u-boot-2011.09-sdc1/board/atm
 +#endif
 +	return rc;
 +}
-diff -urN u-boot-2011.09/boards.cfg u-boot-2011.09-sdc1/boards.cfg
---- u-boot-2011.09/boards.cfg	2011-09-29 15:11:15.000000000 -0400
-+++ u-boot-2011.09-sdc1/boards.cfg	2011-12-15 09:53:20.033165134 -0500
-@@ -89,6 +89,7 @@
- at91sam9xeek_nandflash       arm         arm926ejs   at91sam9260ek       atmel          at91        at91sam9260ek:AT91SAM9XE,SYS_USE_NANDFLASH
- at91sam9xeek_dataflash_cs0   arm         arm926ejs   at91sam9260ek       atmel          at91        at91sam9260ek:AT91SAM9XE,SYS_USE_DATAFLASH_CS0
- at91sam9xeek_dataflash_cs1   arm         arm926ejs   at91sam9260ek       atmel          at91        at91sam9260ek:AT91SAM9XE,SYS_USE_DATAFLASH_CS1
+diff -urN a/boards.cfg b/boards.cfg
+--- a/boards.cfg	2012-12-23 15:31:37.770782700 -0500
++++ b/boards.cfg	2012-12-23 15:32:07.935785794 -0500
+@@ -93,6 +93,7 @@
+ at91sam9g20ek_dataflash_cs0  arm         arm926ejs   at91sam9260ek       atmel          at91        at91sam9260ek:AT91SAM9G20,SYS_USE_DATAFLASH_CS0
+ at91sam9g20ek_dataflash_cs1  arm         arm926ejs   at91sam9260ek       atmel          at91        at91sam9260ek:AT91SAM9G20,SYS_USE_DATAFLASH_CS1
+ at91sam9g20ek_nandflash      arm         arm926ejs   at91sam9260ek       atmel          at91        at91sam9260ek:AT91SAM9G20,SYS_USE_NANDFLASH
 +wb40n                        arm         arm926ejs   wb40n               atmel          at91        wb40n:AT91SAM9G20,SYS_USE_NANDFLASH
- snapper9260                  arm         arm926ejs   -                   bluewater      at91        snapper9260:AT91SAM9260
- snapper9g20                  arm         arm926ejs   snapper9260         bluewater      at91        snapper9260:AT91SAM9G20
- sbc35_a9g20_nandflash        arm         arm926ejs   sbc35_a9g20         calao          at91        sbc35_a9g20:AT91SAM9G20,SYS_USE_NANDFLASH
-diff -urN u-boot-2011.09/include/configs/wb40n.h u-boot-2011.09-sdc1/include/configs/wb40n.h
---- u-boot-2011.09/include/configs/wb40n.h	1969-12-31 19:00:00.000000000 -0500
-+++ u-boot-2011.09-sdc1/include/configs/wb40n.h	2011-12-15 10:11:40.447193389 -0500
-@@ -0,0 +1,193 @@
+ at91sam9m10g45ek_nandflash   arm         arm926ejs   at91sam9m10g45ek    atmel          at91        at91sam9m10g45ek:AT91SAM9M10G45,SYS_USE_NANDFLASH
+ at91sam9rlek_dataflash       arm         arm926ejs   at91sam9rlek        atmel          at91        at91sam9rlek:AT91SAM9RL,SYS_USE_DATAFLASH
+ at91sam9rlek_nandflash       arm         arm926ejs   at91sam9rlek        atmel          at91        at91sam9rlek:AT91SAM9RL,SYS_USE_NANDFLASH
+diff -urN a/common/env_common.c b/common/env_common.c
+--- a/common/env_common.c	2012-12-23 14:53:15.504546549 -0500
++++ b/common/env_common.c	2012-12-23 15:32:07.935785794 -0500
+@@ -141,6 +141,7 @@
+ 		error("Environment import failed: errno = %d\n", errno);
+ 
+ 	gd->flags |= GD_FLG_ENV_READY;
++	saveenv();
+ }
+ 
+ 
+diff -urN a/include/configs/wb40n.h b/include/configs/wb40n.h
+--- a/include/configs/wb40n.h	1969-12-31 19:00:00.000000000 -0500
++++ b/include/configs/wb40n.h	2012-12-23 15:32:07.936785795 -0500
+@@ -0,0 +1,195 @@
 +/*
-+ * Copyright (c) 2010, 2011 Summit Data Communications, Inc.
++ * Copyright (c) 2010-2012 Laird technologies
 + * All rights reserved.
 + *
 + * ----------------------------------------------------------------------------
 + * File Name:		wb40n.h
-+ * Creation:		Chris Cole, ccole@summitdatacom.com
++ * Creation:		Chris Cole, chris.cole@lairdtech.com
 + * Date:		June 16, 2011
 + *-----------------------------------------------------------------------------
 + */
@@ -313,6 +340,11 @@ diff -urN u-boot-2011.09/include/configs/wb40n.h u-boot-2011.09-sdc1/include/con
 +
 +#undef DEBUG
 +#include <asm/hardware.h>
++
++/* new uImage format support */
++#define CONFIG_FIT		1
++#define CONFIG_OF_LIBFDT	1
++#define CONFIG_FIT_VERBOSE	1 /* enable fit_format_{error,warning}() */
 +
 +/*
 + * WARNING:
@@ -363,7 +395,7 @@ diff -urN u-boot-2011.09/include/configs/wb40n.h u-boot-2011.09-sdc1/include/con
 +#define	CONFIG_RED_LED			AT91_PIN_PA25	/* led0 */
 +#define	CONFIG_GREEN_LED		AT91_PIN_PA26	/* led1 */
 +
-+#define CONFIG_BOOTDELAY		3
++#define CONFIG_BOOTDELAY		1
 +
 +/*
 + * BOOTP options
@@ -387,12 +419,12 @@ diff -urN u-boot-2011.09/include/configs/wb40n.h u-boot-2011.09-sdc1/include/con
 +#define CONFIG_CMD_PING			1
 +#define CONFIG_CMD_DHCP			1
 +#define CONFIG_CMD_NAND			1
-+#undef CONFIG_CMD_USB
++#define CONFIG_CMD_USB			1
 +#define CONFIG_CMD_MII			1
 +
 +/* SDRAM */
 +#define CONFIG_NR_DRAM_BANKS		1
-+#define CONFIG_SYS_SDRAM_BASE		0x20000000
++#define CONFIG_SYS_SDRAM_BASE		ATMEL_BASE_CS1
 +#define CONFIG_SYS_SDRAM_SIZE		0x02000000 /* 32 MB */
 +#define CONFIG_SYS_LOAD_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x01000000)
 +#define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
@@ -406,11 +438,9 @@ diff -urN u-boot-2011.09/include/configs/wb40n.h u-boot-2011.09-sdc1/include/con
 +#ifdef CONFIG_CMD_NAND
 +#define CONFIG_NAND_ATMEL
 +#define CONFIG_SYS_MAX_NAND_DEVICE	1
-+#define CONFIG_SYS_NAND_BASE		0x40000000
++#define CONFIG_SYS_NAND_BASE		ATMEL_BASE_CS3
 +#define CONFIG_SYS_NAND_DBW_8		1
-+/* our ALE is AD21 */
 +#define CONFIG_SYS_NAND_MASK_ALE	(1 << 21)
-+/* our CLE is AD22 */
 +#define CONFIG_SYS_NAND_MASK_CLE	(1 << 22)
 +#define CONFIG_SYS_NAND_ENABLE_PIN	AT91_PIN_PC14
 +#define CONFIG_SYS_NAND_READY_PIN	AT91_PIN_PC13
@@ -426,30 +456,26 @@ diff -urN u-boot-2011.09/include/configs/wb40n.h u-boot-2011.09-sdc1/include/con
 +#define CONFIG_NET_RETRY_COUNT		20
 +#define CONFIG_RESET_PHY_R		1
 +#define CONFIG_ETHADDR			00:17:23:00:00:00
-+#define CONFIG_OVERWRITE_ETHADDR_ONCE	1 
++//#define CONFIG_OVERWRITE_ETHADDR_ONCE	1
 +
 +/* USB */
-+#undef CONFIG_USB_ATMEL
-+//#define CONFIG_USB_OHCI_NEW		1
-+//#define CONFIG_DOS_PARTITION		1
-+//#define CONFIG_SYS_USB_OHCI_CPU_INIT	1
-+//#define CONFIG_SYS_USB_OHCI_REGS_BASE	0x00500000	/* AT91SAM9260_UHP_BASE */
-+//#define CONFIG_SYS_USB_OHCI_SLOT_NAME	"at91sam9260"
-+//#define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS	2
-+//#define CONFIG_USB_STORAGE		1
-+//#define CONFIG_CMD_FAT			1
++#define CONFIG_USB_ATMEL
++#define CONFIG_USB_OHCI_NEW		1
++#define CONFIG_DOS_PARTITION		1
++#define CONFIG_SYS_USB_OHCI_CPU_INIT	1
++#define CONFIG_SYS_USB_OHCI_REGS_BASE	0x00500000	/* AT91SAM9260_UHP_BASE */
++#define CONFIG_SYS_USB_OHCI_SLOT_NAME	"at91sam9260"
++#define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS	2
++#define CONFIG_USB_STORAGE		1
++#define CONFIG_CMD_FAT			1
 +
 +/* bootstrap + u-boot + env + linux in nandflash */
 +#define CONFIG_ENV_IS_IN_NAND		1
 +#define CONFIG_ENV_OFFSET		0x80000
-+//#define CONFIG_ENV_OFFSET_REDUND	0x80000
 +#define CONFIG_ENV_SIZE			0x20000		/* 1 sector = 128 kB */
 +#define CONFIG_BOOTCOMMAND		"nand read 0x21000000 0xA0000 0x200000; bootm"
 +#define CONFIG_BOOTARGS			"mem=32M console=ttyS0,115200 ubi.mtd=5 root=ubi0:rootfs " \
-+					"rootfstype=ubifs loglevel=7 rootflags=bulk_read,chk_data_crc rw"
-+
-+#define CONFIG_BAUDRATE			115200
-+#define CONFIG_SYS_BAUDRATE_TABLE	{115200 , 19200, 38400, 57600, 9600 }
++					"rootfstype=ubifs loglevel=4 rootflags=bulk_read,chk_data_crc rw"
 +
 +#define CONFIG_SYS_PROMPT		"U-Boot> "
 +#define CONFIG_SYS_CBSIZE		256
@@ -471,8 +497,8 @@ diff -urN u-boot-2011.09/include/configs/wb40n.h u-boot-2011.09-sdc1/include/con
 +#endif
 +
 +#define CONFIG_SYS_USE_UBI
-+#define CONFIG_CMD_UBI 
-+#define CONFIG_RBTREE  
++#define CONFIG_CMD_UBI
++#define CONFIG_RBTREE
 +#define CONFIG_MTD_DEVICE		/* needed for mtdparts commands */
 +#define CONFIG_MTD_PARTITIONS
 +#define CONFIG_CMD_MTDPARTS
@@ -490,3 +516,15 @@ diff -urN u-boot-2011.09/include/configs/wb40n.h u-boot-2011.09-sdc1/include/con
 +
 +#endif
 +
++#define CONFIG_HW_WATCHDOG		1
++#define CONFIG_AT91SAM9_WATCHDOG	1
++
+diff -urN a/tools/env/wb40n-fw_env.config b/tools/env/wb40n-fw_env.config
+--- a/tools/env/wb40n-fw_env.config	1969-12-31 19:00:00.000000000 -0500
++++ b/tools/env/wb40n-fw_env.config	2012-12-23 15:32:07.936785795 -0500
+@@ -0,0 +1,5 @@
++# Configuration file for fw_(printenv/saveenv) utility.
++# Up to two entries are valid, in this case the redundant
++# environment sector is assumed present.
++# MTD device name	Device offset	Env. size	Flash sector size
++/dev/mtd2		0x0000		0x20000		0x20000
