@@ -1,39 +1,72 @@
-diff -urN linux-3.7-rc3-next-20121102/arch/arm/boot/dts/at91sam9x5.dtsi linux-3.7-rc3-next-20121102-lt1/arch/arm/boot/dts/at91sam9x5.dtsi
---- linux-3.7-rc3-next-20121102/arch/arm/boot/dts/at91sam9x5.dtsi	2012-11-04 13:31:55.383095397 -0500
-+++ linux-3.7-rc3-next-20121102-lt1/arch/arm/boot/dts/at91sam9x5.dtsi	2012-11-04 13:50:22.474350468 -0500
-@@ -206,6 +206,22 @@
- 					};
- 				};
- 
-+				macb0 {
-+					pinctrl_macb0: macb0-0 {
-+						atmel,pins =
-+							<1 4 0x1 0x0	/* PB4 periph A ETXCK_EREFCK*/
-+							 1 3 0x1 0x0	/* PB3 periph A ERXDV */
-+							 1 0 0x1 0x0	/* PB0 periph A ERX0 */
-+							 1 1 0x1 0x0	/* PB1 periph A ERX1 */
-+							 1 2 0x1 0x0	/* PB2 periph A ERXER */
-+							 1 7 0x1 0x0	/* PB7 periph A ETXEN */
-+							 1 9 0x1 0x0	/* PB9 periph A ETX0 */
-+							 1 10 0x1 0x0	/* PB10 periph A ETX1 */
-+							 1 5 0x1 0x0	/* PB5 periph A EMDIO */
-+							 1 6 0x1 0x0>;	/* PB6 periph A EMDC */
-+					};
-+				};
-+
- 				pioA: gpio@fffff400 {
- 					compatible = "atmel,at91sam9x5-gpio", "atmel,at91rm9200-gpio";
- 					reg = <0xfffff400 0x200>;
-@@ -295,6 +311,8 @@
- 				compatible = "cdns,at32ap7000-macb", "cdns,macb";
- 				reg = <0xf802c000 0x100>;
- 				interrupts = <24 4 3>;
-+				pinctrl-names = "default";
-+				pinctrl-0 = <&pinctrl_macb0>;
- 				status = "disabled";
+diff -urN a/arch/arm/boot/dts/at91sam9g25ek.dts b/arch/arm/boot/dts/at91sam9g25ek.dts
+--- a/arch/arm/boot/dts/at91sam9g25ek.dts	2012-12-10 22:30:57.000000000 -0500
++++ b/arch/arm/boot/dts/at91sam9g25ek.dts	2012-12-23 21:34:26.000000000 -0500
+@@ -28,6 +28,14 @@
+ 				status = "okay";
  			};
  
-@@ -369,6 +387,24 @@
++			usart1: serial@f8020000 {
++				status = "okay";
++			};
++
++			usart2: serial@f8024000 {
++				status = "okay";
++			};
++
+ 			macb0: ethernet@f802c000 {
+ 				phy-mode = "rmii";
+ 				status = "okay";
+@@ -44,18 +52,42 @@
+ 			i2c2: i2c@f8018000 {
+ 				status = "okay";
+ 			};
++
++			mmc0: mmc@f0008000 {
++				status = "okay";
++				slot@0 {
++					reg = <0>;
++					bus-width = <4>;
++					cd-gpios = <&pioC 11 0>;
++					cd-inverted;
++				};
++			};
++
++			mmc1: mmc@f000c000 {
++				status = "okay";
++				slot@0 {
++					reg = <0>;
++					bus-width = <4>;
++					/* cd-gpios = <&pioC 11 0>; */
++					/* cd-inverted; */
++				};
++			};
+ 		};
+ 
+ 		usb0: ohci@00600000 {
+ 			status = "okay";
+-			num-ports = <2>;
+-			atmel,vbus-gpio = <&pioD 19 1
+-					   &pioD 20 1
+-					  >;
++			num-ports = <1>;
++			atmel,vbus-gpio = <&pioB 12 1>;
++			atmel,oc-gpio = <&pioB 13 1>;
+ 		};
+ 
+ 		usb1: ehci@00700000 {
+ 			status = "okay";
+ 		};
+ 	};
++
++	atheros {
++		compatible = "atheros,ath6kl";
++		atheros,board-id = "SD32";
++	};
+ };
+diff -urN a/arch/arm/boot/dts/at91sam9x5.dtsi b/arch/arm/boot/dts/at91sam9x5.dtsi
+--- a/arch/arm/boot/dts/at91sam9x5.dtsi	2012-12-10 22:30:57.000000000 -0500
++++ b/arch/arm/boot/dts/at91sam9x5.dtsi	2012-12-23 21:34:01.000000000 -0500
+@@ -263,6 +263,24 @@
  					trigger-value = <0x6>;
  				};
  			};
@@ -58,7 +91,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/boot/dts/at91sam9x5.dtsi linux-3.
  		};
  
  		nand0: nand@40000000 {
-@@ -376,6 +412,9 @@
+@@ -270,6 +288,9 @@
  			#address-cells = <1>;
  			#size-cells = <1>;
  			reg = <0x40000000 0x10000000
@@ -68,10 +101,10 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/boot/dts/at91sam9x5.dtsi linux-3.
  			      >;
  			atmel,nand-addr-offset = <21>;
  			atmel,nand-cmd-offset = <22>;
-diff -urN linux-3.7-rc3-next-20121102/arch/arm/boot/dts/at91sam9x5cm.dtsi linux-3.7-rc3-next-20121102-lt1/arch/arm/boot/dts/at91sam9x5cm.dtsi
---- linux-3.7-rc3-next-20121102/arch/arm/boot/dts/at91sam9x5cm.dtsi	2012-09-30 19:47:46.000000000 -0400
-+++ linux-3.7-rc3-next-20121102-lt1/arch/arm/boot/dts/at91sam9x5cm.dtsi	2012-11-04 11:12:43.678892763 -0500
-@@ -26,23 +26,27 @@
+diff -urN a/arch/arm/boot/dts/at91sam9x5cm.dtsi b/arch/arm/boot/dts/at91sam9x5cm.dtsi
+--- a/arch/arm/boot/dts/at91sam9x5cm.dtsi	2012-12-10 22:30:57.000000000 -0500
++++ b/arch/arm/boot/dts/at91sam9x5cm.dtsi	2012-12-23 20:58:56.000000000 -0500
+@@ -26,33 +26,62 @@
  	ahb {
  		nand0: nand@40000000 {
  			nand-bus-width = <8>;
@@ -101,20 +134,52 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/boot/dts/at91sam9x5cm.dtsi linux-
 +			ubootenv@a0000 {
  				label = "U-Boot Env";
 -				reg = <0xc0000 0x140000>;
-+				reg = <0xa0000 0x160000>;
++				reg = <0xa0000 0x20000>;
++			};
++
++			ubootenv@c0000 {
++				label = "U-Boot Redund Env";
++				reg = <0xc0000 0x20000>;
++			};
++
++			kernel-a@e0000 {
++				label = "kernel-a";
++				reg = <0xe0000 0x280000>;
++			};
++
++			kernel-b@360000 {
++				label = "kernel-b";
++				reg = <0x360000 0x280000>;
++			};
++
++			rootfs-a@5e0000 {
++				label = "rootfs-a";
++				reg = <0x5e0000 0x2600000>;
++			};
++
++			rootfs-b@2be0000 {
++				label = "rootfs-b";
++				reg = <0x2be0000 0x2600000>;
  			};
  
- 			kernel@200000 {
-@@ -52,7 +56,7 @@
+-			kernel@200000 {
+-				label = "kernel";
+-				reg = <0x200000 0x600000>;
++			user@51e0000 {
++				label = "user";
++				reg = <0x51e0000 0x2dc0000>;
+ 			};
  
- 			rootfs@800000 {
- 				label = "rootfs";
+-			rootfs@800000 {
+-				label = "rootfs";
 -				reg = <0x800000 0x1f800000>;
-+				reg = <0x800000 0x7800000>;
++			logs@7fa0000 {
++				label = "logs";
++				reg = <0x7fa0000 0x60000>;
  			};
  		};
  	};
-@@ -60,15 +64,15 @@
+@@ -60,15 +89,15 @@
  	leds {
  		compatible = "gpio-leds";
  
@@ -136,53 +201,13 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/boot/dts/at91sam9x5cm.dtsi linux-
  		};
  	};
  };
-diff -urN linux-3.7-rc3-next-20121102/arch/arm/boot/dts/at91sam9x5ek.dtsi linux-3.7-rc3-next-20121102-lt1/arch/arm/boot/dts/at91sam9x5ek.dtsi
---- linux-3.7-rc3-next-20121102/arch/arm/boot/dts/at91sam9x5ek.dtsi	2012-11-04 13:31:55.383095397 -0500
-+++ linux-3.7-rc3-next-20121102-lt1/arch/arm/boot/dts/at91sam9x5ek.dtsi	2012-11-04 14:07:43.826622269 -0500
-@@ -42,6 +42,26 @@
- 			i2c2: i2c@f8018000 {
- 				status = "okay";
- 			};
-+
-+			mmc0: mmc@f0008000 {
-+				status = "okay";
-+				slot@0 {
-+					reg = <0>;
-+					bus-width = <4>;
-+					cd-gpios = <&pioC 11 0>;
-+					cd-inverted;
-+				};
-+			};
-+
-+			mmc1: mmc@f000c000 {
-+				status = "okay";
-+				slot@0 {
-+					reg = <0>;
-+					bus-width = <4>;
-+					/* cd-gpios = <&pioC 11 0>; */
-+					/* cd-inverted; */
-+				};
-+			};
- 		};
- 
- 		usb0: ohci@00600000 {
-@@ -56,4 +76,9 @@
- 			status = "okay";
- 		};
- 	};
-+
-+	atheros {
-+		compatible = "atheros,ath6kl";
-+		atheros,board-id = "SD32";
-+	};
- };
-diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3.7-rc3-next-20121102-lt1/arch/arm/configs/at91_dt_defconfig
---- linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig	2012-11-04 13:31:55.395095410 -0500
-+++ linux-3.7-rc3-next-20121102-lt1/arch/arm/configs/at91_dt_defconfig	2012-11-04 14:21:16.817879378 -0500
-@@ -1,197 +1,2334 @@
+diff -urN a/arch/arm/configs/wb45n_defconfig b/arch/arm/configs/wb45n_defconfig
+--- a/arch/arm/configs/wb45n_defconfig	1969-12-31 19:00:00.000000000 -0500
++++ b/arch/arm/configs/wb45n_defconfig	2012-12-11 08:24:25.000000000 -0500
+@@ -0,0 +1,2319 @@
 +#
 +# Automatically generated file; DO NOT EDIT.
-+# Linux/arm 3.7.0-rc3 Kernel Configuration
++# Linux/arm 3.7.0 Kernel Configuration
 +#
 +CONFIG_ARM=y
 +CONFIG_SYS_SUPPORTS_APM_EMULATION=y
@@ -206,12 +231,12 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +#
 +# General setup
 +#
- CONFIG_EXPERIMENTAL=y
++CONFIG_EXPERIMENTAL=y
 +CONFIG_BROKEN_ON_SMP=y
 +CONFIG_INIT_ENV_ARG_LIMIT=32
 +CONFIG_CROSS_COMPILE="arm-sdc-linux-gnueabi-"
-+CONFIG_LOCALVERSION=""
- # CONFIG_LOCALVERSION_AUTO is not set
++CONFIG_LOCALVERSION="-lt3"
++# CONFIG_LOCALVERSION_AUTO is not set
 +CONFIG_HAVE_KERNEL_GZIP=y
 +CONFIG_HAVE_KERNEL_LZMA=y
 +CONFIG_HAVE_KERNEL_XZ=y
@@ -221,10 +246,8 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_KERNEL_XZ is not set
 +# CONFIG_KERNEL_LZO is not set
 +CONFIG_DEFAULT_HOSTNAME="(none)"
- # CONFIG_SWAP is not set
- CONFIG_SYSVIPC=y
--CONFIG_LOG_BUF_SHIFT=14
--CONFIG_BLK_DEV_INITRD=y
++# CONFIG_SWAP is not set
++CONFIG_SYSVIPC=y
 +CONFIG_SYSVIPC_SYSCTL=y
 +# CONFIG_POSIX_MQUEUE is not set
 +# CONFIG_FHANDLE is not set
@@ -278,7 +301,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_SYSFS_DEPRECATED is not set
 +# CONFIG_RELAY is not set
 +# CONFIG_BLK_DEV_INITRD is not set
- CONFIG_CC_OPTIMIZE_FOR_SIZE=y
++CONFIG_CC_OPTIMIZE_FOR_SIZE=y
 +CONFIG_SYSCTL=y
 +CONFIG_ANON_INODES=y
 +CONFIG_EXPERT=y
@@ -286,7 +309,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +CONFIG_UID16=y
 +# CONFIG_SYSCTL_SYSCALL is not set
 +CONFIG_KALLSYMS=y
- CONFIG_KALLSYMS_ALL=y
++CONFIG_KALLSYMS_ALL=y
 +CONFIG_HOTPLUG=y
 +CONFIG_PRINTK=y
 +CONFIG_BUG=y
@@ -299,7 +322,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +CONFIG_EVENTFD=y
 +CONFIG_SHMEM=y
 +CONFIG_AIO=y
- CONFIG_EMBEDDED=y
++CONFIG_EMBEDDED=y
 +CONFIG_HAVE_PERF_EVENTS=y
 +CONFIG_PERF_USE_VMALLOC=y
 +
@@ -309,7 +332,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_PERF_EVENTS is not set
 +CONFIG_VM_EVENT_COUNTERS=y
 +# CONFIG_COMPAT_BRK is not set
- CONFIG_SLAB=y
++CONFIG_SLAB=y
 +# CONFIG_SLUB is not set
 +# CONFIG_SLOB is not set
 +# CONFIG_PROFILING is not set
@@ -340,16 +363,16 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +CONFIG_SLABINFO=y
 +CONFIG_RT_MUTEXES=y
 +CONFIG_BASE_SMALL=0
- CONFIG_MODULES=y
++CONFIG_MODULES=y
 +# CONFIG_MODULE_FORCE_LOAD is not set
- CONFIG_MODULE_UNLOAD=y
++CONFIG_MODULE_UNLOAD=y
 +# CONFIG_MODULE_FORCE_UNLOAD is not set
 +CONFIG_MODVERSIONS=y
 +# CONFIG_MODULE_SRCVERSION_ALL is not set
 +# CONFIG_MODULE_SIG is not set
 +CONFIG_BLOCK=y
- # CONFIG_LBDAF is not set
- # CONFIG_BLK_DEV_BSG is not set
++# CONFIG_LBDAF is not set
++# CONFIG_BLK_DEV_BSG is not set
 +# CONFIG_BLK_DEV_BSGLIB is not set
 +# CONFIG_BLK_DEV_INTEGRITY is not set
 +
@@ -363,8 +386,8 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# IO Schedulers
 +#
 +CONFIG_IOSCHED_NOOP=y
- # CONFIG_IOSCHED_DEADLINE is not set
- # CONFIG_IOSCHED_CFQ is not set
++# CONFIG_IOSCHED_DEADLINE is not set
++# CONFIG_IOSCHED_CFQ is not set
 +CONFIG_DEFAULT_NOOP=y
 +CONFIG_DEFAULT_IOSCHED="noop"
 +CONFIG_UNINLINE_SPIN_UNLOCK=y
@@ -378,10 +401,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_ARCH_INTEGRATOR is not set
 +# CONFIG_ARCH_REALVIEW is not set
 +# CONFIG_ARCH_VERSATILE is not set
- CONFIG_ARCH_AT91=y
--CONFIG_SOC_AT91SAM9260=y
--CONFIG_SOC_AT91SAM9263=y
--CONFIG_SOC_AT91SAM9G45=y
++CONFIG_ARCH_AT91=y
 +# CONFIG_ARCH_BCM2835 is not set
 +# CONFIG_ARCH_CNS3XXX is not set
 +# CONFIG_ARCH_CLPS711X is not set
@@ -390,6 +410,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_ARCH_EBSA110 is not set
 +# CONFIG_ARCH_EP93XX is not set
 +# CONFIG_ARCH_FOOTBRIDGE is not set
++# CONFIG_ARCH_MXC is not set
 +# CONFIG_ARCH_MXS is not set
 +# CONFIG_ARCH_NETX is not set
 +# CONFIG_ARCH_H720X is not set
@@ -424,7 +445,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_PLAT_SPEAR is not set
 +# CONFIG_ARCH_DAVINCI is not set
 +# CONFIG_ARCH_OMAP is not set
-+# CONFIG_ARCH_VT8500_SINGLE is not set
++# CONFIG_ARCH_VT8500 is not set
 +# CONFIG_ARCH_ZYNQ is not set
 +CONFIG_HAVE_AT91_DBGU0=y
 +CONFIG_AT91_SAM9_ALT_RESET=y
@@ -444,7 +465,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_SOC_AT91SAM9263 is not set
 +# CONFIG_SOC_AT91SAM9RL is not set
 +# CONFIG_SOC_AT91SAM9G45 is not set
- CONFIG_SOC_AT91SAM9X5=y
++CONFIG_SOC_AT91SAM9X5=y
 +# CONFIG_SOC_AT91SAM9N12 is not set
 +CONFIG_ARCH_AT91_NONE=y
 +# CONFIG_ARCH_AT91RM9200 is not set
@@ -460,7 +481,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +#
 +# Generic Board Type
 +#
- CONFIG_MACH_AT91SAM_DT=y
++CONFIG_MACH_AT91SAM_DT=y
 +
 +#
 +# AT91 Board Options
@@ -469,11 +490,10 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +#
 +# AT91 Feature Selections
 +#
- CONFIG_AT91_PROGRAMMABLE_CLOCKS=y
++CONFIG_AT91_PROGRAMMABLE_CLOCKS=y
 +# CONFIG_AT91_SLOW_CLOCK is not set
- CONFIG_AT91_TIMER_HZ=128
++CONFIG_AT91_TIMER_HZ=128
 +# CONFIG_GPIO_PCA953X is not set
-+# CONFIG_ARCH_VT8500 is not set
 +
 +#
 +# Processor Type
@@ -522,10 +542,8 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +CONFIG_PREEMPT=y
 +CONFIG_PREEMPT_COUNT=y
 +CONFIG_HZ=128
- CONFIG_AEABI=y
- # CONFIG_OABI_COMPAT is not set
--CONFIG_LEDS=y
--CONFIG_LEDS_CPU=y
++CONFIG_AEABI=y
++# CONFIG_OABI_COMPAT is not set
 +# CONFIG_ARCH_SPARSEMEM_DEFAULT is not set
 +# CONFIG_ARCH_SELECT_MEMORY_MODEL is not set
 +CONFIG_HAVE_ARCH_PFN_VALID=y
@@ -548,7 +566,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_CLEANCACHE is not set
 +CONFIG_FORCE_MAX_ZONEORDER=11
 +CONFIG_ALIGNMENT_TRAP=y
- CONFIG_UACCESS_WITH_MEMCPY=y
++CONFIG_UACCESS_WITH_MEMCPY=y
 +# CONFIG_SECCOMP is not set
 +# CONFIG_CC_STACKPROTECTOR is not set
 +
@@ -558,22 +576,20 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +CONFIG_USE_OF=y
 +CONFIG_ATAGS=y
 +# CONFIG_DEPRECATED_PARAM_STRUCT is not set
- CONFIG_ZBOOT_ROM_TEXT=0x0
- CONFIG_ZBOOT_ROM_BSS=0x0
- CONFIG_ARM_APPENDED_DTB=y
- CONFIG_ARM_ATAG_DTB_COMPAT=y
--CONFIG_CMDLINE="mem=128M console=ttyS0,115200 initrd=0x21100000,25165824 root=/dev/ram0 rw"
++CONFIG_ZBOOT_ROM_TEXT=0x0
++CONFIG_ZBOOT_ROM_BSS=0x0
++CONFIG_ARM_APPENDED_DTB=y
++CONFIG_ARM_ATAG_DTB_COMPAT=y
 +CONFIG_ARM_ATAG_DTB_COMPAT_CMDLINE_FROM_BOOTLOADER=y
 +# CONFIG_ARM_ATAG_DTB_COMPAT_CMDLINE_EXTEND is not set
-+CONFIG_CMDLINE="mem=64M console=ttyS0,115200 mtdparts=atmel_nand:8M(bootstrap/uboot/kernel)ro,-(rootfs) root=/dev/mtdblock1 rw rootfstype=ubifs ubi.mtd=1 root=ubi0:rootfs"
++CONFIG_CMDLINE="mem=64M console=ttyS0,115200"
 +CONFIG_CMDLINE_FROM_BOOTLOADER=y
 +# CONFIG_CMDLINE_EXTEND is not set
 +# CONFIG_CMDLINE_FORCE is not set
 +# CONFIG_XIP_KERNEL is not set
- CONFIG_KEXEC=y
-+CONFIG_ATAGS_PROC=y
++# CONFIG_KEXEC is not set
 +# CONFIG_CRASH_DUMP is not set
- CONFIG_AUTO_ZRELADDR=y
++CONFIG_AUTO_ZRELADDR=y
 +
 +#
 +# CPU Power Management
@@ -597,7 +613,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +#
 +CONFIG_BINFMT_ELF=y
 +CONFIG_ARCH_BINFMT_ELF_RANDOMIZE_PIE=y
- # CONFIG_CORE_DUMP_DEFAULT_ELF_HEADERS is not set
++# CONFIG_CORE_DUMP_DEFAULT_ELF_HEADERS is not set
 +CONFIG_HAVE_AOUT=y
 +# CONFIG_BINFMT_AOUT is not set
 +# CONFIG_BINFMT_MISC is not set
@@ -621,21 +637,21 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +CONFIG_CPU_PM=y
 +CONFIG_ARCH_SUSPEND_POSSIBLE=y
 +CONFIG_ARM_CPU_SUSPEND=y
- CONFIG_NET=y
++CONFIG_NET=y
 +
 +#
 +# Networking options
 +#
- CONFIG_PACKET=y
++CONFIG_PACKET=y
 +# CONFIG_PACKET_DIAG is not set
- CONFIG_UNIX=y
++CONFIG_UNIX=y
 +# CONFIG_UNIX_DIAG is not set
 +# CONFIG_XFRM_USER is not set
 +# CONFIG_NET_KEY is not set
- CONFIG_INET=y
- CONFIG_IP_MULTICAST=y
++CONFIG_INET=y
++CONFIG_IP_MULTICAST=y
 +# CONFIG_IP_ADVANCED_ROUTER is not set
- CONFIG_IP_PNP=y
++CONFIG_IP_PNP=y
 +# CONFIG_IP_PNP_DHCP is not set
 +# CONFIG_IP_PNP_BOOTP is not set
 +# CONFIG_IP_PNP_RARP is not set
@@ -649,12 +665,11 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_INET_IPCOMP is not set
 +# CONFIG_INET_XFRM_TUNNEL is not set
 +CONFIG_INET_TUNNEL=m
- # CONFIG_INET_XFRM_MODE_TRANSPORT is not set
- # CONFIG_INET_XFRM_MODE_TUNNEL is not set
- # CONFIG_INET_XFRM_MODE_BEET is not set
++# CONFIG_INET_XFRM_MODE_TRANSPORT is not set
++# CONFIG_INET_XFRM_MODE_TUNNEL is not set
++# CONFIG_INET_XFRM_MODE_BEET is not set
 +CONFIG_INET_LRO=y
- # CONFIG_INET_DIAG is not set
--CONFIG_IPV6=y
++# CONFIG_INET_DIAG is not set
 +# CONFIG_TCP_CONG_ADVANCED is not set
 +CONFIG_TCP_CONG_CUBIC=y
 +CONFIG_DEFAULT_TCP_CONG="cubic"
@@ -669,14 +684,12 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_IPV6_MIP6 is not set
 +# CONFIG_INET6_XFRM_TUNNEL is not set
 +# CONFIG_INET6_TUNNEL is not set
- # CONFIG_INET6_XFRM_MODE_TRANSPORT is not set
- # CONFIG_INET6_XFRM_MODE_TUNNEL is not set
- # CONFIG_INET6_XFRM_MODE_BEET is not set
++# CONFIG_INET6_XFRM_MODE_TRANSPORT is not set
++# CONFIG_INET6_XFRM_MODE_TUNNEL is not set
++# CONFIG_INET6_XFRM_MODE_BEET is not set
 +# CONFIG_INET6_XFRM_MODE_ROUTEOPTIMIZATION is not set
 +CONFIG_IPV6_SIT=m
- CONFIG_IPV6_SIT_6RD=y
--# CONFIG_WIRELESS is not set
--CONFIG_UEVENT_HELPER_PATH="/sbin/hotplug"
++CONFIG_IPV6_SIT_6RD=y
 +CONFIG_IPV6_NDISC_NODETYPE=y
 +# CONFIG_IPV6_TUNNEL is not set
 +# CONFIG_IPV6_GRE is not set
@@ -984,10 +997,10 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# Generic Driver Options
 +#
 +CONFIG_UEVENT_HELPER_PATH=""
- CONFIG_DEVTMPFS=y
- CONFIG_DEVTMPFS_MOUNT=y
- # CONFIG_STANDALONE is not set
- # CONFIG_PREVENT_FIRMWARE_BUILD is not set
++CONFIG_DEVTMPFS=y
++CONFIG_DEVTMPFS_MOUNT=y
++# CONFIG_STANDALONE is not set
++# CONFIG_PREVENT_FIRMWARE_BUILD is not set
 +CONFIG_FW_LOADER=y
 +# CONFIG_FIRMWARE_IN_KERNEL is not set
 +CONFIG_EXTRA_FIRMWARE=""
@@ -1003,10 +1016,10 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +#
 +# CONFIG_OMAP_OCP2SCP is not set
 +# CONFIG_CONNECTOR is not set
- CONFIG_MTD=y
++CONFIG_MTD=y
 +# CONFIG_MTD_TESTS is not set
 +# CONFIG_MTD_REDBOOT_PARTS is not set
- CONFIG_MTD_CMDLINE_PARTS=y
++CONFIG_MTD_CMDLINE_PARTS=y
 +# CONFIG_MTD_AFS_PARTS is not set
 +CONFIG_MTD_OF_PARTS=y
 +# CONFIG_MTD_AR7_PARTS is not set
@@ -1014,9 +1027,9 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +#
 +# User Modules And Translation Layers
 +#
- CONFIG_MTD_CHAR=y
++CONFIG_MTD_CHAR=y
 +CONFIG_MTD_BLKDEVS=y
- CONFIG_MTD_BLOCK=y
++CONFIG_MTD_BLOCK=y
 +# CONFIG_FTL is not set
 +# CONFIG_NFTL is not set
 +# CONFIG_INFTL is not set
@@ -1070,17 +1083,16 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_MTD_DOCG3 is not set
 +CONFIG_MTD_NAND_ECC=y
 +# CONFIG_MTD_NAND_ECC_SMC is not set
- CONFIG_MTD_NAND=y
++CONFIG_MTD_NAND=y
 +CONFIG_MTD_NAND_BCH=y
 +CONFIG_MTD_NAND_ECC_BCH=y
 +# CONFIG_MTD_SM_COMMON is not set
 +# CONFIG_MTD_NAND_MUSEUM_IDS is not set
-+# CONFIG_MTD_NAND_DENALI is not set
 +# CONFIG_MTD_NAND_GPIO is not set
 +CONFIG_MTD_NAND_IDS=y
 +# CONFIG_MTD_NAND_DISKONCHIP is not set
 +# CONFIG_MTD_NAND_DOCG4 is not set
- CONFIG_MTD_NAND_ATMEL=y
++CONFIG_MTD_NAND_ATMEL=y
 +# CONFIG_MTD_NAND_NANDSIM is not set
 +# CONFIG_MTD_NAND_PLATFORM is not set
 +# CONFIG_MTD_ALAUDA is not set
@@ -1090,18 +1102,18 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# LPDDR flash memory drivers
 +#
 +# CONFIG_MTD_LPDDR is not set
- CONFIG_MTD_UBI=y
++CONFIG_MTD_UBI=y
 +CONFIG_MTD_UBI_WL_THRESHOLD=4096
 +CONFIG_MTD_UBI_BEB_LIMIT=20
 +# CONFIG_MTD_UBI_FASTMAP is not set
- CONFIG_MTD_UBI_GLUEBI=y
++CONFIG_MTD_UBI_GLUEBI=y
 +CONFIG_DTC=y
 +CONFIG_OF=y
 +
 +#
 +# Device Tree and Open Firmware support
 +#
- CONFIG_PROC_DEVICETREE=y
++CONFIG_PROC_DEVICETREE=y
 +# CONFIG_OF_SELFTEST is not set
 +CONFIG_OF_FLATTREE=y
 +CONFIG_OF_EARLY_FLATTREE=y
@@ -1115,7 +1127,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_PARPORT is not set
 +CONFIG_BLK_DEV=y
 +# CONFIG_BLK_DEV_COW_COMMON is not set
- CONFIG_BLK_DEV_LOOP=y
++CONFIG_BLK_DEV_LOOP=y
 +CONFIG_BLK_DEV_LOOP_MIN_COUNT=8
 +# CONFIG_BLK_DEV_CRYPTOLOOP is not set
 +
@@ -1123,9 +1135,9 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# DRBD disabled because PROC_FS, INET or CONNECTOR not selected
 +#
 +# CONFIG_BLK_DEV_NBD is not set
- CONFIG_BLK_DEV_RAM=y
- CONFIG_BLK_DEV_RAM_COUNT=4
- CONFIG_BLK_DEV_RAM_SIZE=8192
++CONFIG_BLK_DEV_RAM=y
++CONFIG_BLK_DEV_RAM_COUNT=4
++CONFIG_BLK_DEV_RAM_SIZE=8192
 +# CONFIG_BLK_DEV_XIP is not set
 +# CONFIG_CDROM_PKTCDVD is not set
 +# CONFIG_ATA_OVER_ETH is not set
@@ -1137,9 +1149,8 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +#
 +# CONFIG_SENSORS_LIS3LV02D is not set
 +# CONFIG_AD525X_DPOT is not set
- CONFIG_ATMEL_PWM=y
- CONFIG_ATMEL_TCLIB=y
--CONFIG_EEPROM_93CX6=m
++CONFIG_ATMEL_PWM=y
++CONFIG_ATMEL_TCLIB=y
 +CONFIG_ATMEL_TCB_CLKSRC=y
 +CONFIG_ATMEL_TCB_CLKSRC_BLOCK=0
 +# CONFIG_ICS932S401 is not set
@@ -1187,7 +1198,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +#
 +CONFIG_SCSI_MOD=y
 +# CONFIG_RAID_ATTRS is not set
- CONFIG_SCSI=y
++CONFIG_SCSI=y
 +CONFIG_SCSI_DMA=y
 +# CONFIG_SCSI_TGT is not set
 +# CONFIG_SCSI_NETLINK is not set
@@ -1196,13 +1207,13 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +#
 +# SCSI support type (disk, tape, CD-ROM)
 +#
- CONFIG_BLK_DEV_SD=y
++CONFIG_BLK_DEV_SD=y
 +# CONFIG_CHR_DEV_ST is not set
 +# CONFIG_CHR_DEV_OSST is not set
 +# CONFIG_BLK_DEV_SR is not set
 +# CONFIG_CHR_DEV_SG is not set
 +# CONFIG_CHR_DEV_SCH is not set
- CONFIG_SCSI_MULTI_LUN=y
++CONFIG_SCSI_MULTI_LUN=y
 +# CONFIG_SCSI_CONSTANTS is not set
 +# CONFIG_SCSI_LOGGING is not set
 +# CONFIG_SCSI_SCAN_ASYNC is not set
@@ -1216,18 +1227,18 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_SCSI_SAS_ATTRS is not set
 +# CONFIG_SCSI_SAS_LIBSAS is not set
 +# CONFIG_SCSI_SRP_ATTRS is not set
- # CONFIG_SCSI_LOWLEVEL is not set
++# CONFIG_SCSI_LOWLEVEL is not set
 +# CONFIG_SCSI_DH is not set
 +# CONFIG_SCSI_OSD_INITIATOR is not set
 +# CONFIG_ATA is not set
 +# CONFIG_MD is not set
 +# CONFIG_TARGET_CORE is not set
- CONFIG_NETDEVICES=y
++CONFIG_NETDEVICES=y
 +CONFIG_NET_CORE=y
 +# CONFIG_BONDING is not set
 +# CONFIG_DUMMY is not set
 +# CONFIG_EQUALIZER is not set
- CONFIG_MII=y
++CONFIG_MII=y
 +# CONFIG_NET_TEAM is not set
 +# CONFIG_MACVLAN is not set
 +# CONFIG_VXLAN is not set
@@ -1241,33 +1252,25 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CAIF transport drivers
 +#
 +CONFIG_ETHERNET=y
++CONFIG_HAVE_NET_MACB=y
 +CONFIG_NET_CADENCE=y
-+# CONFIG_ARM_AT91_ETHER is not set
- CONFIG_MACB=y
- # CONFIG_NET_VENDOR_BROADCOM is not set
++CONFIG_MACB=y
++# CONFIG_NET_VENDOR_BROADCOM is not set
 +# CONFIG_NET_CALXEDA_XGMAC is not set
- # CONFIG_NET_VENDOR_CHELSIO is not set
++# CONFIG_NET_VENDOR_CHELSIO is not set
 +# CONFIG_NET_VENDOR_CIRRUS is not set
 +# CONFIG_DM9000 is not set
 +# CONFIG_DNET is not set
- # CONFIG_NET_VENDOR_FARADAY is not set
- # CONFIG_NET_VENDOR_INTEL is not set
- # CONFIG_NET_VENDOR_MARVELL is not set
- # CONFIG_NET_VENDOR_MICREL is not set
++# CONFIG_NET_VENDOR_FARADAY is not set
++# CONFIG_NET_VENDOR_INTEL is not set
++# CONFIG_NET_VENDOR_MARVELL is not set
++# CONFIG_NET_VENDOR_MICREL is not set
 +# CONFIG_NET_VENDOR_MICROCHIP is not set
- # CONFIG_NET_VENDOR_NATSEMI is not set
++# CONFIG_NET_VENDOR_NATSEMI is not set
 +# CONFIG_ETHOC is not set
- # CONFIG_NET_VENDOR_SEEQ is not set
- # CONFIG_NET_VENDOR_SMSC is not set
- # CONFIG_NET_VENDOR_STMICRO is not set
--CONFIG_DAVICOM_PHY=y
--CONFIG_MICREL_PHY=y
--# CONFIG_WLAN is not set
--CONFIG_INPUT_POLLDEV=y
--# CONFIG_INPUT_MOUSEDEV_PSAUX is not set
--CONFIG_INPUT_MOUSEDEV_SCREEN_X=480
--CONFIG_INPUT_MOUSEDEV_SCREEN_Y=272
--CONFIG_INPUT_JOYDEV=y
++# CONFIG_NET_VENDOR_SEEQ is not set
++# CONFIG_NET_VENDOR_SMSC is not set
++# CONFIG_NET_VENDOR_STMICRO is not set
 +# CONFIG_NET_VENDOR_WIZNET is not set
 +CONFIG_PHYLIB=y
 +
@@ -1352,17 +1355,14 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +#
 +# CONFIG_INPUT_MOUSEDEV is not set
 +# CONFIG_INPUT_JOYDEV is not set
- CONFIG_INPUT_EVDEV=y
--# CONFIG_KEYBOARD_ATKBD is not set
--CONFIG_KEYBOARD_GPIO=y
++CONFIG_INPUT_EVDEV=y
 +# CONFIG_INPUT_EVBUG is not set
 +
 +#
 +# Input Device Drivers
 +#
 +# CONFIG_INPUT_KEYBOARD is not set
- # CONFIG_INPUT_MOUSE is not set
--CONFIG_INPUT_TOUCHSCREEN=y
++# CONFIG_INPUT_MOUSE is not set
 +# CONFIG_INPUT_JOYSTICK is not set
 +# CONFIG_INPUT_TABLET is not set
 +# CONFIG_INPUT_TOUCHSCREEN is not set
@@ -1371,7 +1371,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +#
 +# Hardware I/O ports
 +#
- # CONFIG_SERIO is not set
++# CONFIG_SERIO is not set
 +# CONFIG_GAMEPORT is not set
 +
 +#
@@ -1386,7 +1386,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +CONFIG_UNIX98_PTYS=y
 +# CONFIG_DEVPTS_MULTIPLE_INSTANCES is not set
 +CONFIG_LEGACY_PTYS=y
- CONFIG_LEGACY_PTY_COUNT=4
++CONFIG_LEGACY_PTY_COUNT=4
 +# CONFIG_SERIAL_NONSTANDARD is not set
 +# CONFIG_N_GSM is not set
 +# CONFIG_TRACE_SINK is not set
@@ -1400,8 +1400,8 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +#
 +# Non-8250 serial port support
 +#
- CONFIG_SERIAL_ATMEL=y
- CONFIG_SERIAL_ATMEL_CONSOLE=y
++CONFIG_SERIAL_ATMEL=y
++CONFIG_SERIAL_ATMEL_CONSOLE=y
 +CONFIG_SERIAL_ATMEL_PDC=y
 +# CONFIG_SERIAL_ATMEL_TTYAT is not set
 +# CONFIG_SERIAL_MAX3100 is not set
@@ -1414,19 +1414,17 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_SERIAL_ALTERA_UART is not set
 +# CONFIG_SERIAL_IFX6X60 is not set
 +# CONFIG_SERIAL_XILINX_PS_UART is not set
-+# CONFIG_SERIAL_ARC is not set
 +# CONFIG_TTY_PRINTK is not set
 +# CONFIG_HVC_DCC is not set
 +# CONFIG_IPMI_HANDLER is not set
- CONFIG_HW_RANDOM=y
++CONFIG_HW_RANDOM=y
 +# CONFIG_HW_RANDOM_TIMERIOMEM is not set
 +CONFIG_HW_RANDOM_ATMEL=y
 +# CONFIG_HW_RANDOM_EXYNOS is not set
 +# CONFIG_R3964 is not set
 +# CONFIG_RAW_DRIVER is not set
 +# CONFIG_TCG_TPM is not set
- CONFIG_I2C=y
--CONFIG_I2C_GPIO=y
++CONFIG_I2C=y
 +CONFIG_I2C_BOARDINFO=y
 +# CONFIG_I2C_COMPAT is not set
 +CONFIG_I2C_CHARDEV=m
@@ -1464,8 +1462,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_I2C_DEBUG_CORE is not set
 +# CONFIG_I2C_DEBUG_ALGO is not set
 +# CONFIG_I2C_DEBUG_BUS is not set
- CONFIG_SPI=y
--CONFIG_SPI_ATMEL=y
++CONFIG_SPI=y
 +# CONFIG_SPI_DEBUG is not set
 +CONFIG_SPI_MASTER=y
 +
@@ -1502,23 +1499,10 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +#
 +# PTP clock support
 +#
-+# CONFIG_PTP_1588_CLOCK is not set
 +
 +#
-+# Enable PHYLIB and NETWORK_PHY_TIMESTAMPING to see the additional clocks.
++# Enable Device Drivers -> PPS to see the PTP clock options.
 +#
-+CONFIG_PINCTRL=y
-+
-+#
-+# Pin controllers
-+#
-+CONFIG_PINMUX=y
-+CONFIG_PINCONF=y
-+# CONFIG_DEBUG_PINCTRL is not set
- CONFIG_PINCTRL_AT91=y
-+# CONFIG_PINCTRL_SINGLE is not set
-+# CONFIG_PINCTRL_SAMSUNG is not set
-+# CONFIG_PINCTRL_EXYNOS4 is not set
 +CONFIG_ARCH_HAVE_CUSTOM_GPIO_H=y
 +CONFIG_ARCH_REQUIRE_GPIOLIB=y
 +CONFIG_GPIOLIB=y
@@ -1564,9 +1548,9 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_W1 is not set
 +# CONFIG_POWER_SUPPLY is not set
 +# CONFIG_POWER_AVS is not set
- # CONFIG_HWMON is not set
++# CONFIG_HWMON is not set
 +# CONFIG_THERMAL is not set
- CONFIG_WATCHDOG=y
++CONFIG_WATCHDOG=y
 +CONFIG_WATCHDOG_CORE=y
 +# CONFIG_WATCHDOG_NOWAYOUT is not set
 +
@@ -1574,24 +1558,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# Watchdog Device Drivers
 +#
 +# CONFIG_SOFT_WATCHDOG is not set
- CONFIG_AT91SAM9X_WATCHDOG=y
--CONFIG_SSB=m
--CONFIG_FB=y
--CONFIG_FB_MODE_HELPERS=y
--CONFIG_FB_ATMEL=y
--CONFIG_BACKLIGHT_LCD_SUPPORT=y
--# CONFIG_LCD_CLASS_DEVICE is not set
--CONFIG_BACKLIGHT_CLASS_DEVICE=y
--CONFIG_BACKLIGHT_ATMEL_LCDC=y
--# CONFIG_BACKLIGHT_GENERIC is not set
--CONFIG_FRAMEBUFFER_CONSOLE=y
--CONFIG_FRAMEBUFFER_CONSOLE_DETECT_PRIMARY=y
--CONFIG_FONTS=y
--CONFIG_FONT_8x8=y
--CONFIG_FONT_ACORN_8x8=y
--CONFIG_FONT_MINI_4x6=y
--CONFIG_LOGO=y
--# CONFIG_HID_SUPPORT is not set
++CONFIG_AT91SAM9X_WATCHDOG=y
 +# CONFIG_DW_WATCHDOG is not set
 +# CONFIG_MAX63XX_WATCHDOG is not set
 +
@@ -1721,7 +1688,6 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_HID_UCLOGIC is not set
 +# CONFIG_HID_WALTOP is not set
 +# CONFIG_HID_GYRATION is not set
-+# CONFIG_HID_ICADE is not set
 +# CONFIG_HID_TWINHAN is not set
 +# CONFIG_HID_KENSINGTON is not set
 +# CONFIG_HID_LCPOWER is not set
@@ -1773,11 +1739,9 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +CONFIG_USB_SUPPORT=y
 +CONFIG_USB_COMMON=y
 +CONFIG_USB_ARCH_HAS_HCD=y
- CONFIG_USB=y
++CONFIG_USB=y
 +# CONFIG_USB_DEBUG is not set
- CONFIG_USB_ANNOUNCE_NEW_DEVICES=y
--CONFIG_USB_DEVICEFS=y
--# CONFIG_USB_DEVICE_CLASS is not set
++CONFIG_USB_ANNOUNCE_NEW_DEVICES=y
 +
 +#
 +# Miscellaneous USB options
@@ -1794,17 +1758,14 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# USB Host Controller Drivers
 +#
 +# CONFIG_USB_C67X00_HCD is not set
- CONFIG_USB_EHCI_HCD=y
++CONFIG_USB_EHCI_HCD=y
 +# CONFIG_USB_EHCI_ROOT_HUB_TT is not set
 +CONFIG_USB_EHCI_TT_NEWSCHED=y
 +# CONFIG_USB_OXU210HP_HCD is not set
 +# CONFIG_USB_ISP116X_HCD is not set
 +# CONFIG_USB_ISP1760_HCD is not set
 +# CONFIG_USB_ISP1362_HCD is not set
- CONFIG_USB_OHCI_HCD=y
--CONFIG_USB_ACM=y
--CONFIG_USB_STORAGE=y
--CONFIG_USB_SERIAL=y
++CONFIG_USB_OHCI_HCD=y
 +# CONFIG_USB_OHCI_HCD_PLATFORM is not set
 +# CONFIG_USB_EHCI_HCD_PLATFORM is not set
 +# CONFIG_USB_OHCI_BIG_ENDIAN_DESC is not set
@@ -1813,6 +1774,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_USB_SL811_HCD is not set
 +# CONFIG_USB_R8A66597_HCD is not set
 +# CONFIG_USB_MUSB_HDRC is not set
++# CONFIG_USB_CHIPIDEA is not set
 +# CONFIG_USB_RENESAS_USBHS is not set
 +
 +#
@@ -1857,10 +1819,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# USB port drivers
 +#
 +CONFIG_USB_SERIAL=m
- CONFIG_USB_SERIAL_GENERIC=y
--CONFIG_USB_SERIAL_FTDI_SIO=y
--CONFIG_USB_SERIAL_PL2303=y
--CONFIG_USB_GADGET=y
++CONFIG_USB_SERIAL_GENERIC=y
 +# CONFIG_USB_SERIAL_AIRCABLE is not set
 +# CONFIG_USB_SERIAL_ARK3116 is not set
 +# CONFIG_USB_SERIAL_BELKIN is not set
@@ -1954,8 +1913,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +#
 +# USB Peripheral Controller
 +#
- CONFIG_USB_AT91=m
--CONFIG_USB_ATMEL_USBA=m
++CONFIG_USB_AT91=m
 +# CONFIG_USB_FUSB300 is not set
 +# CONFIG_USB_R8A66597 is not set
 +# CONFIG_USB_MV_UDC is not set
@@ -1964,13 +1922,11 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_USB_DUMMY_HCD is not set
 +CONFIG_USB_LIBCOMPOSITE=m
 +# CONFIG_USB_ZERO is not set
- CONFIG_USB_ETH=m
++CONFIG_USB_ETH=m
 +CONFIG_USB_ETH_RNDIS=y
 +# CONFIG_USB_ETH_EEM is not set
 +# CONFIG_USB_G_NCM is not set
- CONFIG_USB_GADGETFS=m
--CONFIG_USB_CDC_COMPOSITE=m
--CONFIG_USB_G_ACM_MS=m
++CONFIG_USB_GADGETFS=m
 +# CONFIG_USB_FUNCTIONFS is not set
 +# CONFIG_USB_FILE_STORAGE is not set
 +# CONFIG_USB_MASS_STORAGE is not set
@@ -1978,9 +1934,9 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_USB_G_PRINTER is not set
 +# CONFIG_USB_CDC_COMPOSITE is not set
 +# CONFIG_USB_G_ACM_MS is not set
- CONFIG_USB_G_MULTI=m
++CONFIG_USB_G_MULTI=m
 +CONFIG_USB_G_MULTI_RNDIS=y
- CONFIG_USB_G_MULTI_CDC=y
++CONFIG_USB_G_MULTI_CDC=y
 +CONFIG_USB_G_HID=m
 +# CONFIG_USB_G_DBGP is not set
 +
@@ -1990,7 +1946,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_USB_GPIO_VBUS is not set
 +# CONFIG_USB_ULPI is not set
 +# CONFIG_NOP_USB_XCEIV is not set
- CONFIG_MMC=y
++CONFIG_MMC=y
 +# CONFIG_MMC_DEBUG is not set
 +# CONFIG_MMC_UNSAFE_RESUME is not set
 +# CONFIG_MMC_CLKGATE is not set
@@ -2010,14 +1966,15 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_MMC_SDHCI is not set
 +# CONFIG_MMC_SDHCI_PXAV3 is not set
 +# CONFIG_MMC_SDHCI_PXAV2 is not set
- CONFIG_MMC_ATMELMCI=y
++# CONFIG_MMC_AT91 is not set
++CONFIG_MMC_ATMELMCI=y
 +# CONFIG_MMC_SPI is not set
 +# CONFIG_MMC_DW is not set
 +# CONFIG_MMC_VUB300 is not set
 +# CONFIG_MMC_USHC is not set
 +# CONFIG_MEMSTICK is not set
- CONFIG_NEW_LEDS=y
- CONFIG_LEDS_CLASS=y
++CONFIG_NEW_LEDS=y
++CONFIG_LEDS_CLASS=y
 +
 +#
 +# LED drivers
@@ -2026,7 +1983,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_LEDS_LM3530 is not set
 +# CONFIG_LEDS_LM3642 is not set
 +# CONFIG_LEDS_PCA9532 is not set
- CONFIG_LEDS_GPIO=y
++CONFIG_LEDS_GPIO=y
 +# CONFIG_LEDS_LP3944 is not set
 +# CONFIG_LEDS_LP5521 is not set
 +# CONFIG_LEDS_LP5523 is not set
@@ -2040,17 +1997,17 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_LEDS_LM355x is not set
 +# CONFIG_LEDS_OT200 is not set
 +# CONFIG_LEDS_BLINKM is not set
- CONFIG_LEDS_TRIGGERS=y
++CONFIG_LEDS_TRIGGERS=y
 +
 +#
 +# LED Triggers
 +#
- CONFIG_LEDS_TRIGGER_TIMER=y
++CONFIG_LEDS_TRIGGER_TIMER=y
 +CONFIG_LEDS_TRIGGER_ONESHOT=y
- CONFIG_LEDS_TRIGGER_HEARTBEAT=y
++CONFIG_LEDS_TRIGGER_HEARTBEAT=y
 +# CONFIG_LEDS_TRIGGER_BACKLIGHT is not set
 +CONFIG_LEDS_TRIGGER_CPU=y
- CONFIG_LEDS_TRIGGER_GPIO=y
++CONFIG_LEDS_TRIGGER_GPIO=y
 +CONFIG_LEDS_TRIGGER_DEFAULT_ON=y
 +
 +#
@@ -2060,8 +2017,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_ACCESSIBILITY is not set
 +# CONFIG_EDAC is not set
 +CONFIG_RTC_LIB=y
- CONFIG_RTC_CLASS=y
--CONFIG_RTC_DRV_AT91RM9200=y
++CONFIG_RTC_CLASS=y
 +CONFIG_RTC_HCTOSYS=y
 +CONFIG_RTC_HCTOSYS_DEVICE="rtc0"
 +# CONFIG_RTC_DEBUG is not set
@@ -2133,11 +2089,11 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# on-CPU RTC drivers
 +#
 +# CONFIG_RTC_DRV_AT91RM9200 is not set
- CONFIG_RTC_DRV_AT91SAM9=y
++CONFIG_RTC_DRV_AT91SAM9=y
 +CONFIG_RTC_DRV_AT91SAM9_RTT=0
 +CONFIG_RTC_DRV_AT91SAM9_GPBR=0
 +# CONFIG_RTC_DRV_SNVS is not set
- CONFIG_DMADEVICES=y
++CONFIG_DMADEVICES=y
 +# CONFIG_DMADEVICES_DEBUG is not set
 +
 +#
@@ -2171,8 +2127,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +#
 +# Hardware Spinlock drivers
 +#
- # CONFIG_IOMMU_SUPPORT is not set
--CONFIG_EXT2_FS=y
++# CONFIG_IOMMU_SUPPORT is not set
 +
 +#
 +# Remoteproc drivers (EXPERIMENTAL)
@@ -2180,7 +2135,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_STE_MODEM_RPROC is not set
 +
 +#
-+# Rpmsg drivers
++# Rpmsg drivers (EXPERIMENTAL)
 +#
 +# CONFIG_VIRT_DRIVERS is not set
 +# CONFIG_PM_DEVFREQ is not set
@@ -2205,7 +2160,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +CONFIG_FSNOTIFY=y
 +# CONFIG_DNOTIFY is not set
 +CONFIG_INOTIFY_USER=y
- CONFIG_FANOTIFY=y
++CONFIG_FANOTIFY=y
 +# CONFIG_QUOTA is not set
 +# CONFIG_QUOTACTL is not set
 +# CONFIG_AUTOFS4_FS is not set
@@ -2227,7 +2182,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +#
 +CONFIG_FAT_FS=y
 +# CONFIG_MSDOS_FS is not set
- CONFIG_VFAT_FS=y
++CONFIG_VFAT_FS=y
 +CONFIG_FAT_DEFAULT_CODEPAGE=437
 +CONFIG_FAT_DEFAULT_IOCHARSET="iso8859-1"
 +# CONFIG_NTFS_FS is not set
@@ -2239,10 +2194,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +CONFIG_PROC_SYSCTL=y
 +CONFIG_PROC_PAGE_MONITOR=y
 +CONFIG_SYSFS=y
- CONFIG_TMPFS=y
--CONFIG_NFS_FS=y
--CONFIG_NFS_V3=y
--CONFIG_ROOT_NFS=y
++CONFIG_TMPFS=y
 +# CONFIG_TMPFS_POSIX_ACL is not set
 +# CONFIG_TMPFS_XATTR is not set
 +# CONFIG_HUGETLB_PAGE is not set
@@ -2276,10 +2228,10 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_NETWORK_FILESYSTEMS is not set
 +CONFIG_NLS=y
 +CONFIG_NLS_DEFAULT="iso8859-1"
- CONFIG_NLS_CODEPAGE_437=y
++CONFIG_NLS_CODEPAGE_437=y
 +# CONFIG_NLS_CODEPAGE_737 is not set
 +# CONFIG_NLS_CODEPAGE_775 is not set
- CONFIG_NLS_CODEPAGE_850=y
++CONFIG_NLS_CODEPAGE_850=y
 +# CONFIG_NLS_CODEPAGE_852 is not set
 +# CONFIG_NLS_CODEPAGE_855 is not set
 +# CONFIG_NLS_CODEPAGE_857 is not set
@@ -2300,7 +2252,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_NLS_CODEPAGE_1250 is not set
 +# CONFIG_NLS_CODEPAGE_1251 is not set
 +# CONFIG_NLS_ASCII is not set
- CONFIG_NLS_ISO8859_1=y
++CONFIG_NLS_ISO8859_1=y
 +# CONFIG_NLS_ISO8859_2 is not set
 +# CONFIG_NLS_ISO8859_3 is not set
 +# CONFIG_NLS_ISO8859_4 is not set
@@ -2335,10 +2287,10 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +CONFIG_ENABLE_MUST_CHECK=y
 +CONFIG_FRAME_WARN=1024
 +# CONFIG_MAGIC_SYSRQ is not set
- CONFIG_STRIP_ASM_SYMS=y
++CONFIG_STRIP_ASM_SYMS=y
 +# CONFIG_READABLE_ASM is not set
 +# CONFIG_UNUSED_SYMBOLS is not set
- CONFIG_DEBUG_FS=y
++CONFIG_DEBUG_FS=y
 +# CONFIG_HEADERS_CHECK is not set
 +# CONFIG_DEBUG_SECTION_MISMATCH is not set
 +CONFIG_DEBUG_KERNEL=y
@@ -2347,7 +2299,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_PANIC_ON_OOPS is not set
 +CONFIG_PANIC_ON_OOPS_VALUE=0
 +# CONFIG_DETECT_HUNG_TASK is not set
- # CONFIG_SCHED_DEBUG is not set
++# CONFIG_SCHED_DEBUG is not set
 +# CONFIG_SCHEDSTATS is not set
 +# CONFIG_TIMER_STATS is not set
 +# CONFIG_DEBUG_OBJECTS is not set
@@ -2368,7 +2320,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_DEBUG_LOCKING_API_SELFTESTS is not set
 +# CONFIG_DEBUG_STACK_USAGE is not set
 +# CONFIG_DEBUG_KOBJECT is not set
- # CONFIG_DEBUG_BUGVERBOSE is not set
++# CONFIG_DEBUG_BUGVERBOSE is not set
 +# CONFIG_DEBUG_INFO is not set
 +# CONFIG_DEBUG_VM is not set
 +# CONFIG_DEBUG_WRITECOUNT is not set
@@ -2396,7 +2348,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +CONFIG_HAVE_SYSCALL_TRACEPOINTS=y
 +CONFIG_HAVE_C_RECORDMCOUNT=y
 +CONFIG_TRACING_SUPPORT=y
- # CONFIG_FTRACE is not set
++# CONFIG_FTRACE is not set
 +# CONFIG_RBTREE_TEST is not set
 +# CONFIG_INTERVAL_TREE_TEST is not set
 +CONFIG_DYNAMIC_DEBUG=y
@@ -2408,7 +2360,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_TEST_KSTRTOX is not set
 +# CONFIG_STRICT_DEVMEM is not set
 +CONFIG_ARM_UNWIND=y
- CONFIG_DEBUG_USER=y
++CONFIG_DEBUG_USER=y
 +# CONFIG_DEBUG_LL is not set
 +CONFIG_DEBUG_LL_INCLUDE="mach/debug-macro.S"
 +
@@ -2421,7 +2373,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +# CONFIG_SECURITYFS is not set
 +CONFIG_DEFAULT_SECURITY_DAC=y
 +CONFIG_DEFAULT_SECURITY=""
- CONFIG_CRYPTO=y
++CONFIG_CRYPTO=y
 +
 +#
 +# Crypto core or helper
@@ -2459,7 +2411,7 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +CONFIG_CRYPTO_CBC=y
 +# CONFIG_CRYPTO_CTR is not set
 +# CONFIG_CRYPTO_CTS is not set
- CONFIG_CRYPTO_ECB=y
++CONFIG_CRYPTO_ECB=y
 +# CONFIG_CRYPTO_LRW is not set
 +# CONFIG_CRYPTO_PCBC is not set
 +# CONFIG_CRYPTO_XTS is not set
@@ -2493,10 +2445,10 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +#
 +# Ciphers
 +#
- CONFIG_CRYPTO_AES=y
++CONFIG_CRYPTO_AES=y
 +# CONFIG_CRYPTO_AES_ARM is not set
 +# CONFIG_CRYPTO_ANUBIS is not set
- CONFIG_CRYPTO_ARC4=y
++CONFIG_CRYPTO_ARC4=y
 +# CONFIG_CRYPTO_BLOWFISH is not set
 +# CONFIG_CRYPTO_CAMELLIA is not set
 +# CONFIG_CRYPTO_CAST5 is not set
@@ -2520,11 +2472,10 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +#
 +# Random Number Generation
 +#
- # CONFIG_CRYPTO_ANSI_CPRNG is not set
++# CONFIG_CRYPTO_ANSI_CPRNG is not set
 +CONFIG_CRYPTO_USER_API=m
- CONFIG_CRYPTO_USER_API_HASH=m
- CONFIG_CRYPTO_USER_API_SKCIPHER=m
--# CONFIG_CRYPTO_HW is not set
++CONFIG_CRYPTO_USER_API_HASH=m
++CONFIG_CRYPTO_USER_API_SKCIPHER=m
 +CONFIG_CRYPTO_HW=y
 +CONFIG_CRYPTO_DEV_ATMEL_AES=y
 +CONFIG_CRYPTO_DEV_ATMEL_TDES=y
@@ -2539,17 +2490,17 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +CONFIG_GENERIC_STRNLEN_USER=y
 +CONFIG_GENERIC_PCI_IOMAP=y
 +CONFIG_GENERIC_IO=y
- CONFIG_CRC_CCITT=m
++CONFIG_CRC_CCITT=m
 +CONFIG_CRC16=y
 +# CONFIG_CRC_T10DIF is not set
- CONFIG_CRC_ITU_T=m
++CONFIG_CRC_ITU_T=m
 +CONFIG_CRC32=y
 +# CONFIG_CRC32_SELFTEST is not set
 +CONFIG_CRC32_SLICEBY8=y
 +# CONFIG_CRC32_SLICEBY4 is not set
 +# CONFIG_CRC32_SARWATE is not set
 +# CONFIG_CRC32_BIT is not set
- CONFIG_CRC7=m
++CONFIG_CRC7=m
 +# CONFIG_LIBCRC32C is not set
 +# CONFIG_CRC8 is not set
 +CONFIG_ZLIB_INFLATE=y
@@ -2570,12 +2521,12 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/configs/at91_dt_defconfig linux-3
 +CONFIG_NLATTR=y
 +CONFIG_GENERIC_ATOMIC64=y
 +CONFIG_ARCH_HAS_ATOMIC64_DEC_IF_POSITIVE=y
- CONFIG_AVERAGE=y
++CONFIG_AVERAGE=y
 +# CONFIG_CORDIC is not set
 +# CONFIG_DDR is not set
-diff -urN linux-3.7-rc3-next-20121102/arch/arm/mach-at91/at91sam9x5.c linux-3.7-rc3-next-20121102-lt1/arch/arm/mach-at91/at91sam9x5.c
---- linux-3.7-rc3-next-20121102/arch/arm/mach-at91/at91sam9x5.c	2012-11-04 13:31:55.413095430 -0500
-+++ linux-3.7-rc3-next-20121102-lt1/arch/arm/mach-at91/at91sam9x5.c	2012-11-04 11:12:43.679892764 -0500
+diff -urN a/arch/arm/mach-at91/at91sam9x5.c b/arch/arm/mach-at91/at91sam9x5.c
+--- a/arch/arm/mach-at91/at91sam9x5.c	2012-12-10 22:30:57.000000000 -0500
++++ b/arch/arm/mach-at91/at91sam9x5.c	2012-12-11 07:26:34.000000000 -0500
 @@ -231,6 +231,8 @@
  	CLKDEV_CON_DEV_ID("t0_clk", "f800c000.timer", &tcb0_clk),
  	CLKDEV_CON_DEV_ID("dma_clk", "ffffec00.dma-controller", &dma0_clk),
@@ -2585,9 +2536,9 @@ diff -urN linux-3.7-rc3-next-20121102/arch/arm/mach-at91/at91sam9x5.c linux-3.7-
  	CLKDEV_CON_DEV_ID(NULL, "f8010000.i2c", &twi0_clk),
  	CLKDEV_CON_DEV_ID(NULL, "f8014000.i2c", &twi1_clk),
  	CLKDEV_CON_DEV_ID(NULL, "f8018000.i2c", &twi2_clk),
-diff -urN linux-3.7-rc3-next-20121102/drivers/mmc/host/atmel-mci.c linux-3.7-rc3-next-20121102-lt1/drivers/mmc/host/atmel-mci.c
---- linux-3.7-rc3-next-20121102/drivers/mmc/host/atmel-mci.c	2012-11-04 13:31:03.000000000 -0500
-+++ linux-3.7-rc3-next-20121102-lt1/drivers/mmc/host/atmel-mci.c	2012-11-04 11:12:43.680892765 -0500
+diff -urN a/drivers/mmc/host/atmel-mci.c b/drivers/mmc/host/atmel-mci.c
+--- a/drivers/mmc/host/atmel-mci.c	2012-12-10 22:30:57.000000000 -0500
++++ b/drivers/mmc/host/atmel-mci.c	2012-12-11 07:26:34.000000000 -0500
 @@ -2350,6 +2350,13 @@
  		}
  	}
@@ -2602,10 +2553,10 @@ diff -urN linux-3.7-rc3-next-20121102/drivers/mmc/host/atmel-mci.c linux-3.7-rc3
  	irq = platform_get_irq(pdev, 0);
  	if (irq < 0)
  		return irq;
-diff -urN linux-3.7-rc3-next-20121102/drivers/mtd/nand/atmel_nand.c linux-3.7-rc3-next-20121102-lt1/drivers/mtd/nand/atmel_nand.c
---- linux-3.7-rc3-next-20121102/drivers/mtd/nand/atmel_nand.c	2012-11-04 13:31:56.057096129 -0500
-+++ linux-3.7-rc3-next-20121102-lt1/drivers/mtd/nand/atmel_nand.c	2012-11-04 11:12:43.680892765 -0500
-@@ -65,10 +65,10 @@
+diff -urN a/drivers/mtd/nand/atmel_nand.c b/drivers/mtd/nand/atmel_nand.c
+--- a/drivers/mtd/nand/atmel_nand.c	2012-12-10 22:30:57.000000000 -0500
++++ b/drivers/mtd/nand/atmel_nand.c	2012-12-11 07:26:34.000000000 -0500
+@@ -64,10 +64,10 @@
   * several NAND_CMD_RNDOUT during read
   */
  static struct nand_ecclayout atmel_oobinfo_large = {
@@ -2619,849 +2570,27 @@ diff -urN linux-3.7-rc3-next-20121102/drivers/mtd/nand/atmel_nand.c linux-3.7-rc
  	},
  };
  
-diff -urN linux-3.7-rc3-next-20121102/drivers/net/ethernet/cadence/macb.c linux-3.7-rc3-next-20121102-lt1/drivers/net/ethernet/cadence/macb.c
---- linux-3.7-rc3-next-20121102/drivers/net/ethernet/cadence/macb.c	2012-11-04 13:31:56.157096219 -0500
-+++ linux-3.7-rc3-next-20121102-lt1/drivers/net/ethernet/cadence/macb.c	2012-11-04 14:20:13.497860236 -0500
-@@ -26,77 +26,35 @@
- #include <linux/of.h>
- #include <linux/of_device.h>
- #include <linux/of_net.h>
--#include <linux/pinctrl/consumer.h>
- 
- #include "macb.h"
- 
- #define RX_BUFFER_SIZE		128
--#define RX_RING_SIZE		512 /* must be power of 2 */
--#define RX_RING_BYTES		(sizeof(struct macb_dma_desc) * RX_RING_SIZE)
-+#define RX_RING_SIZE		512
-+#define RX_RING_BYTES		(sizeof(struct dma_desc) * RX_RING_SIZE)
- 
--#define TX_RING_SIZE		128 /* must be power of 2 */
--#define TX_RING_BYTES		(sizeof(struct macb_dma_desc) * TX_RING_SIZE)
-+/* Make the IP header word-aligned (the ethernet header is 14 bytes) */
-+#define RX_OFFSET		2
-+
-+#define TX_RING_SIZE		128
-+#define DEF_TX_RING_PENDING	(TX_RING_SIZE - 1)
-+#define TX_RING_BYTES		(sizeof(struct dma_desc) * TX_RING_SIZE)
-+
-+#define TX_RING_GAP(bp)						\
-+	(TX_RING_SIZE - (bp)->tx_pending)
-+#define TX_BUFFS_AVAIL(bp)					\
-+	(((bp)->tx_tail <= (bp)->tx_head) ?			\
-+	 (bp)->tx_tail + (bp)->tx_pending - (bp)->tx_head :	\
-+	 (bp)->tx_tail - (bp)->tx_head - TX_RING_GAP(bp))
-+#define NEXT_TX(n)		(((n) + 1) & (TX_RING_SIZE - 1))
-+
-+#define NEXT_RX(n)		(((n) + 1) & (RX_RING_SIZE - 1))
- 
- /* minimum number of free TX descriptors before waking up TX process */
- #define MACB_TX_WAKEUP_THRESH	(TX_RING_SIZE / 4)
- 
- #define MACB_RX_INT_FLAGS	(MACB_BIT(RCOMP) | MACB_BIT(RXUBR)	\
- 				 | MACB_BIT(ISR_ROVR))
--#define MACB_TX_ERR_FLAGS	(MACB_BIT(ISR_TUND)			\
--					| MACB_BIT(ISR_RLE)		\
--					| MACB_BIT(TXERR))
--#define MACB_TX_INT_FLAGS	(MACB_TX_ERR_FLAGS | MACB_BIT(TCOMP))
--
--/*
-- * Graceful stop timeouts in us. We should allow up to
-- * 1 frame time (10 Mbits/s, full-duplex, ignoring collisions)
-- */
--#define MACB_HALT_TIMEOUT	1230
--
--/* Ring buffer accessors */
--static unsigned int macb_tx_ring_wrap(unsigned int index)
--{
--	return index & (TX_RING_SIZE - 1);
--}
--
--static unsigned int macb_tx_ring_avail(struct macb *bp)
--{
--	return (bp->tx_tail - bp->tx_head) & (TX_RING_SIZE - 1);
--}
--
--static struct macb_dma_desc *macb_tx_desc(struct macb *bp, unsigned int index)
--{
--	return &bp->tx_ring[macb_tx_ring_wrap(index)];
--}
--
--static struct macb_tx_skb *macb_tx_skb(struct macb *bp, unsigned int index)
--{
--	return &bp->tx_skb[macb_tx_ring_wrap(index)];
--}
--
--static dma_addr_t macb_tx_dma(struct macb *bp, unsigned int index)
--{
--	dma_addr_t offset;
--
--	offset = macb_tx_ring_wrap(index) * sizeof(struct macb_dma_desc);
--
--	return bp->tx_ring_dma + offset;
--}
--
--static unsigned int macb_rx_ring_wrap(unsigned int index)
--{
--	return index & (RX_RING_SIZE - 1);
--}
--
--static struct macb_dma_desc *macb_rx_desc(struct macb *bp, unsigned int index)
--{
--	return &bp->rx_ring[macb_rx_ring_wrap(index)];
--}
--
--static void *macb_rx_buffer(struct macb *bp, unsigned int index)
--{
--	return bp->rx_buffers + RX_BUFFER_SIZE * macb_rx_ring_wrap(index);
--}
- 
- static void __macb_set_hwaddr(struct macb *bp)
- {
-@@ -194,17 +152,13 @@
- 
- 			reg = macb_readl(bp, NCFGR);
- 			reg &= ~(MACB_BIT(SPD) | MACB_BIT(FD));
--			if (macb_is_gem(bp))
--				reg &= ~GEM_BIT(GBE);
- 
- 			if (phydev->duplex)
- 				reg |= MACB_BIT(FD);
- 			if (phydev->speed == SPEED_100)
- 				reg |= MACB_BIT(SPD);
--			if (phydev->speed == SPEED_1000)
--				reg |= GEM_BIT(GBE);
- 
--			macb_or_gem_writel(bp, NCFGR, reg);
-+			macb_writel(bp, NCFGR, reg);
- 
- 			bp->speed = phydev->speed;
- 			bp->duplex = phydev->duplex;
-@@ -262,10 +216,7 @@
- 	}
- 
- 	/* mask with MAC supported features */
--	if (macb_is_gem(bp))
--		phydev->supported &= PHY_GBIT_FEATURES;
--	else
--		phydev->supported &= PHY_BASIC_FEATURES;
-+	phydev->supported &= PHY_BASIC_FEATURES;
- 
- 	phydev->advertising = phydev->supported;
- 
-@@ -347,147 +298,93 @@
- 		*p += __raw_readl(reg);
- }
- 
--static int macb_halt_tx(struct macb *bp)
-+static void macb_tx(struct macb *bp)
- {
--	unsigned long	halt_time, timeout;
--	u32		status;
-+	unsigned int tail;
-+	unsigned int head;
-+	u32 status;
- 
--	macb_writel(bp, NCR, macb_readl(bp, NCR) | MACB_BIT(THALT));
-+	status = macb_readl(bp, TSR);
-+	macb_writel(bp, TSR, status);
- 
--	timeout = jiffies + usecs_to_jiffies(MACB_HALT_TIMEOUT);
--	do {
--		halt_time = jiffies;
--		status = macb_readl(bp, TSR);
--		if (!(status & MACB_BIT(TGO)))
--			return 0;
-+	netdev_dbg(bp->dev, "macb_tx status = %02lx\n", (unsigned long)status);
- 
--		usleep_range(10, 250);
--	} while (time_before(halt_time, timeout));
-+	if (status & (MACB_BIT(UND) | MACB_BIT(TSR_RLE))) {
-+		int i;
-+		netdev_err(bp->dev, "TX %s, resetting buffers\n",
-+			   status & MACB_BIT(UND) ?
-+			   "underrun" : "retry limit exceeded");
- 
--	return -ETIMEDOUT;
--}
-+		/* Transfer ongoing, disable transmitter, to avoid confusion */
-+		if (status & MACB_BIT(TGO))
-+			macb_writel(bp, NCR, macb_readl(bp, NCR) & ~MACB_BIT(TE));
- 
--static void macb_tx_error_task(struct work_struct *work)
--{
--	struct macb	*bp = container_of(work, struct macb, tx_error_task);
--	struct macb_tx_skb	*tx_skb;
--	struct sk_buff		*skb;
--	unsigned int		tail;
-+		head = bp->tx_head;
- 
--	netdev_vdbg(bp->dev, "macb_tx_error_task: t = %u, h = %u\n",
--		    bp->tx_tail, bp->tx_head);
-+		/*Mark all the buffer as used to avoid sending a lost buffer*/
-+		for (i = 0; i < TX_RING_SIZE; i++)
-+			bp->tx_ring[i].ctrl = MACB_BIT(TX_USED);
- 
--	/* Make sure nobody is trying to queue up new packets */
--	netif_stop_queue(bp->dev);
-+		/* Add wrap bit */
-+		bp->tx_ring[TX_RING_SIZE - 1].ctrl |= MACB_BIT(TX_WRAP);
- 
--	/*
--	 * Stop transmission now
--	 * (in case we have just queued new packets)
--	 */
--	if (macb_halt_tx(bp))
--		/* Just complain for now, reinitializing TX path can be good */
--		netdev_err(bp->dev, "BUG: halt tx timed out\n");
-+		/* free transmit buffer in upper layer*/
-+		for (tail = bp->tx_tail; tail != head; tail = NEXT_TX(tail)) {
-+			struct ring_info *rp = &bp->tx_skb[tail];
-+			struct sk_buff *skb = rp->skb;
- 
--	/* No need for the lock here as nobody will interrupt us anymore */
-+			BUG_ON(skb == NULL);
- 
--	/*
--	 * Treat frames in TX queue including the ones that caused the error.
--	 * Free transmit buffers in upper layer.
--	 */
--	for (tail = bp->tx_tail; tail != bp->tx_head; tail++) {
--		struct macb_dma_desc	*desc;
--		u32			ctrl;
--
--		desc = macb_tx_desc(bp, tail);
--		ctrl = desc->ctrl;
--		tx_skb = macb_tx_skb(bp, tail);
--		skb = tx_skb->skb;
--
--		if (ctrl & MACB_BIT(TX_USED)) {
--			netdev_vdbg(bp->dev, "txerr skb %u (data %p) TX complete\n",
--				    macb_tx_ring_wrap(tail), skb->data);
--			bp->stats.tx_packets++;
--			bp->stats.tx_bytes += skb->len;
--		} else {
--			/*
--			 * "Buffers exhausted mid-frame" errors may only happen
--			 * if the driver is buggy, so complain loudly about those.
--			 * Statistics are updated by hardware.
--			 */
--			if (ctrl & MACB_BIT(TX_BUF_EXHAUSTED))
--				netdev_err(bp->dev,
--					   "BUG: TX buffers exhausted mid-frame\n");
-+			rmb();
- 
--			desc->ctrl = ctrl | MACB_BIT(TX_USED);
-+			dma_unmap_single(&bp->pdev->dev, rp->mapping, skb->len,
-+							 DMA_TO_DEVICE);
-+			rp->skb = NULL;
-+			dev_kfree_skb_irq(skb);
- 		}
- 
--		dma_unmap_single(&bp->pdev->dev, tx_skb->mapping, skb->len,
--				 DMA_TO_DEVICE);
--		tx_skb->skb = NULL;
--		dev_kfree_skb(skb);
--	}
-+		bp->tx_head = bp->tx_tail = 0;
- 
--	/* Make descriptor updates visible to hardware */
--	wmb();
--
--	/* Reinitialize the TX desc queue */
--	macb_writel(bp, TBQP, bp->tx_ring_dma);
--	/* Make TX ring reflect state of hardware */
--	bp->tx_head = bp->tx_tail = 0;
--
--	/* Now we are ready to start transmission again */
--	netif_wake_queue(bp->dev);
--
--	/* Housework before enabling TX IRQ */
--	macb_writel(bp, TSR, macb_readl(bp, TSR));
--	macb_writel(bp, IER, MACB_TX_INT_FLAGS);
--}
--
--static void macb_tx_interrupt(struct macb *bp)
--{
--	unsigned int tail;
--	unsigned int head;
--	u32 status;
--
--	status = macb_readl(bp, TSR);
--	macb_writel(bp, TSR, status);
-+		/* Enable the transmitter again */
-+		if (status & MACB_BIT(TGO))
-+			macb_writel(bp, NCR, macb_readl(bp, NCR) | MACB_BIT(TE));
-+	}
- 
--	netdev_vdbg(bp->dev, "macb_tx_interrupt status = 0x%03lx\n",
--		(unsigned long)status);
-+	if (!(status & MACB_BIT(COMP)))
-+		/*
-+		 * This may happen when a buffer becomes complete
-+		 * between reading the ISR and scanning the
-+		 * descriptors.  Nothing to worry about.
-+		 */
-+		return;
- 
- 	head = bp->tx_head;
--	for (tail = bp->tx_tail; tail != head; tail++) {
--		struct macb_tx_skb	*tx_skb;
--		struct sk_buff		*skb;
--		struct macb_dma_desc	*desc;
--		u32			ctrl;
-+	for (tail = bp->tx_tail; tail != head; tail = NEXT_TX(tail)) {
-+		struct ring_info *rp = &bp->tx_skb[tail];
-+		struct sk_buff *skb = rp->skb;
-+		u32 bufstat;
- 
--		desc = macb_tx_desc(bp, tail);
-+		BUG_ON(skb == NULL);
- 
--		/* Make hw descriptor updates visible to CPU */
- 		rmb();
-+		bufstat = bp->tx_ring[tail].ctrl;
- 
--		ctrl = desc->ctrl;
--
--		if (!(ctrl & MACB_BIT(TX_USED)))
-+		if (!(bufstat & MACB_BIT(TX_USED)))
- 			break;
- 
--		tx_skb = macb_tx_skb(bp, tail);
--		skb = tx_skb->skb;
--
--		netdev_vdbg(bp->dev, "skb %u (data %p) TX complete\n",
--			macb_tx_ring_wrap(tail), skb->data);
--		dma_unmap_single(&bp->pdev->dev, tx_skb->mapping, skb->len,
-+		netdev_dbg(bp->dev, "skb %u (data %p) TX complete\n",
-+			   tail, skb->data);
-+		dma_unmap_single(&bp->pdev->dev, rp->mapping, skb->len,
- 				 DMA_TO_DEVICE);
- 		bp->stats.tx_packets++;
- 		bp->stats.tx_bytes += skb->len;
--		tx_skb->skb = NULL;
-+		rp->skb = NULL;
- 		dev_kfree_skb_irq(skb);
- 	}
- 
- 	bp->tx_tail = tail;
--	if (netif_queue_stopped(bp->dev)
--			&& macb_tx_ring_avail(bp) > MACB_TX_WAKEUP_THRESH)
-+	if (netif_queue_stopped(bp->dev) &&
-+	    TX_BUFFS_AVAIL(bp) > MACB_TX_WAKEUP_THRESH)
- 		netif_wake_queue(bp->dev);
- }
- 
-@@ -496,48 +393,31 @@
- {
- 	unsigned int len;
- 	unsigned int frag;
--	unsigned int offset;
-+	unsigned int offset = 0;
- 	struct sk_buff *skb;
--	struct macb_dma_desc *desc;
- 
--	desc = macb_rx_desc(bp, last_frag);
--	len = MACB_BFEXT(RX_FRMLEN, desc->ctrl);
-+	len = MACB_BFEXT(RX_FRMLEN, bp->rx_ring[last_frag].ctrl);
- 
--	netdev_vdbg(bp->dev, "macb_rx_frame frags %u - %u (len %u)\n",
--		macb_rx_ring_wrap(first_frag),
--		macb_rx_ring_wrap(last_frag), len);
-+	netdev_dbg(bp->dev, "macb_rx_frame frags %u - %u (len %u)\n",
-+		   first_frag, last_frag, len);
- 
--	/*
--	 * The ethernet header starts NET_IP_ALIGN bytes into the
--	 * first buffer. Since the header is 14 bytes, this makes the
--	 * payload word-aligned.
--	 *
--	 * Instead of calling skb_reserve(NET_IP_ALIGN), we just copy
--	 * the two padding bytes into the skb so that we avoid hitting
--	 * the slowpath in memcpy(), and pull them off afterwards.
--	 */
--	skb = netdev_alloc_skb(bp->dev, len + NET_IP_ALIGN);
-+	skb = netdev_alloc_skb(bp->dev, len + RX_OFFSET);
- 	if (!skb) {
- 		bp->stats.rx_dropped++;
--		for (frag = first_frag; ; frag++) {
--			desc = macb_rx_desc(bp, frag);
--			desc->addr &= ~MACB_BIT(RX_USED);
-+		for (frag = first_frag; ; frag = NEXT_RX(frag)) {
-+			bp->rx_ring[frag].addr &= ~MACB_BIT(RX_USED);
- 			if (frag == last_frag)
- 				break;
- 		}
--
--		/* Make descriptor updates visible to hardware */
- 		wmb();
--
- 		return 1;
- 	}
- 
--	offset = 0;
--	len += NET_IP_ALIGN;
-+	skb_reserve(skb, RX_OFFSET);
- 	skb_checksum_none_assert(skb);
- 	skb_put(skb, len);
- 
--	for (frag = first_frag; ; frag++) {
-+	for (frag = first_frag; ; frag = NEXT_RX(frag)) {
- 		unsigned int frag_len = RX_BUFFER_SIZE;
- 
- 		if (offset + frag_len > len) {
-@@ -545,24 +425,22 @@
- 			frag_len = len - offset;
- 		}
- 		skb_copy_to_linear_data_offset(skb, offset,
--				macb_rx_buffer(bp, frag), frag_len);
-+					       (bp->rx_buffers +
-+					        (RX_BUFFER_SIZE * frag)),
-+					       frag_len);
- 		offset += RX_BUFFER_SIZE;
--		desc = macb_rx_desc(bp, frag);
--		desc->addr &= ~MACB_BIT(RX_USED);
-+		bp->rx_ring[frag].addr &= ~MACB_BIT(RX_USED);
-+		wmb();
- 
- 		if (frag == last_frag)
- 			break;
- 	}
- 
--	/* Make descriptor updates visible to hardware */
--	wmb();
--
--	__skb_pull(skb, NET_IP_ALIGN);
- 	skb->protocol = eth_type_trans(skb, bp->dev);
- 
- 	bp->stats.rx_packets++;
--	bp->stats.rx_bytes += skb->len;
--	netdev_vdbg(bp->dev, "received skb of length %u, csum: %08x\n",
-+	bp->stats.rx_bytes += len;
-+	netdev_dbg(bp->dev, "received skb of length %u, csum: %08x\n",
- 		   skb->len, skb->csum);
- 	netif_receive_skb(skb);
- 
-@@ -575,12 +453,8 @@
- {
- 	unsigned int frag;
- 
--	for (frag = begin; frag != end; frag++) {
--		struct macb_dma_desc *desc = macb_rx_desc(bp, frag);
--		desc->addr &= ~MACB_BIT(RX_USED);
--	}
--
--	/* Make descriptor updates visible to hardware */
-+	for (frag = begin; frag != end; frag = NEXT_RX(frag))
-+		bp->rx_ring[frag].addr &= ~MACB_BIT(RX_USED);
- 	wmb();
- 
- 	/*
-@@ -593,18 +467,15 @@
- static int macb_rx(struct macb *bp, int budget)
- {
- 	int received = 0;
--	unsigned int tail;
-+	unsigned int tail = bp->rx_tail;
- 	int first_frag = -1;
- 
--	for (tail = bp->rx_tail; budget > 0; tail++) {
--		struct macb_dma_desc *desc = macb_rx_desc(bp, tail);
-+	for (; budget > 0; tail = NEXT_RX(tail)) {
- 		u32 addr, ctrl;
- 
--		/* Make hw descriptor updates visible to CPU */
- 		rmb();
--
--		addr = desc->addr;
--		ctrl = desc->ctrl;
-+		addr = bp->rx_ring[tail].addr;
-+		ctrl = bp->rx_ring[tail].ctrl;
- 
- 		if (!(addr & MACB_BIT(RX_USED)))
- 			break;
-@@ -647,7 +518,7 @@
- 
- 	work_done = 0;
- 
--	netdev_vdbg(bp->dev, "poll: status = %08lx, budget = %d\n",
-+	netdev_dbg(bp->dev, "poll: status = %08lx, budget = %d\n",
- 		   (unsigned long)status, budget);
- 
- 	work_done = macb_rx(bp, budget);
-@@ -686,8 +557,6 @@
- 			break;
- 		}
- 
--		netdev_vdbg(bp->dev, "isr = 0x%08lx\n", (unsigned long)status);
--
- 		if (status & MACB_RX_INT_FLAGS) {
- 			/*
- 			 * There's no point taking any more interrupts
-@@ -699,19 +568,14 @@
- 			macb_writel(bp, IDR, MACB_RX_INT_FLAGS);
- 
- 			if (napi_schedule_prep(&bp->napi)) {
--				netdev_vdbg(bp->dev, "scheduling RX softirq\n");
-+				netdev_dbg(bp->dev, "scheduling RX softirq\n");
- 				__napi_schedule(&bp->napi);
- 			}
- 		}
- 
--		if (unlikely(status & (MACB_TX_ERR_FLAGS))) {
--			macb_writel(bp, IDR, MACB_TX_INT_FLAGS);
--			schedule_work(&bp->tx_error_task);
--			break;
--		}
--
--		if (status & MACB_BIT(TCOMP))
--			macb_tx_interrupt(bp);
-+		if (status & (MACB_BIT(TCOMP) | MACB_BIT(ISR_TUND) |
-+			    MACB_BIT(ISR_RLE)))
-+			macb_tx(bp);
- 
- 		/*
- 		 * Link change detection isn't possible with RMII, so we'll
-@@ -763,13 +627,11 @@
- 	struct macb *bp = netdev_priv(dev);
- 	dma_addr_t mapping;
- 	unsigned int len, entry;
--	struct macb_dma_desc *desc;
--	struct macb_tx_skb *tx_skb;
- 	u32 ctrl;
- 	unsigned long flags;
- 
--#if defined(DEBUG) && defined(VERBOSE_DEBUG)
--	netdev_vdbg(bp->dev,
-+#ifdef DEBUG
-+	netdev_dbg(bp->dev,
- 		   "start_xmit: len %u head %p data %p tail %p end %p\n",
- 		   skb->len, skb->head, skb->data,
- 		   skb_tail_pointer(skb), skb_end_pointer(skb));
-@@ -781,7 +643,7 @@
- 	spin_lock_irqsave(&bp->lock, flags);
- 
- 	/* This is a hard error, log it. */
--	if (macb_tx_ring_avail(bp) < 1) {
-+	if (TX_BUFFS_AVAIL(bp) < 1) {
- 		netif_stop_queue(dev);
- 		spin_unlock_irqrestore(&bp->lock, flags);
- 		netdev_err(bp->dev, "BUG! Tx Ring full when queue awake!\n");
-@@ -790,16 +652,13 @@
- 		return NETDEV_TX_BUSY;
- 	}
- 
--	entry = macb_tx_ring_wrap(bp->tx_head);
--	bp->tx_head++;
--	netdev_vdbg(bp->dev, "Allocated ring entry %u\n", entry);
-+	entry = bp->tx_head;
-+	netdev_dbg(bp->dev, "Allocated ring entry %u\n", entry);
- 	mapping = dma_map_single(&bp->pdev->dev, skb->data,
- 				 len, DMA_TO_DEVICE);
--
--	tx_skb = &bp->tx_skb[entry];
--	tx_skb->skb = skb;
--	tx_skb->mapping = mapping;
--	netdev_vdbg(bp->dev, "Mapped skb data %p to DMA addr %08lx\n",
-+	bp->tx_skb[entry].skb = skb;
-+	bp->tx_skb[entry].mapping = mapping;
-+	netdev_dbg(bp->dev, "Mapped skb data %p to DMA addr %08lx\n",
- 		   skb->data, (unsigned long)mapping);
- 
- 	ctrl = MACB_BF(TX_FRMLEN, len);
-@@ -807,18 +666,18 @@
- 	if (entry == (TX_RING_SIZE - 1))
- 		ctrl |= MACB_BIT(TX_WRAP);
- 
--	desc = &bp->tx_ring[entry];
--	desc->addr = mapping;
--	desc->ctrl = ctrl;
--
--	/* Make newly initialized descriptor visible to hardware */
-+	bp->tx_ring[entry].addr = mapping;
-+	bp->tx_ring[entry].ctrl = ctrl;
- 	wmb();
- 
-+	entry = NEXT_TX(entry);
-+	bp->tx_head = entry;
-+
- 	skb_tx_timestamp(skb);
- 
- 	macb_writel(bp, NCR, macb_readl(bp, NCR) | MACB_BIT(TSTART));
- 
--	if (macb_tx_ring_avail(bp) < 1)
-+	if (TX_BUFFS_AVAIL(bp) < 1)
- 		netif_stop_queue(dev);
- 
- 	spin_unlock_irqrestore(&bp->lock, flags);
-@@ -854,7 +713,7 @@
- {
- 	int size;
- 
--	size = TX_RING_SIZE * sizeof(struct macb_tx_skb);
-+	size = TX_RING_SIZE * sizeof(struct ring_info);
- 	bp->tx_skb = kmalloc(size, GFP_KERNEL);
- 	if (!bp->tx_skb)
- 		goto out_err;
-@@ -917,6 +776,9 @@
- 
- static void macb_reset_hw(struct macb *bp)
- {
-+	/* Make sure we have the write buffer for ourselves */
-+	wmb();
-+
- 	/*
- 	 * Disable RX and TX (XXX: Should we halt the transmission
- 	 * more gracefully?)
-@@ -1021,7 +883,6 @@
- 	__macb_set_hwaddr(bp);
- 
- 	config = macb_mdc_clk_div(bp);
--	config |= MACB_BF(RBOF, NET_IP_ALIGN);	/* Make eth data aligned */
- 	config |= MACB_BIT(PAE);		/* PAuse Enable */
- 	config |= MACB_BIT(DRFCS);		/* Discard Rx FCS */
- 	config |= MACB_BIT(BIG);		/* Receive oversized frames */
-@@ -1042,8 +903,13 @@
- 	macb_writel(bp, NCR, MACB_BIT(RE) | MACB_BIT(TE) | MACB_BIT(MPE));
- 
- 	/* Enable interrupts */
--	macb_writel(bp, IER, (MACB_RX_INT_FLAGS
--			      | MACB_TX_INT_FLAGS
-+	macb_writel(bp, IER, (MACB_BIT(RCOMP)
-+			      | MACB_BIT(RXUBR)
-+			      | MACB_BIT(ISR_TUND)
-+			      | MACB_BIT(ISR_RLE)
-+			      | MACB_BIT(TXERR)
-+			      | MACB_BIT(TCOMP)
-+			      | MACB_BIT(ISR_ROVR)
- 			      | MACB_BIT(HRESP)));
- 
- }
-@@ -1340,49 +1206,20 @@
- 	return phy_ethtool_sset(phydev, cmd);
- }
- 
--static int macb_get_regs_len(struct net_device *netdev)
--{
--	return MACB_GREGS_NBR * sizeof(u32);
--}
--
--static void macb_get_regs(struct net_device *dev, struct ethtool_regs *regs,
--			  void *p)
-+static void macb_get_drvinfo(struct net_device *dev,
-+			     struct ethtool_drvinfo *info)
- {
- 	struct macb *bp = netdev_priv(dev);
--	unsigned int tail, head;
--	u32 *regs_buff = p;
--
--	regs->version = (macb_readl(bp, MID) & ((1 << MACB_REV_SIZE) - 1))
--			| MACB_GREGS_VERSION;
--
--	tail = macb_tx_ring_wrap(bp->tx_tail);
--	head = macb_tx_ring_wrap(bp->tx_head);
--
--	regs_buff[0]  = macb_readl(bp, NCR);
--	regs_buff[1]  = macb_or_gem_readl(bp, NCFGR);
--	regs_buff[2]  = macb_readl(bp, NSR);
--	regs_buff[3]  = macb_readl(bp, TSR);
--	regs_buff[4]  = macb_readl(bp, RBQP);
--	regs_buff[5]  = macb_readl(bp, TBQP);
--	regs_buff[6]  = macb_readl(bp, RSR);
--	regs_buff[7]  = macb_readl(bp, IMR);
--
--	regs_buff[8]  = tail;
--	regs_buff[9]  = head;
--	regs_buff[10] = macb_tx_dma(bp, tail);
--	regs_buff[11] = macb_tx_dma(bp, head);
- 
--	if (macb_is_gem(bp)) {
--		regs_buff[12] = gem_readl(bp, USRIO);
--		regs_buff[13] = gem_readl(bp, DMACFG);
--	}
-+	strcpy(info->driver, bp->pdev->dev.driver->name);
-+	strcpy(info->version, "$Revision: 1.14 $");
-+	strcpy(info->bus_info, dev_name(&bp->pdev->dev));
- }
- 
- const struct ethtool_ops macb_ethtool_ops = {
- 	.get_settings		= macb_get_settings,
- 	.set_settings		= macb_set_settings,
--	.get_regs_len		= macb_get_regs_len,
--	.get_regs		= macb_get_regs,
-+	.get_drvinfo		= macb_get_drvinfo,
- 	.get_link		= ethtool_op_get_link,
- 	.get_ts_info		= ethtool_op_get_ts_info,
+diff -urN a/include/uapi/linux/netfilter_bridge/ebt_nat.h b/include/uapi/linux/netfilter_bridge/ebt_nat.h
+--- a/include/uapi/linux/netfilter_bridge/ebt_nat.h	2012-12-10 22:30:57.000000000 -0500
++++ b/include/uapi/linux/netfilter_bridge/ebt_nat.h	2012-12-11 07:26:34.000000000 -0500
+@@ -9,5 +9,6 @@
  };
-@@ -1473,7 +1310,6 @@
- 	struct phy_device *phydev;
- 	u32 config;
- 	int err = -ENXIO;
--	struct pinctrl *pinctrl;
- 
- 	regs = platform_get_resource(pdev, IORESOURCE_MEM, 0);
- 	if (!regs) {
-@@ -1481,15 +1317,6 @@
- 		goto err_out;
- 	}
- 
--	pinctrl = devm_pinctrl_get_select_default(&pdev->dev);
--	if (IS_ERR(pinctrl)) {
--		err = PTR_ERR(pinctrl);
--		if (err == -EPROBE_DEFER)
--			goto err_out;
--
--		dev_warn(&pdev->dev, "No pinctrl provided\n");
--	}
--
- 	err = -ENOMEM;
- 	dev = alloc_etherdev(sizeof(*bp));
- 	if (!dev)
-@@ -1505,7 +1332,6 @@
- 	bp->dev = dev;
- 
- 	spin_lock_init(&bp->lock);
--	INIT_WORK(&bp->tx_error_task, macb_tx_error_task);
- 
- 	bp->pclk = clk_get(&pdev->dev, "pclk");
- 	if (IS_ERR(bp->pclk)) {
-@@ -1562,9 +1388,7 @@
- 		bp->phy_interface = err;
- 	}
- 
--	if (bp->phy_interface == PHY_INTERFACE_MODE_RGMII)
--		macb_or_gem_writel(bp, USRIO, GEM_BIT(RGMII));
--	else if (bp->phy_interface == PHY_INTERFACE_MODE_RMII)
-+	if (bp->phy_interface == PHY_INTERFACE_MODE_RMII)
- #if defined(CONFIG_ARCH_AT91)
- 		macb_or_gem_writel(bp, USRIO, (MACB_BIT(RMII) |
- 					       MACB_BIT(CLKEN)));
-@@ -1578,6 +1402,8 @@
- 		macb_or_gem_writel(bp, USRIO, MACB_BIT(MII));
- #endif
- 
-+	bp->tx_pending = DEF_TX_RING_PENDING;
-+
- 	err = register_netdev(dev);
- 	if (err) {
- 		dev_err(&pdev->dev, "Cannot register net device, aborting.\n");
-diff -urN linux-3.7-rc3-next-20121102/drivers/net/ethernet/cadence/macb.h linux-3.7-rc3-next-20121102-lt1/drivers/net/ethernet/cadence/macb.h
---- linux-3.7-rc3-next-20121102/drivers/net/ethernet/cadence/macb.h	2012-11-04 13:31:56.158096220 -0500
-+++ linux-3.7-rc3-next-20121102-lt1/drivers/net/ethernet/cadence/macb.h	2012-11-04 14:20:17.529860970 -0500
-@@ -10,9 +10,6 @@
- #ifndef _MACB_H
- #define _MACB_H
- 
--#define MACB_GREGS_NBR 16
--#define MACB_GREGS_VERSION 1
--
- /* MACB register offsets */
- #define MACB_NCR				0x0000
- #define MACB_NCFGR				0x0004
-@@ -152,8 +149,6 @@
- #define MACB_IRXFCS_SIZE			1
- 
- /* GEM specific NCFGR bitfields. */
--#define GEM_GBE_OFFSET				10
--#define GEM_GBE_SIZE				1
- #define GEM_CLK_OFFSET				18
- #define GEM_CLK_SIZE				3
- #define GEM_DBW_OFFSET				21
-@@ -257,8 +252,6 @@
- /* Bitfields in USRIO (AT91) */
- #define MACB_RMII_OFFSET			0
- #define MACB_RMII_SIZE				1
--#define GEM_RGMII_OFFSET			0	/* GEM gigabit mode */
--#define GEM_RGMII_SIZE				1
- #define MACB_CLKEN_OFFSET			1
- #define MACB_CLKEN_SIZE				1
- 
-@@ -365,12 +358,7 @@
- 		__v; \
- 	})
- 
--/**
-- * struct macb_dma_desc - Hardware DMA descriptor
-- * @addr: DMA address of data buffer
-- * @ctrl: Control and status bits
-- */
--struct macb_dma_desc {
-+struct dma_desc {
- 	u32	addr;
- 	u32	ctrl;
- };
-@@ -435,12 +423,7 @@
- #define MACB_TX_USED_OFFSET			31
- #define MACB_TX_USED_SIZE			1
- 
--/**
-- * struct macb_tx_skb - data about an skb which is being transmitted
-- * @skb: skb currently being transmitted
-- * @mapping: DMA address of the skb's data buffer
-- */
--struct macb_tx_skb {
-+struct ring_info {
- 	struct sk_buff		*skb;
- 	dma_addr_t		mapping;
- };
-@@ -525,12 +508,12 @@
- 	void __iomem		*regs;
- 
- 	unsigned int		rx_tail;
--	struct macb_dma_desc	*rx_ring;
-+	struct dma_desc		*rx_ring;
- 	void			*rx_buffers;
- 
- 	unsigned int		tx_head, tx_tail;
--	struct macb_dma_desc	*tx_ring;
--	struct macb_tx_skb	*tx_skb;
-+	struct dma_desc		*tx_ring;
-+	struct ring_info	*tx_skb;
- 
- 	spinlock_t		lock;
- 	struct platform_device	*pdev;
-@@ -538,7 +521,6 @@
- 	struct clk		*hclk;
- 	struct net_device	*dev;
- 	struct napi_struct	napi;
--	struct work_struct	tx_error_task;
- 	struct net_device_stats	stats;
- 	union {
- 		struct macb_stats	macb;
-@@ -549,6 +531,8 @@
- 	dma_addr_t		tx_ring_dma;
- 	dma_addr_t		rx_buffers_dma;
- 
-+	unsigned int		rx_pending, tx_pending;
-+
- 	struct mii_bus		*mii_bus;
- 	struct phy_device	*phy_dev;
- 	unsigned int 		link;
-diff -urN linux-3.7-rc3-next-20121102/include/uapi/linux/netfilter_bridge/ebt_nat.h linux-3.7-rc3-next-20121102-lt1/include/uapi/linux/netfilter_bridge/ebt_nat.h
---- linux-3.7-rc3-next-20121102/include/uapi/linux/netfilter_bridge/ebt_nat.h	2012-11-04 13:31:09.000000000 -0500
-+++ linux-3.7-rc3-next-20121102-lt1/include/uapi/linux/netfilter_bridge/ebt_nat.h	2012-11-04 11:12:43.681892767 -0500
-@@ -10,4 +10,6 @@
  #define EBT_SNAT_TARGET "snat"
  #define EBT_DNAT_TARGET "dnat"
- 
 +#define EBT_ARPNAT_TARGET "arpnat"
-+
- #endif
-diff -urN linux-3.7-rc3-next-20121102/net/bridge/br_fdb.c linux-3.7-rc3-next-20121102-lt1/net/bridge/br_fdb.c
---- linux-3.7-rc3-next-20121102/net/bridge/br_fdb.c	2012-11-04 13:31:09.000000000 -0500
-+++ linux-3.7-rc3-next-20121102-lt1/net/bridge/br_fdb.c	2012-11-04 11:12:43.681892767 -0500
-@@ -228,6 +228,7 @@
- 	}
- 	spin_unlock_bh(&br->hash_lock);
- }
-+EXPORT_SYMBOL(__br_fdb_get);
  
- /* No locking or refcounting, assumes caller has rcu_read_lock */
- struct net_bridge_fdb_entry *__br_fdb_get(struct net_bridge *br,
-diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/Kconfig linux-3.7-rc3-next-20121102-lt1/net/bridge/netfilter/Kconfig
---- linux-3.7-rc3-next-20121102/net/bridge/netfilter/Kconfig	2012-09-30 19:47:46.000000000 -0400
-+++ linux-3.7-rc3-next-20121102-lt1/net/bridge/netfilter/Kconfig	2012-11-04 11:12:43.681892767 -0500
+ #endif
+diff -urN a/net/bridge/br_fdb.c b/net/bridge/br_fdb.c
+--- a/net/bridge/br_fdb.c	2012-12-10 22:30:57.000000000 -0500
++++ b/net/bridge/br_fdb.c	2012-12-11 07:26:34.000000000 -0500
+@@ -674,3 +674,4 @@
+ 
+ 	return err;
+ }
++
+diff -urN a/net/bridge/netfilter/Kconfig b/net/bridge/netfilter/Kconfig
+--- a/net/bridge/netfilter/Kconfig	2012-12-10 22:30:57.000000000 -0500
++++ b/net/bridge/netfilter/Kconfig	2012-12-11 07:26:34.000000000 -0500
 @@ -177,6 +177,16 @@
  	  source address of frames.
  
@@ -3472,16 +2601,16 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/Kconfig linux-3.7-rc3
 +	depends on BRIDGE_NF_EBTABLES
 +	help
 +	  This option adds the ARP match, which allows ARP and RARP header field
-+	  filtering.
-+
-+	  To compile it as a module, choose M here.  If unsure, say N.
++	  filtering
++ 
++	  To compile it as a module, choose M here. If unsure, say N.
 +
  #
  # watchers
  #
-diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/Makefile linux-3.7-rc3-next-20121102-lt1/net/bridge/netfilter/Makefile
---- linux-3.7-rc3-next-20121102/net/bridge/netfilter/Makefile	2012-09-30 19:47:46.000000000 -0400
-+++ linux-3.7-rc3-next-20121102-lt1/net/bridge/netfilter/Makefile	2012-11-04 11:12:43.681892767 -0500
+diff -urN a/net/bridge/netfilter/Makefile b/net/bridge/netfilter/Makefile
+--- a/net/bridge/netfilter/Makefile	2012-12-10 22:30:57.000000000 -0500
++++ b/net/bridge/netfilter/Makefile	2012-12-11 07:26:34.000000000 -0500
 @@ -27,6 +27,7 @@
  obj-$(CONFIG_BRIDGE_EBT_DNAT) += ebt_dnat.o
  obj-$(CONFIG_BRIDGE_EBT_REDIRECT) += ebt_redirect.o
@@ -3490,10 +2619,10 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/Makefile linux-3.7-rc
  
  # watchers
  obj-$(CONFIG_BRIDGE_EBT_LOG) += ebt_log.o
-diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.7-rc3-next-20121102-lt1/net/bridge/netfilter/ebt_arpnat.c
---- linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c	1969-12-31 19:00:00.000000000 -0500
-+++ linux-3.7-rc3-next-20121102-lt1/net/bridge/netfilter/ebt_arpnat.c	2012-11-04 11:12:43.682892769 -0500
-@@ -0,0 +1,630 @@
+diff -urN a/net/bridge/netfilter/ebt_arpnat.c b/net/bridge/netfilter/ebt_arpnat.c
+--- a/net/bridge/netfilter/ebt_arpnat.c	1969-12-31 19:00:00.000000000 -0500
++++ b/net/bridge/netfilter/ebt_arpnat.c	2012-12-11 07:26:34.000000000 -0500
+@@ -0,0 +1,650 @@
 +/*
 + *  ebt_arpnat
 + *
@@ -3515,16 +2644,19 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 + *
 + *  September 18, 2011
 + *
-+ *  	Updated code to work with kernel v3.0.0
-+ *  	Various bridging structures have changed
-+ *  	Added debugging information
-+ * 	Christopher Cole <ccole@summitdata.com>
++ *      Updated code to work with kernel v3.0.0
++ *      Various bridging structures have changed
++ *      Added debugging information
++ *      Christopher Cole <chris.cole@lairdtech.com>
 + *
 + * February 11, 2012
 + *
-+ * 	Added DHCP Relay code
-+ * 	Christopher Cole <ccole@summitdata.com>
++ *      Added DHCP Relay code
++ *      Christopher Cole <chris.cole@lairdtech.com>
 + */
++
++
++
 +
 +#include <linux/netfilter/x_tables.h>
 +#include <linux/netfilter_bridge/ebtables.h>
@@ -3545,35 +2677,30 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +#include <linux/udp.h>
 +#include <linux/in.h>
 +#include <net/checksum.h>
-+#include <linux/vmalloc.h>
++
 +
 +#include "../br_private.h"
 +
 +#define STRMAC "%02x:%02x:%02x:%02x:%02x:%02x"
 +#define STRIP "%d.%d.%d.%d"
 +#define MAC2STR(x) (x)[0],(x)[1],(x)[2],(x)[3],(x)[4],(x)[5]
-+#define IP2STR(x) (x)>>0&0xff,(x)>>8&0xff,(x)>>16&0xff,(x)>>24&0xff
++#define IP2STR(x) (x)>>24&0xff,(x)>>16&0xff,(x)>>8&0xff,(x)&0xff
 +
 +#define GIADDR_OFFSET (24)
 +#define CHADDR_OFFSET (28)
 +
-+/* Debugging capability for the driver */
-+#define ARPNAT_DEBUG 1
 +
-+/* By default, debugging is off, but it can be enabled at runtime:
-+ * echo n > /proc/arpnat_debug , where n=
-+ *  0x00000000 = no debugging
-+ * |0x00000001 = terse debugging
-+ * |0x00000010 = packet dumps
-+ * |0x00000100 = funcion tracing
-+ */
-+static int debug = 0;
++
++//#define ARPNAT_DEBUG 1
++
 +
 +#ifdef ARPNAT_DEBUG
-+#define ARPNAT_TRACE { if (debug>1) { printk("%s:%s()[%d]\n", __FILE__, __FUNCTION__, __LINE__); } }
++static uint8_t debug = 1;
 +#else
-+#define ARPNAT_TRACE
++static uint8_t debug = 0;
 +#endif
++
++
 +
 +#ifndef __packed
 +#define __packed __attribute__((__packed__))
@@ -3594,7 +2721,8 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +};
 +
 +static HLIST_HEAD(arpnat_table);
-+DEFINE_SPINLOCK(arpnat_lock);
++static spinlock_t arpnat_lock = __SPIN_LOCK_UNLOCKED(arpnat_lock);
++
 +static uint8_t bootpnat = 1;
 +
 +static struct mac2ip* find_mac_nat(struct hlist_head* head, const uint8_t* mac)
@@ -3603,8 +2731,6 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +	struct mac2ip* result = NULL;
 +	struct hlist_node* pos;
 +	struct hlist_node* n;
-+
-+	ARPNAT_TRACE
 +	hlist_for_each_entry_safe(tpos, pos, n, head, node)
 +	{
 +		if (memcmp(tpos->data.mac, mac, ETH_ALEN) == 0)
@@ -3623,7 +2749,6 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +	struct hlist_node* pos;
 +	struct hlist_node* n;
 +
-+	ARPNAT_TRACE
 +	hlist_for_each_entry_safe(tpos, pos, n, head, node)
 +	{
 +		if (tpos->data.ip == ip)
@@ -3635,13 +2760,13 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +	return result;
 +}
 +
++
 +static void clear_ip_nat(struct hlist_head* head, uint32_t ip)
 +{
 +	struct mac2ip* tpos;
 +	struct hlist_node* pos;
 +	struct hlist_node* n;
 +
-+	ARPNAT_TRACE
 +	hlist_for_each_entry_safe(tpos, pos, n, head, node)
 +	{
 +		if (tpos->data.ip == ip)
@@ -3657,8 +2782,6 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +	struct mac2ip* tpos;
 +	struct hlist_node* pos;
 +	struct hlist_node* n;
-+
-+	ARPNAT_TRACE
 +	hlist_for_each_entry_safe(tpos, pos, n, head, node)
 +	{
 +		hlist_del(pos);
@@ -3670,7 +2793,6 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +{
 +	struct mac2ip* entry;
 +
-+	ARPNAT_TRACE
 +	entry = find_mac_nat(head, mac);
 +	if (!entry)
 +	{
@@ -3695,79 +2817,112 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +
 +#ifdef CONFIG_PROC_FS
 +
-+int arpnat_debug_read(char *buffer, char **start, off_t offset, int length, int *eof, void *data)
++static void *arpnat_start(struct seq_file *seq, loff_t *loff_pos)
 +{
-+	ARPNAT_TRACE
-+	if(offset>0)
-+		return 0;
-+	*eof=1;
-+	length = 0;
-+	length += sprintf(buffer+length, "%d\n", debug);
-+	return length;
-+}
++	static unsigned long counter = 0;
 +
-+int arpnat_debug_write(struct file *file, const char *buffer, unsigned long count, void *data)
-+{
-+	char *page;
-+	int input_data = 0;
-+
-+	ARPNAT_TRACE
-+	page = (char *)vmalloc(count);
-+	if (!page)
-+		return -ENOMEM;   
-+	if (copy_from_user(page, buffer, count)) {
-+		vfree(page);
-+		return -EFAULT;
++	/* beginning a new sequence ? */	
++	if ( *loff_pos == 0 )
++	{	
++		/* yes => return a non null value to begin the sequence */
++		return &counter;
 +	}
-+	sscanf(page, "%d", &input_data);
-+	debug = input_data;
-+	vfree(page); 
-+	return count;
++	else
++	{
++		/* no => it's the end of the sequence, return end to stop reading */
++		*loff_pos = 0;
++		return NULL;
++	}
 +}
 +
-+int arpnat_cache_read(char *buffer, char **start, off_t offset, int length, int *eof, void *data)
++static void *arpnat_next(struct seq_file *seq, void *v, loff_t *pos)
++{
++	return NULL;
++}
++
++
++static void arpnat_stop(struct seq_file *seq, void *v)
++{
++	//don't need to do anything
++}
++
++
++static int arpnat_cache_show(struct seq_file *s, void *v)
 +{
 +	struct mac2ip* tpos;
 +	struct hlist_node* pos;
 +	struct hlist_node* n;
 +	unsigned long flags;
 +
-+	ARPNAT_TRACE
-+	if(offset>0)
-+		return 0;
-+	*eof=1;
-+	length = 0;
 +	spin_lock_irqsave(&arpnat_lock, flags);
 +	hlist_for_each_entry_safe(tpos, pos, n, &arpnat_table, node)
 +	{
-+		length += sprintf(buffer+length, STRMAC"\t"STRIP"\n", MAC2STR(tpos->data.mac), IP2STR(tpos->data.ip));
++		seq_printf(s, STRMAC"\t"STRIP"\n", MAC2STR(tpos->data.mac), IP2STR(tpos->data.ip));
 +	}
 +	spin_unlock_irqrestore(&arpnat_lock, flags);
-+	return length;
++
++	return 0;
++}
++static int arpnat_info_show(struct seq_file *s, void *v)
++{
++	seq_printf(s, "Debug: %d\nBOOTPNAT: %d\n", debug, bootpnat);
++	return 0;
 +}
 +
-+int arpnat_info_read(char *buffer, char **start, off_t offset, int length, int *eof, void *data)
++
++static struct seq_operations arpnat_cache_sops = {
++	.start = arpnat_start,
++	.next  = arpnat_next,
++	.stop  = arpnat_stop,
++	.show  = arpnat_cache_show
++};
++static struct seq_operations arpnat_info_sops = {
++	.start = arpnat_start,
++	.next  = arpnat_next,
++	.stop  = arpnat_stop,
++	.show  = arpnat_info_show
++};
++
++static int arpnat_cache_open(struct inode *inode, struct file* file)
 +{
-+	ARPNAT_TRACE
-+	if(offset>0)
-+		return 0;
-+	*eof=1;
-+	length = 0;
-+	length += sprintf(buffer+length, "Debug: %d\nBOOTPNAT: %d\n", debug, bootpnat);
-+	return length;
++	return seq_open(file, &arpnat_cache_sops);
 +}
++static int arpnat_info_open(struct inode *inode, struct file* file)
++{
++	return seq_open(file, &arpnat_info_sops);
++}
++
++
++static struct file_operations arpnat_cache_fops = {
++	.owner   = THIS_MODULE,
++	.open    = arpnat_cache_open,
++	.read    = seq_read,
++	.llseek  = seq_lseek,
++	.release = seq_release
++};
++static struct file_operations arpnat_info_fops = {
++	.owner   = THIS_MODULE,
++	.open    = arpnat_info_open,
++	.read    = seq_read,
++	.llseek  = seq_lseek,
++	.release = seq_release
++};
++
++
 +
 +#endif
 +
-+static unsigned int ebt_arpnat_tg(struct sk_buff *pskb, const struct xt_action_param *par)
++
++static unsigned int ebt_target_arpnat(struct sk_buff *pskb, const struct xt_action_param *par)
 +{
 +	const struct net_device *in  =  par->in;
 +	const struct net_device *out =  par->out;
 +
-+	struct ebt_nat_info *info = (struct ebt_nat_info *) par->targinfo;
++	const struct ebt_nat_info *info = (struct ebt_nat_info *) par->targinfo;
 +
 +	struct arphdr *ah = NULL;
 +	struct arphdr _arph;
++
 +
 +	//used for target only
 +	uint8_t* eth_smac = eth_hdr(pskb)->h_source;
@@ -3779,15 +2934,10 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +	struct mac2ip* entry = NULL;
 +	unsigned long flags;
 +
-+	ARPNAT_TRACE
-+
-+	if (debug & (1<<1))
-+		printk("[%s] "STRMAC" -> "STRMAC"\n", in?"IN":"OUT", MAC2STR(eth_smac), MAC2STR(eth_dmac));
-+
 +	/* if it's an arp packet, initialize pointers to arp source/dest ip/mac addresses in skb */
 +	if (eth_hdr(pskb)->h_proto == __constant_htons(ETH_P_ARP))
 +	{
-+		if(debug & (1<<0))
++		if(debug)
 +		{
 +			printk("ARPNAT ARP DETECTED\n");
 +		}
@@ -3808,15 +2958,18 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +	
 +	if (in)
 +	{
++		struct net_bridge_port *in_br_port;
++		in_br_port = br_port_get_rcu(in);
++
 +		/* handle input packets */
-+		if(debug & (1<<0))
++		if(debug)
 +		{
 +			printk("ARPNAT INBOUND DETECTED\n");
 +		}
 +
 +		if (ah)
 +		{
-+			if(debug & (1<<0))
++			if(debug)
 +			{
 +				printk("IN ARPNAT:\n");
 +				printk("          arp_smac="STRMAC", arp_dmac="STRMAC"\n", MAC2STR(arp_smac), MAC2STR(arp_dmac));
@@ -3836,14 +2989,16 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +
 +			}
 +
-+			if (inet_confirm_addr( __in_dev_get_rcu(br_port_get_rcu(in)->br->dev) , 0, *arp_dip, RT_SCOPE_HOST))
++
++			if (inet_confirm_addr( __in_dev_get_rcu(in_br_port->br->dev) , 0, *arp_dip, RT_SCOPE_HOST))
 +			{
-+				if (debug & (1<<0))
++				if (debug)
 +				{
 +					printk("          TO US\n");
 +				}
 +				return info->target;
 +			}
++
 +
 +			spin_lock_irqsave(&arpnat_lock, flags);
 +			entry = find_ip_nat(&arpnat_table, *arp_dip);
@@ -3854,10 +3009,10 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +				if (entry)
 +				{
 +					uint32_t dip = *arp_dip;
-+					uint32_t sip = inet_select_addr(br_port_get_rcu(in)->br->dev, dip, RT_SCOPE_LINK);
++					uint32_t sip = inet_select_addr(in_br_port->br->dev, dip, RT_SCOPE_LINK);
 +					if (! (eth_dmac[0] & 1))
 +					{
-+						if (debug & (1<<0))
++						if (debug)
 +						{
 +							printk("          "STRMAC" -> "STRMAC"\n", MAC2STR(eth_dmac), MAC2STR(entry->data.mac));
 +						}
@@ -3868,9 +3023,9 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +					spin_unlock_irqrestore(&arpnat_lock, flags);
 +					/*if (dip != sip)
 +					{
-+						if (debug & (1<<0))
++						if (debug)
 +							printk("SEND ARP REQUEST: "STRIP" -> "STRIP"\n", IP2STR(sip), IP2STR(dip));
-+						arp_send(ARPOP_REQUEST, ETH_P_ARP, dip, &br_port_get_rcu(in)->br->dev, sip, NULL, br_port_get_rcu(in)->br->dev.dev_addr, NULL);
++						arp_send(ARPOP_REQUEST, ETH_P_ARP, dip, &in_br_port->br->dev, sip, NULL, in_br_port->br->dev.dev_addr, NULL);
 +					}*/
 +					return info->target;
 +				}
@@ -3887,7 +3042,7 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +				uh = (struct udphdr*)((u_int32_t *)iph + iph->ihl);
 +				if(uh->dest == htons(67) || uh->dest == htons(68) )
 +				{
-+					// BOOTP Relay
++					//do something illegal for BOOTP
 +					uint32_t* giaddrp = (uint32_t*)(((uint8_t*)uh) + sizeof(*uh) + GIADDR_OFFSET);
 +					uint8_t* mac = (uint8_t*)(giaddrp + 1);
 +					uint32_t ihl = iph->ihl << 2;
@@ -3897,7 +3052,7 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +					//iph->daddr = 0xffffffff;
 +					// Recall the original BOOTP CHADDR
 +					memcpy(mac, &chaddr_orig_bootp_relay, ETH_ALEN);
-+					if (debug & (1<<0))
++					if (debug)
 +					{
 +						printk("IN BOOTPRELAY: "STRMAC"["STRIP"] -> "STRMAC"["STRIP"]\n", MAC2STR(eth_dmac), IP2STR(orig_daddr), MAC2STR(mac), IP2STR(iph->daddr));
 +					}
@@ -3928,18 +3083,18 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +				entry = find_ip_nat(&arpnat_table, iph->daddr);
 +				if (entry)
 +				{
-+					if (inet_confirm_addr( __in_dev_get_rcu(br_port_get_rcu(in)->br->dev),  0, entry->data.ip, RT_SCOPE_HOST))
++					if (inet_confirm_addr( __in_dev_get_rcu(in_br_port->br->dev),  0, entry->data.ip, RT_SCOPE_HOST))
 +					{
 +						//to me
-+						if (debug & (1<<0))
++						if (debug)
 +						{
-+							printk("IP PKT TO ME: "STRMAC"["STRIP"] -> "STRMAC"[type: %d]\n", MAC2STR(eth_dmac), IP2STR(iph->daddr), MAC2STR(br_port_get_rcu(in)->br->dev->dev_addr), (pskb)->pkt_type);
++							printk("IP PKT TO ME: "STRMAC"["STRIP"] -> "STRMAC"[type: %d]\n", MAC2STR(eth_dmac), IP2STR(iph->daddr), MAC2STR(in_br_port->br->dev->dev_addr), (pskb)->pkt_type);
 +						}
-+						memcpy(eth_dmac, br_port_get_rcu(in)->br->dev->dev_addr, ETH_ALEN);
++						memcpy(eth_dmac, in_br_port->br->dev->dev_addr, ETH_ALEN);
 +					}
 +					else
 +					{
-+						if (debug & (1<<0))
++						if (debug)
 +						{
 +							printk("IP PKT TO OTHER: "STRMAC"["STRIP"] -> "STRMAC"[type: %d]\n", MAC2STR(eth_dmac), IP2STR(iph->daddr), MAC2STR(entry->data.mac), (pskb)->pkt_type);
 +						}
@@ -3955,7 +3110,7 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +		
 +		if (! (eth_dmac[0] & 1))
 +		{
-+			if (memcmp(br_port_get_rcu(in)->br->dev->dev_addr, eth_dmac, ETH_ALEN) && memcmp(in->dev_addr, eth_dmac, ETH_ALEN))
++			if (memcmp(in_br_port->br->dev->dev_addr, eth_dmac, ETH_ALEN) && memcmp(in->dev_addr, eth_dmac, ETH_ALEN))
 +			{
 +				return EBT_DROP;
 +			}
@@ -3967,13 +3122,17 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +			}
 +			else
 +			{
-+				memcpy(eth_dmac, br_port_get_rcu(in)->br->dev->dev_addr, ETH_ALEN);
++				memcpy(eth_dmac, in_br_port->br->dev->dev_addr, ETH_ALEN);
 +			}
 +			spin_unlock_irqrestore(&arpnat_lock, flags);
 +		}
 +	}
 +	else if (out)
 +	{
++		struct net_bridge_port *out_br_port;
++		out_br_port = br_port_get_rcu(out);
++
++
 +		/* handle outbound packets */
 +		if (ah)
 +		{
@@ -3984,11 +3143,11 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +
 +				
 +				/* do BR ip lookup */
-+				if(inet_confirm_addr( __in_dev_get_rcu(br_port_get_rcu(out)->br->dev), 0, *arp_dip, RT_SCOPE_HOST))
++				if(inet_confirm_addr( __in_dev_get_rcu(out_br_port->br->dev), 0, *arp_dip, RT_SCOPE_HOST))
 +				{
 +					return info->target;
 +				}
-+				if(!inet_confirm_addr( __in_dev_get_rcu(br_port_get_rcu(out)->br->dev), 0, *arp_sip, RT_SCOPE_HOST))
++				if(!inet_confirm_addr( __in_dev_get_rcu(out_br_port->br->dev), 0, *arp_sip, RT_SCOPE_HOST))
 +				{
 +					spin_lock_irqsave(&arpnat_lock, flags);
 +					update_arp_nat(&arpnat_table, arp_smac, *arp_sip);
@@ -3998,7 +3157,7 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +				//pskb = skb_unshare(pskb, GFP_ATOMIC);
 +				eth_smac = eth_hdr(pskb)->h_source;
 +				arp_smac = skb_network_header(pskb) + sizeof(struct arphdr);
-+				if (debug & (1<<0))
++				if (debug)
 +				{
 +					printk("OUT ARPNAT: "STRMAC" -> "STRMAC"\n", MAC2STR(eth_smac), MAC2STR(out->dev_addr));
 +					printk("           arp_smac="STRMAC", arp_dmac="STRMAC"\n", MAC2STR(arp_smac), MAC2STR(arp_dmac));
@@ -4022,7 +3181,7 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +				break;
 +			}
 +		}
-+		else if (bootpnat && eth_hdr(pskb)->h_proto == __constant_htons(ETH_P_IP) && memcmp(br_port_get_rcu(out)->br->dev->dev_addr, eth_smac, ETH_ALEN))
++		else if (bootpnat && eth_hdr(pskb)->h_proto == __constant_htons(ETH_P_IP) && memcmp(out_br_port->br->dev->dev_addr, eth_smac, ETH_ALEN))
 +		{
 +			struct iphdr *iph = ip_hdr(pskb);
 +			struct udphdr *uh = NULL;
@@ -4031,15 +3190,15 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +				uh = (struct udphdr*)((u_int32_t *)iph + iph->ihl);
 +				if (uh->dest == htons(67) || uh->dest == htons(68) )
 +				{
-+					// BOOTP Relay
-+					uint32_t giaddr = inet_select_addr(br_port_get_rcu(out)->br->dev, iph->daddr, RT_SCOPE_LINK);
-+					uint32_t *giaddrp = (uint32_t*)(((uint8_t*)uh) + sizeof(*uh) + GIADDR_OFFSET);
++					//do something illegal for BOOTP
++					uint32_t giaddr = inet_select_addr(out_br_port->br->dev, iph->daddr, RT_SCOPE_LINK);
++					uint32_t* giaddrp = (uint32_t*)(((uint8_t*)uh) + sizeof(*uh) + GIADDR_OFFSET);
 +					uint8_t *chaddrp = (uint8_t*)(((uint8_t*)uh) + sizeof(*uh) + CHADDR_OFFSET);
 +					uint32_t ihl = iph->ihl << 2;
 +					uint32_t size = (pskb)->len - ihl;
-+					if (debug & (1<<0))
++					if (debug)
 +					{
-+						printk("OUT BOOTPRELAY: "STRMAC"["STRIP"] -changed-> "STRMAC"["STRIP"]\n", MAC2STR(eth_smac), IP2STR(*giaddrp), MAC2STR(out->dev_addr), IP2STR(giaddr));
++						printk("OUT BOOTPRELAY: "STRIP" -> "STRIP"\n", IP2STR(*giaddrp), IP2STR(giaddr));
 +					}
 +					*giaddrp = giaddr;
 +					// Save off the original BOOTP CHADDR
@@ -4064,20 +3223,19 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +	return info->target;
 +}
 +
-+static int ebt_arpnat_tg_check(const struct xt_tgchk_param *par)
++static int ebt_target_nat_arpcheck(const struct xt_tgchk_param *par)
 +{
-+	ARPNAT_TRACE
 +	return 0;
 +}
-+static struct xt_target ebt_arpnat_tg_reg __read_mostly =
++static struct xt_target arpnat =
 +{
 +	.name		= EBT_ARPNAT_TARGET,
 +	.revision	= 0,
 +	.family		= NFPROTO_BRIDGE,
 +	.table		= "nat",
 +	.hooks		= (1 << NF_BR_NUMHOOKS) | (1 << NF_BR_POST_ROUTING) |  (1 << NF_BR_PRE_ROUTING) ,
-+	.target		= ebt_arpnat_tg, 
-+	.checkentry	= ebt_arpnat_tg_check,
++	.target		= ebt_target_arpnat, 
++	.checkentry	= ebt_target_nat_arpcheck,
 +	.targetsize	= XT_ALIGN(sizeof(struct ebt_nat_info)),
 +	.me		= THIS_MODULE
 +};
@@ -4085,74 +3243,97 @@ diff -urN linux-3.7-rc3-next-20121102/net/bridge/netfilter/ebt_arpnat.c linux-3.
 +static int __init init(void)
 +{
 +#ifdef CONFIG_PROC_FS
-+	struct proc_dir_entry *proc_arpnat_debug = create_proc_entry("arpnat_debug", 0, NULL);
 +	struct proc_dir_entry *proc_arpnat_info  = create_proc_entry("arpnat_info", 0, NULL);
 +	struct proc_dir_entry *proc_arpnat_cache = create_proc_entry("arpnat_cache", 0, NULL);
-+#endif
-+
-+	ARPNAT_TRACE
-+#ifdef CONFIG_PROC_FS
-+	if(proc_arpnat_debug)
-+	{
-+		proc_arpnat_debug->read_proc = arpnat_debug_read;
-+		proc_arpnat_debug->write_proc = arpnat_debug_write;
-+	}
 +	if(proc_arpnat_info)
 +	{
-+		proc_arpnat_info->read_proc = arpnat_info_read;
++		proc_arpnat_info->proc_fops = &arpnat_info_fops;
 +	}
++	
 +	if(proc_arpnat_cache)
 +	{
-+		proc_arpnat_cache->read_proc = arpnat_cache_read;
++		proc_arpnat_cache->proc_fops = &arpnat_cache_fops;
 +	}
 +#endif
-+	return xt_register_target(&ebt_arpnat_tg_reg);
++	return xt_register_target(&arpnat);
 +}
 +
 +static void __exit fini(void)
 +{
-+	ARPNAT_TRACE
-+	xt_unregister_target(&ebt_arpnat_tg_reg);
++	xt_unregister_target(&arpnat);
 +	free_arp_nat(&arpnat_table);
 +#ifdef CONFIG_PROC_FS
 +	remove_proc_entry("arpnat_info", NULL);
 +	remove_proc_entry("arpnat_cache", NULL);
-+	remove_proc_entry("arpnat_debug", NULL);
 +#endif
 +}
 +
 +module_init(init);
 +module_exit(fini);
 +MODULE_LICENSE("GPL");
-diff -urN linux-3.7-rc3-next-20121102/net/wireless/core.c linux-3.7-rc3-next-20121102-lt1/net/wireless/core.c
---- linux-3.7-rc3-next-20121102/net/wireless/core.c	2012-11-04 13:31:58.903098442 -0500
-+++ linux-3.7-rc3-next-20121102-lt1/net/wireless/core.c	2012-11-04 11:12:43.710892789 -0500
-@@ -862,10 +862,10 @@
++
++
+diff -urN a/net/wireless/core.c b/net/wireless/core.c
+--- a/net/wireless/core.c	2012-12-10 22:30:57.000000000 -0500
++++ b/net/wireless/core.c	2012-12-11 07:26:34.000000000 -0500
+@@ -859,8 +859,7 @@
  		if (!dev->ethtool_ops)
  			dev->ethtool_ops = &cfg80211_ethtool_ops;
  
 -		if ((wdev->iftype == NL80211_IFTYPE_STATION ||
 -		     wdev->iftype == NL80211_IFTYPE_P2P_CLIENT ||
--		     wdev->iftype == NL80211_IFTYPE_ADHOC) && !wdev->use_4addr)
--			dev->priv_flags |= IFF_DONT_BRIDGE;
-+//		if ((wdev->iftype == NL80211_IFTYPE_STATION ||
-+//		     wdev->iftype == NL80211_IFTYPE_P2P_CLIENT ||
-+//		     wdev->iftype == NL80211_IFTYPE_ADHOC) && !wdev->use_4addr)
-+//			dev->priv_flags |= IFF_DONT_BRIDGE;
++		if ((wdev->iftype == NL80211_IFTYPE_P2P_CLIENT ||
+ 		     wdev->iftype == NL80211_IFTYPE_ADHOC) && !wdev->use_4addr)
+ 			dev->priv_flags |= IFF_DONT_BRIDGE;
  		break;
- 	case NETDEV_GOING_DOWN:
- 		switch (wdev->iftype) {
-diff -urN linux-3.7-rc3-next-20121102/net/wireless/util.c linux-3.7-rc3-next-20121102-lt1/net/wireless/util.c
---- linux-3.7-rc3-next-20121102/net/wireless/util.c	2012-11-04 13:31:58.912098452 -0500
-+++ linux-3.7-rc3-next-20121102-lt1/net/wireless/util.c	2012-11-04 11:12:43.714892793 -0500
-@@ -867,8 +867,8 @@
- 			/* fall through */
+diff -urN a/net/wireless/nl80211.c b/net/wireless/nl80211.c
+--- a/net/wireless/nl80211.c	2012-12-10 22:30:57.000000000 -0500
++++ b/net/wireless/nl80211.c	2012-12-11 07:26:34.000000000 -0500
+@@ -1881,8 +1881,6 @@
+ 			       enum nl80211_iftype iftype)
+ {
+ 	if (!use_4addr) {
+-		if (netdev && (netdev->priv_flags & IFF_BRIDGE_PORT))
+-			return -EBUSY;
+ 		return 0;
+ 	}
+ 
+diff -urN a/net/wireless/util.c b/net/wireless/util.c
+--- a/net/wireless/util.c	2012-12-10 22:30:57.000000000 -0500
++++ b/net/wireless/util.c	2012-12-11 07:26:34.000000000 -0500
+@@ -813,7 +813,6 @@
+ 	/* if it's part of a bridge, reject changing type to station/ibss */
+ 	if ((dev->priv_flags & IFF_BRIDGE_PORT) &&
+ 	    (ntype == NL80211_IFTYPE_ADHOC ||
+-	     ntype == NL80211_IFTYPE_STATION ||
+ 	     ntype == NL80211_IFTYPE_P2P_CLIENT))
+ 		return -EBUSY;
+ 
+@@ -861,14 +860,11 @@
+ 	if (!err) {
+ 		dev->priv_flags &= ~IFF_DONT_BRIDGE;
+ 		switch (ntype) {
+-		case NL80211_IFTYPE_STATION:
+-			if (dev->ieee80211_ptr->use_4addr)
+-				break;
+-			/* fall through */
  		case NL80211_IFTYPE_P2P_CLIENT:
  		case NL80211_IFTYPE_ADHOC:
--			dev->priv_flags |= IFF_DONT_BRIDGE;
--			break;
-+//			dev->priv_flags |= IFF_DONT_BRIDGE;
-+//			break;
+ 			dev->priv_flags |= IFF_DONT_BRIDGE;
+ 			break;
++		case NL80211_IFTYPE_STATION:
  		case NL80211_IFTYPE_P2P_GO:
  		case NL80211_IFTYPE_AP:
  		case NL80211_IFTYPE_AP_VLAN:
+diff -urN a/scripts/setlocalversion b/scripts/setlocalversion
+--- a/scripts/setlocalversion	2012-12-10 22:30:57.000000000 -0500
++++ b/scripts/setlocalversion	2012-12-11 07:26:34.000000000 -0500
+@@ -169,7 +169,7 @@
+ 	# LOCALVERSION= is not specified
+ 	if test "${LOCALVERSION+set}" != "set"; then
+ 		scm=$(scm_version --short)
+-		res="$res${scm:++}"
++#		res="$res${scm:++}"
+ 	fi
+ fi
+ 
