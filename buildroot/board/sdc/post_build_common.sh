@@ -25,4 +25,10 @@ install -m 600 $HOME/.ssh/id_rsa.pub $TARGETDIR/root/.ssh/authorized_keys
 # delete the default ssh init file
 rm -f $TARGETDIR/etc/init.d/S50sshd
 
+# install libnl*.so.3 links
+(   cd "$TARGETDIR/usr/lib" &&
+    ln -sf libnl-3.so libnl.so.3 &&
+    ln -sf libnl-genl-3.so libnl-genl.so.3  )
+
+
 echo "COMMON POST BUILD script: done."
