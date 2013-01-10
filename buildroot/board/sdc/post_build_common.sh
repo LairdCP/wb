@@ -19,9 +19,6 @@ set -x -e
 # if necessary, by the product specific rootfs-additions
 tar c --exclude=.svn -C board/sdc/rootfs-additions-common/ . | tar x -C $TARGETDIR/
 
-# Copy the product specific rootfs additions
-tar c --exclude=.svn -C board/sdc/wb40n/rootfs-additions/ . | tar x -C $TARGETDIR/
-
 # copy my RSA public key to device
 install -d -m 700 $TARGETDIR/root/.ssh
 install -m 600 $HOME/.ssh/id_rsa.pub $TARGETDIR/root/.ssh/authorized_keys
