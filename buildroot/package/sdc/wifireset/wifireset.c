@@ -1,3 +1,8 @@
+/*
+ * For the wb40nbt to use w/Dongle-Host-Driver module.
+ *   D.Siganos for Lairdtech
+ */
+
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/gpio.h>
