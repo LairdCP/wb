@@ -34,5 +34,7 @@ rm -f $TARGETDIR/etc/init.d/S50sshd
     ln -sf libnl-3.so libnl.so.3 &&
     ln -sf libnl-genl-3.so libnl-genl.so.3  )
 
+# Services to disable by default
+chmod a-x "$TARGETDIR/etc/init.d/S59snmpd"
 
 echo "COMMON POST BUILD script: done."
