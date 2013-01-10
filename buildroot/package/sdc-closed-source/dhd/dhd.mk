@@ -33,7 +33,7 @@ define DHD_INSTALL_TARGET_CMDS
 	$(MAKE) --no-print-directory -C $(LINUX_DIR) kernelrelease ARCH=arm CROSS_COMPILE="$(TARGET_CROSS)" > $(@D)/kernel.release
 	$(MAKE) --no-print-directory -C $(LINUX_DIR) kernelversion ARCH=arm CROSS_COMPILE="$(TARGET_CROSS)" > $(@D)/kernel.version
 	$(INSTALL) -D -m 644 $(@D)/open-src/src/dhd/linux/dhd-cdc-sdmmc-cfg80211-gpl$(DHD_DEBUG)-`cat $(@D)/kernel.release`/dhd.ko  \
-        $(TOPDIR)/board/sdc/wb40n/rootfs-additions/lib/modules/`cat $(@D)/kernel.release`/kernel/drivers/net/wireless/dhd.ko;
+        $(TOPDIR)/board/sdc/wb40n/rootfs-additions/lib/modules/`cat $(@D)/kernel.release`/kernel/extra/net/wireless/dhd.ko;
     $(INSTALL) -D -m 644 $(@D)/firmware/4329b1/$(DHD_FIRMWARE_FILENAME) \
         $(DHD_TARGET_DIR)/etc/summit/firmware/$(DHD_FIRMWARE_FILENAME)
     $(INSTALL) -D -m 644 $(@D)/nvram/production.nv $(DHD_TARGET_DIR)/etc/summit/nvram/nv
