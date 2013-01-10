@@ -37,7 +37,7 @@ do_platform_update_notify()
 	while :
 	do
 	  sleep 7
-	  if ifconfig eth0 2>/dev/null |grep -q inet
+	  if ifconfig eth0 2>/dev/null |grep -q "inet addr:[1-9]"
 	  then
 	    if fw_update -- 2>/dev/null \
 	    && fw_update --ns $2 update_success 
@@ -60,13 +60,23 @@ do_platform_update_notify()
 MAC=00:17:23:00:00:00
 
 # extract wb platform-specific information 
-# the version number proper is parsed from the summit-release file
+# the version number proper is parsed from the `hostname`-release file
 # the wb type and images come from the kernel cmdline:  wbNNxxx=ab/ab
 # missing data is tolerated
-wbv=$( sed -n "s/.* \([a-z0-9]*\)/\1/p" /etc/summit-release 2>/dev/null )
-eval `sed -n "/.*wb[0-9][0-9][a-z]*=/\
-  s/.* \(wb[0-9][0-9][a-z]*\)=\([ab]\/[ab]\).*/\ wbt=\1_ wbi=~\2/p" \
-    /proc/cmdline`
+if [ -f /etc/${HOSTNAME}-release ]
+then
+  read -r x </etc/${HOSTNAME}-release && wbv=${x##*\ }
+  read -r x </proc/cmdline \
+  && for i in $x
+     do
+       case $i in wb[0-9][0-9]*) wbt=${i%%=*}_ wbi=~${i##*=};; esac
+     done
+#  wbv=$( sed -n "s/.* \([a-z0-9]*\)/\1/p" /etc/summit-release 2>/dev/null )
+#  eval `sed -n "/.*wb[0-9][0-9][a-z]*=/\
+#    s/.* \(wb[0-9][0-9][a-z]*\)=\([ab]\/[ab]\).*/\ wbt=\1_ wbi=~\2/p" \
+#      /proc/cmdline`
+fi
+
 
 case $1 in
   
@@ -81,9 +91,11 @@ case $1 in
       random_mac=`dd if=/dev/urandom bs=1 count=3 2>/dev/null \
         |/usr/bin/od -t x1 -N 3 \
         |/bin/sed -n '1s/^....... \(..\) \(..\) \(..\)/00:17:23:\1:\2:\3/p'`
+
       echo "    storing new (randomized) mac address: $random_mac"
       ifconfig eth0 hw ether $random_mac
       fw_setenv ethaddr $random_mac
+
       touch /tmp/platform_update_request
     fi
 
@@ -106,8 +118,8 @@ case $1 in
     then
       echo "  clearing updated_rootfs-${ufv:0:1} flag"
       fw_setenv updated_rootfs
-      echo -en "    calculating module dependencies..."
-      depmod -a && echo || echo ERROR
+      #echo -en "    calculating module dependencies..."
+      #depmod -a && echo || echo ERROR
     fi
 
     ## check for updated_platform and settings
@@ -136,19 +148,6 @@ case $1 in
         fw_select --transfer-system-settings
       fi
     
-      if [ -n "$mtd7" ]
-      then
-        # ensure extra partition is usable if enabled
-        if ! ubiattach -p /dev/mtd7
-        then
-          echo "  preparing /dev/mtd7 with UBIFS"
-          flash_erase /dev/mtd7 0 0
-          ubiformat /dev/mtd7
-          ubiattach -p /dev/mtd7
-          ubimkvol /dev/ubi1 -N ubifs -m
-        fi
-        ubidetach -p /dev/mtd7
-      fi
     fi
     ;;
     
@@ -161,3 +160,12 @@ case $1 in
 esac
 
 exit 0
+     #  if ! ubiattach -p /dev/mtd7
+     #  then
+     #    echo "  preparing /dev/mtd7 with UBIFS"
+     #    flash_erase /dev/mtd7 0 0
+     #    ubiformat /dev/mtd7
+     #    ubiattach -p /dev/mtd7
+     #    ubimkvol /dev/ubi1 -N ubifs -m
+     #  fi
+     #  ubidetach -p /dev/mtd7

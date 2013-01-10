@@ -4,7 +4,7 @@ trap "" 1 15
 xc=\\033[1K\\\r
 
 ETH_WIRED=eth0
-ETH_WIFI=eth1
+ETH_WIFI=wlan0
 BRIDGE=br0
 
 [ -x /usr/sbin/brctl ] || { echo "brctl n/a"; exit 1; }
@@ -13,8 +13,8 @@ BRIDGE=br0
 waitfor_interface() {
   delay='usleep 200000'
   let n=0
-  echo -en \ \ $1..
-  while ! grep -q $1 /proc/net/dev
+  echo -en \ \ ${1}..
+  while ! grep -q ${1} /proc/net/dev
   do
     echo -en .
     [ 10 -gt $n ] || { echo N/A; return 1; }
@@ -29,7 +29,7 @@ waitfor_initscript() {
   delay='usleep 1000000'
   let n=0
   # if script active, then wait for it to finish 
-  while ps |grep -q S[0-9][0-9]$1
+  while ps |grep -q "S[0-9][0-9]${1}"
   do
     [ 0 -eq $n ] && echo \ \ waiting for $1...
     #echo -en .

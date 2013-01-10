@@ -13,7 +13,7 @@ eni=/etc/network/interfaces
 
 # defaults in lieu of a bridge_settings from cli or from /e/n/i file
 bridge_device="br0"
-bridge_ports="eth0 eth1"
+bridge_ports="eth0 wlan0"
 bridge_setfd="0"
 bridge_stp="off"
 bridge_method="dhcp"

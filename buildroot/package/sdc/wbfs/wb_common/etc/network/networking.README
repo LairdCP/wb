@@ -42,30 +42,34 @@ A system command is provided:
     ( Note: ifrc may be disabled with:  /etc/default/ifrc.disable )
   
   Flags:
-    -t   test, no action
-    -q   quiet, no stdout
-    -v   verbose, multi-level
-    -w   watch the log file
-    -r   remove the log file
-    -e   edit the /e/n/i file
+    -h   this helpful summary
+    -t   test only, no action
+    -q   be quiet, no stdout
+    -v   be more verbose ...
+    -n   no logging to files
+    -r   remove the log files
     -x   run w/o netlink daemon
-    -h   this helpful cruft
-  
+    -m   monitor nl/ifrc events
+
   Interface:
     must be kernel-resident of course
     can be an alias (such as 'wl' for wireless)
   
   Action:
-    show   - default
-    up|dn   - up or down an interface
-    stop|start|restart   - also act on init/driver
+    stop|start|restart   - act on phy-init/driver (up/down the hw-phy)
+    auto|noauto   - set or unset auto-starting interface at bootup (via init)
+    status   - check a configured interface and report its ip-address
+    up|dn   - up or down the interface configuration (up/down the iface)
+    show   - specific interface info, or general info (default action)
+    eni   - edit file: /etc/network/interfaces
+    help   - view file: /etc/network/networking.README (you're reading it)
   
   Method:
     dhcp [<param=value> ...]
        - employ client to new get lease, info stored in leases file
          address=x.x.x.x   - request an ip address from dhcp server
          timeout=nn   - seconds to allow client to try/await response
-         speed=10baseT...   - use fixed port speed during dhcp trial
+         portspeed=10baseT...   - use fixed port speed during dhcp trial
   
     static [<param=x.x.x.x[\nn]> ...]
        - use settings from /e/n/i file or those given on commandline
@@ -73,9 +77,13 @@ A system command is provided:
 
     loopback [param=value>]
        - use to set a specific localhost address
+
+    manual
+       - the interface will not be configured
+
   
   Usage:
-  # ifrc [flags...] <interface> [<action>] [<method> [<param=value> [...]]
+  # ifrc [flags...] [<interface>] [<action>] [<method> [<param=value> ...]]
 
 
 
@@ -194,17 +202,17 @@ parameters are deferred, via netlink.
 
 
 <f.> the dhcp client
-As managed by ifrc, the DHCP client is used only to obtain a lease and then will
-exit.  (In the cases of intermittant connectivity, such as wireless... a client
-has to often be restarted anyway or is otherwise rather useless.)  The client
-will keep trying, unless a timeout is specified.
+As managed by ifrc, the DHCP client is started and runs in the background.  In
+the cases of intermittant connectivity, such as wireless... the client may be
+restarted as required.  Unless a timeout is specified, the client will always
+keep re-trying.
 
 The default DHCP client is udhcpc.  This simple DHCP client is configured to
 send lease requests in sets of 4 at repeated intervals, until responded to.
 It relies on a configuration script in /etc/dhcp and upon success will write to
 a leases file in /var/lib/dhcp.
 
-An alternative client is dhclient.
+An alternative client is dhclient. (there are some issues with using dhclient)
 
 
 
@@ -233,7 +241,7 @@ init:
     :
 
 
-The init.d/rcS script will background called scripts that have '...' extension.
+The init.d/rcS script will background, called scripts that have '.bg' extension.
 The S??network script can be backgrounded during init too.
 
 -eof-

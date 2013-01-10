@@ -8,7 +8,7 @@ if [ ! "${profile_domain##*=}" == "3" ]; then
 fi
 
 # look for a country code in any of the beacons, use the first we see
-country=`iw dev eth1 scan | grep Country | head -n 1 | awk '{print $2}'`
+country=`iw dev wlan0 scan | grep Country | head -n 1 | awk '{print $2}'`
 if [ -z "$country" ]; then
     logger "No country code found. Exiting."
     exit

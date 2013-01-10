@@ -1,5 +1,6 @@
 # /etc/network/interfaces
 # Usually included by the "ifupdown" package, however "ifrc" is used instead.
+#
 # This file is parsed by the networking init script, and also by "ifrc".
 # 
 # Organized by sections:  Localhost, Wired, Serial, Wireless, ...
@@ -58,7 +59,7 @@ iface ppp0 inet manual
 # Wireless
 auto wl
 iface wl inet dhcp
-  alias wl is eth1
+  alias wl is wlan0
   #timeout 60
   #pre-cfg-do echo -e "\a\t[ ...associated! ...applying settings ]"
   #post-cfg-do echo -e "\a\t[ ...ready! ]"
@@ -71,9 +72,10 @@ iface wl inet dhcp
 # works with a mode setup script in /etc/network/
 #auto br0
 iface br0 inet dhcp
-  bridge_ports eth0 eth1
+  bridge_ports eth0 wlan0
   bridge_stp off
   bridge_fd 0
+  #post-cfg-do /etc/network/bridge_mode.conf
   #post-cfg-do /etc/network/bridge_mode.conf
 #iface eth0 inet static
   address 192.168.33.10
@@ -92,10 +94,4 @@ iface usb0 inet manual
   post-cfg-do /etc/network/usb-g_ether.conf
   pre-dcfg-do /etc/network/usb-g_ether.conf
  
-
-
-
-
-
-
 

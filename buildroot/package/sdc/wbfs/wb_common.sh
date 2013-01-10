@@ -1,20 +1,30 @@
 #!/bin/bash
 # board/sdc/wbfs/wb_common.sh
 # package/sdc/wbfs/wb_common.sh
-# This script is designed to run via finalize or package-wbfs.
+# This script is designed to run via finalize-wrapper or package-wbfs (best).
 #
-# Handles common filesystem tweaking for wb-platform_name.
+# Dynamically, handles some common filesystem tweaking for wb-platform_name.
+# a.) Removes some 'embedded' files/directories, that we do not want on the wb.
+#
+# b.) Implements work-around for 'makedev -d <device_table.txt>' feature/fault,
+#    if a copy of the _table_txt file is available (must be done ahead of time).
+#
+# c.) Dynamically modifies /etc/{group,shadow,passwd,issue} files and creates a
+#    directory in /home, based on the generic_hostname and generic_issue values
+#    as set in BR2 configuration.
+#
 # jon.hefling@lairdtech.com
+
 
 wbfs=$( pwd |grep /wbfs ) || { echo must run in sdc/wbfs; exit 2; }
 
+# output/target
 target=${TARGET_DIR:-$1}
 [ -d "$target" ] || { echo TARGET_DIR not set; exit 2; }
 
 brcfg=$target/../../.config
-[ -f $brcfg ] || { echo cannot find buildroot output/.config; exit 2; } 
 
-
+###
 ## wb_common configuration
 # related items to keep or remove (comment-out to remove)
 k_default=:
@@ -41,12 +51,14 @@ $k_ifup rm -fr $target/etc/network/if-*
 $k_bash rm -f $target/root/.bash*
 $k_bash rm -fr $target/etc/bash*
 
-# also check that items in an existing copy of device_table.txt are compatible
+
+# also check that items in an existing *copy* of device_table.txt are compatible
 if [ -f "$target/../build/${device_table_txt##*/}" ]
 then
-  # Note that 'makedev -d generic/device_table.txt' is performed after
-  # the finalize-stage, and potentially conflicts with what we want to
-  # include or not, during this operation.
+  ## Note that 'makedev -d generic/device_table.txt' is performed after
+  ## the finalize-stage, and potentially conflicts with what we want to
+  ## include or not, here, during finalize. (feature/fault)
+  echo "dynamically adjusting *-device_table.txt entries"
 
   # dynamically add hostname as a user
   if [ -n "$gen_hostname" ] \
@@ -59,28 +71,23 @@ then
     sed -i "/${home_hostname}/s/Ts /\t/g" ${device_table_txt}
   fi
 
-  # remove items we don't want
-  $k_ifup sed -i 's,^/etc/network/if-.*,#&,' ${device_table_txt} 2>/dev/null
+  # remove debian items we don't want
+  $k_ifup sed -i 's,^/etc/network/if-.*,#&,' ${device_table_txt}
 
-  sed -i 's,^/usr/share/udhcpc/default.script,#&,' ${device_table_txt} 2>/dev/null
+  sed -i 's,^/usr/share/udhcpc/default.script,#&,' ${device_table_txt}
 fi
 
 
 grep_add_to() {
-  if ! grep -q "${2%%:*}" $target${1}
+  if ! grep -q "${2%%:*}" $target${1} 2>/dev/null
   then
-    echo wrote to $1
-    echo $2 >> $target${1} 
+    echo adding ${2%%:*}
+    echo $2 >> $target${1} || { echo grep_add_to: $1 error; exit 1; }
   fi
 }
 
-# adjust etc/passwd
-if [ -n "$gen_hostname" ]
-then
-  grep_add_to /etc/passwd "${gen_hostname}:x:1001:1001:${gen_issue}:${home_hostname}:/bin/sh"
-fi
-
 # adjust etc/group
+echo "writing: '/etc/group'"
 grep_add_to /etc/group "lp:x:7:"
 grep_add_to /etc/group "kmem:x:9:"
 grep_add_to /etc/group "floppy:x:11:"
@@ -94,25 +101,30 @@ then
   grep_add_to /etc/group "${gen_hostname}:x:1001:"
 fi
 
-# create etc/shadow
-cat $wbfs/password.root > $target/etc/shadow.NEW
-sed '/root/d; /ftp/d; /default/d' $target/etc/shadow \
-  >> $target/etc/shadow.NEW
-cat $wbfs/password.ftp >> $target/etc/shadow.NEW
-cat $wbfs/password.default >> $target/etc/shadow.NEW
+# adjust etc/passwd
 if [ -n "$gen_hostname" ]
 then
-  sed "s/hostname/${gen_hostname}/" $wbfs/password.hostname \
-    >> $target/etc/shadow.NEW
+  echo "writing: '/etc/passwd'"
+  grep_add_to /etc/passwd "${gen_hostname}:x:1001:1001:${gen_issue}:${home_hostname}:/bin/sh"
 fi
-mv -f $target/etc/shadow.NEW $target/etc/shadow
 
-{ \
-  # ensure links for libnl
-  cd $target/usr/lib; \
-  ln -sf libnl-3.so libnl.so.3; \
-  ln -sf libnl-genl-3.so libnl-genl.so.3; \
-}
+# create etc/shadow
+(
+  set -e
+  echo "writing: '/etc/shadow'"
+  # using the local wbfs 'password.*' template files
+  #
+  # replace root, ftp, default
+  sed '/root/d; /ftp/d; /default/d' -i $target/etc/shadow
+  cat $wbfs/password.{root,ftp,default} >> $target/etc/shadow
+  #
+  if [ -n "$gen_hostname" ]
+  then
+    sed "s/hostname/${gen_hostname}/" \
+      $wbfs/password.hostname >> $target/etc/shadow
+  fi
+) || exit 1
+
 
 { \
   # try to use multiple initials in hostname-release file
@@ -122,9 +134,9 @@ mv -f $target/etc/shadow.NEW $target/etc/shadow
 
 # write and show the etc/hostname-release file
 echo "${gen_issue} Linux Release `date +%Y%m%d`" \
-  > $target/etc/${gen_hostname}-release
-echo "wrote to '/etc/${gen_hostname}-release'
+  > $target/etc/${gen_hostname}-release || exit 1
+echo "created: '/etc/${gen_hostname}-release'
   `cat $target/etc/${gen_hostname}-release`"
 
 echo "done"
-exit 0
+

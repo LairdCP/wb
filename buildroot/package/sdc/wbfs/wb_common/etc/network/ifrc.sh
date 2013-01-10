@@ -8,7 +8,7 @@ usage()
 {
   [ -n "${1:3}" ] && echo "${@:3}"
   cat <<-	end-of-usage-info-block
-	$( ls -l $0 |grep -o $0.* )
+	$( ls -l $0 |grep -o "$0.*" )
 	Shows network interface configurations.
 	And, configures an interface to use netlink and dhcp/static methods.
 	Can work with settings from /etc/network/interfaces or the commandline.
@@ -71,11 +71,11 @@ msg()
   then
     echo -e "$@" >>/dev/console
   else
-   # to stdout if not quiet
-   [ -z "$q" ] && echo "$@" || :
+    # to stdout if not quiet
+    [ -z "$q" ] && echo "$@" || :
   fi
   
-  # to log, unless -n was used
+  # to log, unless -n was used and log < 100-blocks
   echo "${@:$o}" >>$ifrc_Log || :
 }
 
@@ -213,12 +213,15 @@ show_bridge_mode()
     [ 3 -eq $# ] \
     && echo -e "Bridge mode interface '$1' active using '$2' and '$3'.\n"
   }
-  if ps |grep -q S[0-9][0-9]bridge.*start
+  if ps |grep -q 'S[0-9][0-9]bridge.*start'
   then
     echo -e "Bridge mode setting up...\n"
   else
-    bmi=$( brctl show |sed -n '2{p;n;p;}' |grep -o [a-z][a-z][a-z]*[0-9] )
-    bridge_info $bmi
+    if grep -q 'br[0-9]' /proc/net/dev
+    then
+      bmi=$( brctl show |sed -n '2{p;n;p;}' |grep -o '[a-z][a-z][a-z]*[0-9]' )
+      bridge_info $bmi
+    fi
   fi
 }
 
@@ -244,7 +247,7 @@ case $1 in
     fi
     if [ -n "${v:0:1}" ]
     then
-      ps -o pid,args |grep -E "dhc[pl]|ifplug[d]|wire[l]ess|sup[p]"
+      ps -o pid,args |grep -E 'dhc[pl]|ifplug[d]|wire[l]ess|sup[p]'
     fi
     exit 0
     ;;
@@ -349,17 +352,30 @@ else
   for af in $IFRC_flags; do parse_flags $af; done
 fi
 
+
+
+
+
 #
 # Extended operations, intended for a specific interface, follow.
 # Begin a new log entry and do action . . . 
 #
 [ -n "$dev" ] && [ "$ifrc_Log" != "/dev/null" ] && ifrc_Log=$ifrc_Log.$dev
 
+# limit log file sizes to 100-blocks
+# the 'ls -s' output is tricky, so have to futz a bit
+ifrc_Log_SZ=$( ls -s $ifrc_Log 2>/dev/null |cut -f1 -d/ )
+let ifrc_Log_SZ+=0
+if [ $ifrc_Log_SZ -gt 100 ]
+then
+  ifrc_Log=/dev/null
+fi
+
 echo -e "\n\t`date`\r  ${dev}\n      __${ifrc_Cmd}  $ifrc_Via" >>$ifrc_Log
 
 [ -n "$m" ] && msg $m ifrc:
 
-[ -n "$v" ] && env |grep "^IF[A-Z]*_.*" |sort >>$ifrc_Log
+[ -n "$v" ] && env |grep '^IF[A-Z]*_.*' |sort >>$ifrc_Log
 
 if [ -z "$IFRC_SCRIPT" -a -n "$devalias" ]
 then
@@ -397,13 +413,18 @@ then
   if [ -n "$ifnl_" ]
   then 
     # override action and method settings, if via ifplugd
+    #
+    # determine if we only need to force a renewal
+    #
     if [ "$IFPLUGD_PREVIOUS" == "up" ]
     then
       msg "overriding action with 'up'"
       IFRC_ACTION=up
       # method and params already set
     fi
+    #
     # can handle other states here...
+    #
   else
     # assume 'show' if action undetermined
     IFRC_ACTION=show
@@ -464,7 +485,8 @@ ifrc_stop_netlink_daemon()
 ifrc_stop_dhcp_client()
 {
   prg="[u]*dhc[lp][ic][dent3]*"
-  # find all possible clients:  udhcpc, dhclient, dhcpcd, dhcp3-client
+  # find all possible client instances for this interface
+  # (including: udhcpc, dhclient, dhcpcd, dhcp3-client)
   for pid in \
   $( ps |sed -n "/${dev}/s/^[ ]*\([0-9]*\).*[\/ ]\(${prg}\)[ -].*/\1_\2 /p" )
   do
@@ -502,25 +524,33 @@ case $IFRC_ACTION in
       || grep -q Generic /sys/class/net/$dev/*/uevent 2>/dev/null
       then
         msg "  ...interface-phy-hw '$dev' is not available"
-        exit 1;
+        exit 1
       fi
     fi
     if [ ! -f /sys/class/net/$dev/uevent ]
     then
-      msg "interface is not available, try:  ifrc $dev start"
-      exit 1;
-      # although in some cases this works and is helpful
-      # is also proves to be problematic for unhandled wireless issues
-      #msg "interface is not available, trying to start it using manual method"
-      #exec /etc/init.d/S??network* $devalias start manual
+      if [ ! -f /var/log/ifrc.$dev.lock ]
+      then
+        touch /var/log/ifrc.$dev.lock
+        msg "interface is not available, trying to start w/method: manual"
+        exec /etc/init.d/S??network* $devalias start manual
+      else
+        msg "interface is not available, try:  ifrc $dev start"
+        exit 1
+      fi
     fi
+    rm -fv /var/log/ifrc.$dev.lock
     #[ "$IFPLUGD_CURRENT" == "up" ] && re=re- || re=
     [ "${IFRC_STATUS##*->}" == "up" ] && re=re- || re=
     msg $m "${re}configuring $dev using $IFRC_METHOD method $methvia"
     #
     # terminate any other netlink/dhcp_client daemons and de-configure
     ifrc_stop_netlink_daemon 
-    ifrc_stop_dhcp_client 
+
+    # only want to stop if this is a new method/request
+    # need to allow renewals to work - pending confirmation/testing
+    ifrc_stop_dhcp_client
+
     ifconfig $dev 0.0.0.0 2>/dev/null \
     || msg "  ...deconfig for up_action resulting in error, ignored"
     ## this de-configure will also re-"up" the interface...
@@ -535,6 +565,7 @@ case $IFRC_ACTION in
       ( eval $pre_dcfg_do )&
               pre_dcfg_do=
     fi
+    rm -fv /var/log/ifrc.$dev.lock
     msg $m "deconfiguring $dev"
     #
     # terminate any other netlink/dhcp_client daemons and de-configure
@@ -571,7 +602,7 @@ case $IFRC_ACTION in
       iw dev $dev link |grep -q Connected \
       && ccl="$ccl, associated"
 
-      ps |grep -q ifplug[d].*$dev && ccl="managed, $ccl" 
+      ps |grep -q "ifplug[d].*${dev}" && ccl="managed, $ccl" 
 
       ifconfig $dev |grep -q UP && ccl="$ccl, up" || ccl="$ccl, dn"
 
@@ -599,7 +630,7 @@ case $IFRC_ACTION in
       #cat /etc/resolv.conf 2>/dev/null
     fi
     [ -n "${v:0:1}" ] \
-    && ps -o pid,args |grep -E "dhc[pl]|ifplug[d]" |grep "$dev"
+    && ps -o pid,args |grep -E 'dhc[pl]|ifplug[d]' |grep "$dev"
     #&& ps -o pid,args |grep -v grep |grep "$dev"
     echo
     exit 0
@@ -627,7 +658,7 @@ case $IFRC_ACTION in
     fi
     exit 0
     ;;
-
+    
   auto) ## set auto-starting for an iface
     if grep -q "auto $devalias$" $eni
     then
@@ -836,17 +867,26 @@ gipa()
 rip=
 run_udhcpc()
 {
+  # set no-verbose or verbose mode level
   [ -z "$v" ] && nv='|grep -E "obtained|udhcpc"'
   [ "${v:0:1}" == "." ] && q=
   [ "${v:1:1}" == "." ] && vb='-v' 
 
-  #ifrc_stop_dhcp_client
+  # optional exit-no-lease and quit
+  nq=
+
+  ifrc_stop_dhcp_client
+
+  # the 'udhcpc.conf' file handles states and writes to a leases file
   export udhcpc_=$vb
 
-  # run until we get a lease or killed, request specific options
-  # the conf file handles states and writes to a leases file
+  # continue running in background, and upon obtaining a lease...
+  # may be called again depending on events/conditions, flags are: 
+  # verbose, request-ip, exit-no-lease/quit-option, then device, request-bf
+  # for retry, send 4-discovers, paused at 2sec, and repeat after 5sec
+  # the bootfile option is conditional, other options are required
   eval \
-  $T udhcpc $vb $rip -q -i $dev -t 4 -T 2 -A 5 -o $bf \
+  $T udhcpc $vb $rip $nq -i $dev -t 4 -T 2 -A 5 -o $bf \
    -O lease \
    -O domain \
    -O dns \
@@ -869,8 +909,7 @@ run_dhclient()
 {
   #ifrc_stop_dhcp_client
 
-  # don't run this critter as daemon, hard to kill
-  # some issues not fully vetted, app contains dead code
+  # some issues not fully vetted, many filed bugs, app contains dead code
   dhclient -d -v $dev \
    -pf /var/log/dhclient.$dev.pid \
     >/var/log/dhclient.$dev.log 2>&1
@@ -947,9 +986,9 @@ case ${IFRC_METHOD%% *} in
     [ -n "$rip" ] && msg $rip
     
     # need a link beat in order for dhcp to work
-    # so try waiting up to 8s, and double check this tricky indicator
+    # so try waiting up to 5s, and double check this tricky indicator
     touch /tmp/ifrc.$dev.lbto
-    let lbto=8000
+    let lbto=5000
     let n=0
     while [ $n -lt $lbto -a -f /tmp/ifrc.$dev.lbto ]
     do
@@ -1007,8 +1046,9 @@ case ${IFRC_METHOD%% *} in
     ;;
 esac
 #
-# Can only get to this point if we successfully (re-)up'd the interface,
-# and it should be packet-ready. If using dhcp, then must employ timeout.
+# Only can get to this point if we successfully (re-)up'd the interface,
+# and it should now be packet-ready.  If using dhcp, then must employ a
+# timeout, to be certain.
 #
 if [ -n "$post_cfg_do" ]
 then
