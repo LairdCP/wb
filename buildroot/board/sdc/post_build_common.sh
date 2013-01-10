@@ -15,7 +15,11 @@ set -x -e
 ## echo "/dev/mtdblock7\t\t/applog\tjffs2\tdefaults\t\t0\t0" \
 ## >> $TARGETDIR/etc/fstab
 
-# Copy the rootfs additions
+# Copy the common rootfs additions first so that they can be overriden,
+# if necessary, by the product specific rootfs-additions
+tar c --exclude=.svn -C board/sdc/rootfs-additions-common/ . | tar x -C $TARGETDIR/
+
+# Copy the product specific rootfs additions
 tar c --exclude=.svn -C board/sdc/wb40n/rootfs-additions/ . | tar x -C $TARGETDIR/
 
 # copy my RSA public key to device
