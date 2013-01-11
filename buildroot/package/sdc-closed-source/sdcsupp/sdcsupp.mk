@@ -7,7 +7,7 @@
 SDCSUPP_VERSION = local
 SDCSUPP_SITE = package/sdc-closed-source/externals/wpa_supplicant
 SDCSUPP_SITE_METHOD = local
-SDCSUPP_DEPENDENCIES = libnl sdcsdk
+SDCSUPP_DEPENDENCIES = libnl openssl sdcsdk
 SDCSUPP_TARGET_DIR = $(O)/sdcbins
 
 define SDCSUPP_CONFIGURE_CMDS
