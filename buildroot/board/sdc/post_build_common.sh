@@ -34,4 +34,9 @@ rm -f $TARGETDIR/etc/init.d/S50sshd
 # Services to disable by default
 chmod a-x "$TARGETDIR/etc/init.d/S59snmpd"
 
+# copy the freshly built sdc binaries
+if [ -d output/sdcbins ]; then
+    cp -a output/sdcbins/* $TARGETDIR/
+fi
+
 echo "COMMON POST BUILD script: done."

@@ -10,18 +10,21 @@ SDCSUPP_SITE_METHOD = local
 SDCSUPP_DEPENDENCIES = libnl openssl sdcsdk
 SDCSUPP_TARGET_DIR = $(O)/sdcbins
 
-define SDCSUPP_CONFIGURE_CMDS
-    patch -d $(@D)/wpa_supplicant < package/sdc-closed-source/sdcsupp/config_openssl.patch
-    patch -d $(@D)/wpa_supplicant < package/sdc-closed-source/sdcsupp/config_openssl_remove_wext.patch
-    patch -d $(@D)/src/drivers < package/sdc-closed-source/sdcsupp/undef_sdc_in_driver_nl80211.patch
-endef
+SDCSUPP_PLATFORM := $(call qstrip,$(BR2_SDC_PLATFORM))
+ifeq ($(SDCSUPP_PLATFORM),wb45n)
+    SDCSUPP_RADIO_FLAGS := CONFIG_SDC_RADIO_QCA45N=y CONFIG_DRIVER_NL80211=y
+else ifeq ($(SDCSUPP_PLATFORM),wb40n)
+    SDCSUPP_RADIO_FLAGS := CONFIG_SDC_RADIO_BCM40N=y CONFIG_DRIVER_NL80211=y CONFIG_DRIVER_WEXT=y
+else
+    $(error "ERROR: Expected BR2_SDC_PLATFORM to be wb45n or wb40n.")
+endif
 
 define SDCSUPP_BUILD_CMDS
     cp $(@D)/wpa_supplicant/config_openssl $(@D)/wpa_supplicant/.config
     $(MAKE) -C $(@D)/wpa_supplicant clean
     CFLAGS="-I$(STAGING_DIR)/usr/include/libnl3 $(TARGET_CFLAGS) -MMD -Wall -g" \
         $(MAKE) -C $(@D)/wpa_supplicant V=1 NEED_TLS_LIBDL=1 \
-            CROSS_COMPILE="$(TARGET_CROSS)" wpa_supplicant
+            $(SDCSUPP_RADIO_FLAGS) CROSS_COMPILE="$(TARGET_CROSS)" wpa_supplicant
     $(TARGET_CROSS)objcopy -S $(@D)/wpa_supplicant/wpa_supplicant $(@D)/wpa_supplicant/sdcsupp
     #(cd $(@D)/wpa_supplicant && CROSS_COMPILE=arm-sdc-linux-gnueabi ./sdc-build-linux.sh 4 1 2 3 1)
 endef

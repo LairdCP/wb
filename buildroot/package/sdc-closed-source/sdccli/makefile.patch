@@ -1,5 +1,5 @@
---- tests/sdc_cli/trunk/Makefile	2012-09-17 15:02:27.349131639 +0100
-+++ Makefile	2012-09-19 23:59:39.218929143 +0100
+--- tests/sdc_cli/trunk/Makefile
++++ Makefile
 @@ -1,51 +1,13 @@
 -ifndef DEVROOT
 -	DEVROOT = $(HOME)/dev_linux
@@ -11,9 +11,9 @@
  
 -ifeq ($(ARCH),arm)
 -		TARGET=arm-sdc-linux-gnueabi
--		TCLIBRARY = $(DEVROOT)/wb40n/trunk/buildroot/output/build
--		SDKPATH =   $(DEVROOT)/wb40n/trunk/basic/libraries/sdc_sdk
--		TOOLCHAIN = $(DEVROOT)/wb40n/trunk/basic/toolchain/bin
+-		TCLIBRARY = $(DEVROOT)/wb40n/output
+-		SDKPATH =   $(DEVROOT)/sdk/trunk
+-		TOOLCHAIN = $(DEVROOT)/toolchain/bin
 -		CC=$(TOOLCHAIN)/arm-sdc-linux-gnueabi-g++
 -else
 -	ifeq ($(ARCH),nk)
@@ -45,8 +45,8 @@
 -CFLAGS += -I$(SDKPATH)/include
 +CFLAGS += -Isrc -I.
  
--LIBS = -L$(LDIR) -L$(TCLIBRARY)/../target/usr/lib/ \
--       -L$(SDKPATH)/lib
+-LIBS = -L$(LDIR) -L$(TCLIBRARY)/target/usr/lib/ \
+-       -L$(SDKPATH)
 -
 -LIBS += -lsdc_sdk $(LDIR)/libedit.a $(LDIR)/libncurses.a 
 -LIBS += -lnl-3 -lnl-genl-3 $(INITLIBS)
