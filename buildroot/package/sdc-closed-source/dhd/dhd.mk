@@ -36,7 +36,7 @@ define DHD_INSTALL_TARGET_CMDS
         $(DHD_TARGET_DIR)/lib/modules/`cat $(@D)/kernel.release`/kernel/extra/net/wireless/dhd.ko
     $(INSTALL) -D -m 644 $(@D)/firmware/4329b1/$(DHD_FIRMWARE_FILENAME) \
         $(DHD_TARGET_DIR)/etc/summit/firmware/$(DHD_FIRMWARE_FILENAME)
-    ln -s $(DHD_FIRMWARE_FILENAME) $(DHD_TARGET_DIR)/etc/summit/firmware/fw
+    ln -sf $(DHD_FIRMWARE_FILENAME) $(DHD_TARGET_DIR)/etc/summit/firmware/fw
     $(INSTALL) -D -m 644 $(@D)/nvram/production.nv $(DHD_TARGET_DIR)/etc/summit/nvram/nv
     $(INSTALL) -D -m 755 $(@D)/open-src/src/wl/exe/wl $(DHD_TARGET_DIR)/usr/bin/wl
 endef
