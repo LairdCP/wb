@@ -1,4 +1,4 @@
-SDCBINS_PRODUCT = $(shell cat $(TOPDIR)/../product.selected)
+SDCBINS_PRODUCT = $(call qstrip,$(BR2_SDC_PLATFORM))
 SDCBINS_VERSION = svn15835-8dec12-no-wext
 SDCBINS_SOURCE = sdcbins-$(SDCBINS_PRODUCT)-$(SDCBINS_VERSION).tar.gz
 SDCBINS_DEPENDENCIES =
