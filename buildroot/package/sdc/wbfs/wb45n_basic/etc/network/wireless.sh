@@ -184,7 +184,7 @@ then
 	#WIFI_DEBUG=-tdddd                                               
 	
 	# Whether to use nl80211
-	#WIFI_80211=-Dnl80211
+	WIFI_80211=-Dnl80211
 	
 	end-of-wifi-configuration-file-block
 fi
