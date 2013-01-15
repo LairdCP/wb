@@ -1,5 +1,7 @@
 TARGETDIR=$1
 
+export BR2_SDC_PLATFORM=wb40n
+
 echo "WB40n POST BUILD script: starting..."
 
 # source the common post build script

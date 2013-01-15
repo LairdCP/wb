@@ -35,8 +35,8 @@ rm -f $TARGETDIR/etc/init.d/S50sshd
 chmod a-x "$TARGETDIR/etc/init.d/S59snmpd"
 
 # copy the freshly built sdc binaries
-if [ -d output/sdcbins ]; then
-    cp -a output/sdcbins/* $TARGETDIR/
+if [ -d output/$BR2_SDC_PLATFORM/sdcbins ]; then
+    cp -a output/$BR2_SDC_PLATFORM/sdcbins/* $TARGETDIR/
 fi
 
 echo "COMMON POST BUILD script: done."

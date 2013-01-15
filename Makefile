@@ -13,22 +13,17 @@ VER   := 2011.11
 PKG   := buildroot-$(VER)
 ARCHV := $(PKG).tar.bz2
 
-default: unpack.stamp
-	$(MAKE) -C buildroot oldconfig
-	$(MAKE) -C buildroot
-	$(MAKE) -C images
+default: wb40n wb45n
 
-product.selected:
-	@echo "******************************************************************"
-	@echo "Type 'make wb40n' or 'make wb45n' to select a product to work with"
-	@echo "and then type 'make'. The selection is remembered."
-	@echo "******************************************************************"
-	@false
+wb40n wb45n: unpack.stamp
+	# install the config file
+	mkdir -p buildroot/output/$@
+	cp buildroot/board/sdc/$@/configs/$(PKG).config buildroot/output/$@/.config
+	$(MAKE) O=output/$@ -C buildroot oldconfig
+	$(MAKE) O=output/$@ -C buildroot
+	$(MAKE) -C images $@
 
-wb40n wb45n:
-	echo "$@" > product.selected
-
-unpack.stamp: product.selected $(ARCHV)
+unpack.stamp: $(ARCHV)
 	# unpack buildroot, rename the directory to 'buildroot' for easier management versions
 	tar xf $(ARCHV) --xform "s/^$(PKG)/buildroot/"
 	# patch buildroot to add the sdc properties
@@ -47,23 +42,28 @@ unpack.stamp: product.selected $(ARCHV)
 	cp buildroot-patches/iproute2-fix-parallel-build-yacc.patch buildroot/package/iproute2/
 	# backport the dtb table support
 	test "$(VER)" = 2011.11 && patch -p0 < buildroot-patches/buildroot-linux-dtb-backport.patch
-	# install the config file
-	cp buildroot/board/sdc/`cat product.selected`/configs/$(PKG).config buildroot/.config
 	# mark operation as done
 	touch unpack.stamp
 
 $(ARCHV):
 	wget -c $(URL)$(ARCHV)
 
-clean:
-	$(MAKE) -C buildroot clean
+clean-wb40n:
+	$(MAKE) -C buildroot O=output/wb40n clean
+	rm -rf buildroot/output/wb40n/sdcbins
+
+clean-wb45n:
+	$(MAKE) -C buildroot O=output/wb45n clean
+	rm -rf buildroot/output/wb45n/sdcbins
+
+clean: clean-wb40n clean-wb45n
 
 cleanall:
 	find buildroot/ -mindepth 1 -maxdepth 1 -not -name board -not -name package -not -name '.svn' \
                 -exec rm -rf "{}" ";"
 	find buildroot/package buildroot/board  -mindepth 1 -maxdepth 1 \
                 -not -name sdc -not -name sdc-closed-source -not -name '.svn' -exec rm -rf "{}" ";"
-	rm -f unpack.stamp product.selected
+	rm -f unpack.stamp
 
-.PHONY: default clean cleanall wb40n wb45n
+.PHONY: default clean cleanall clean-wb40n clean-wb45n wb40n wb45n
 .NOTPARALLEL:
