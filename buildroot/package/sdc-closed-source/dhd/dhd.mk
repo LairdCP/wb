@@ -4,9 +4,9 @@
 #
 #############################################################
 
-DHD_VERSION = HEAD
-DHD_SITE = svn://10.1.10.7/dev_linux/sdc40n.5x/trunk
-DHD_SITE_METHOD = svn
+DHD_VERSION = local
+DHD_SITE = package/sdc-closed-source/externals/dhd
+DHD_SITE_METHOD = local
 DHD_DEPENDENCIES = linux
 DHD_MAKE_ENV = CC="$(TARGET_CC)" \
                CXX="$(TARGET_CXX)" \
