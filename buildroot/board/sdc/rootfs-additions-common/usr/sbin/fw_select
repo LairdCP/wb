@@ -45,6 +45,13 @@ __End-Of-Usage-Info-Block
 
 
 msg() {
+  if ! ls -d /lib/modules/`uname -r` >/dev/null 2>&1
+  then
+    echo "currently mismatched:"
+    echo "  kernel - `uname -r`"
+    echo "  rootfs - `ls -d /lib/modules/* |cut -f4 -d/`"
+    echo
+  fi
   echo -e $wb ${tm:++tm} $@
 }
 
