@@ -15,6 +15,8 @@ DHD_MAKE_ENV = CC="$(TARGET_CC)" \
                LINUXDIR="$(LINUX_DIR)" \
                CROSS_COMPILE="$(TARGET_CROSS)"
 
+DHD_BT_FW1 = BCM4329B1_002.002.023.0924.1027.hcd
+DHD_BT_FW2 = BCM4329B1_002.002.023.0924.1032.hcd
 DHD_FIRMWARE_FILENAME = 4329b1-4-220-55-sdio-ag-cdc-roml-reclaim-11n-wme-minccx-extsup-aoe-pktfilter-keepalive.bin
 DHD_DEBUG = -debug
 DHD_TARGET_DIR = $(O)/sdcbins
@@ -39,6 +41,8 @@ define DHD_INSTALL_TARGET_CMDS
     ln -sf $(DHD_FIRMWARE_FILENAME) $(DHD_TARGET_DIR)/etc/summit/firmware/fw
     $(INSTALL) -D -m 644 $(@D)/nvram/production.nv $(DHD_TARGET_DIR)/etc/summit/nvram/nv
     $(INSTALL) -D -m 755 $(@D)/open-src/src/wl/exe/wl $(DHD_TARGET_DIR)/usr/bin/wl
+    $(INSTALL) -D -m 644 $(@D)/firmware/bt/$(DHD_BT_FW1) $(DHD_TARGET_DIR)/etc/summit/firmware/$(DHD_BT_FW1)
+    $(INSTALL) -D -m 644 $(@D)/firmware/bt/$(DHD_BT_FW2) $(DHD_TARGET_DIR)/etc/summit/firmware/$(DHD_BT_FW2)
 endef
 
 #define DHD_UNINSTALL_TARGET_CMDS
