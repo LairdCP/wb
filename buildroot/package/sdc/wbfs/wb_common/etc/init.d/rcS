@@ -21,7 +21,7 @@ export rcS_awaitscript
 #
 #   The external rcS_awaitscript function can be used by other scripts to
 #   wait on a specified init script to finish, before proceeding. This can
-#   be useful for backgrounded scipts. (be careful doing this)
+#   be useful for backgrounded scripts. (be careful doing this)
 #
 #   Suffixes:  (all other scripts are run normally)
 #   *.bg  (run in a backgrounded subshell, caution!!!)
