@@ -29,6 +29,7 @@ rm -f $TARGETDIR/etc/init.d/S50sshd
 
 # Services to disable by default
 chmod a-x "$TARGETDIR/etc/init.d/S59snmpd"
+chmod a-x "$TARGETDIR/etc/init.d/S99lighttpd"
 
 # copy the freshly built sdc binaries
 if [ -d output/$BR2_SDC_PLATFORM/sdcbins ]; then
