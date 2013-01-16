@@ -289,10 +289,10 @@ else
   echo "Accessing images via locally attached media."
   [ -n "$1" ] && path=${1%/} || path=`pwd`
   [ -d "$path" ] || exit_error "can't access directory: $path"
-  AT91BS_IMG=${1%/}/$AT91BS_IMG
-  U_BOOT_IMG=${1%/}/$U_BOOT_IMG
-  KERNEL_IMG=${1%/}/$KERNEL_IMG
-  ROOTFS_IMG=${1%/}/$ROOTFS_IMG
+  AT91BS_IMG=$path/$AT91BS_IMG
+  U_BOOT_IMG=$path/$U_BOOT_IMG
+  KERNEL_IMG=$path/$KERNEL_IMG
+  ROOTFS_IMG=$path/$ROOTFS_IMG
 fi
 
 mkfifo $FIFO
