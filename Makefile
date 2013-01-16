@@ -17,7 +17,6 @@ default: wb40n wb45n
 
 wb40n wb45n: unpack.stamp
 	# install the config file
-	mkdir -p buildroot/output/$@
 	cp buildroot/board/sdc/$@/configs/$(PKG).config buildroot/output/$@/.config
 	$(MAKE) O=output/$@ -C buildroot oldconfig
 	$(MAKE) O=output/$@ -C buildroot
@@ -42,11 +41,23 @@ unpack.stamp: $(ARCHV)
 	cp buildroot-patches/iproute2-fix-parallel-build-yacc.patch buildroot/package/iproute2/
 	# backport the dtb table support
 	test "$(VER)" = 2011.11 && patch -p0 < buildroot-patches/buildroot-linux-dtb-backport.patch
+	# install .config files so that buildroot is ready to go
+	mkdir -p buildroot/output/wb40n buildroot/output/wb45n
+	cp buildroot/board/sdc/wb40n/configs/$(PKG).config buildroot/output/wb40n/.config
+	cp buildroot/board/sdc/wb45n/configs/$(PKG).config buildroot/output/wb45n/.config
 	# mark operation as done
 	touch unpack.stamp
 
 $(ARCHV):
 	wget -c $(URL)$(ARCHV)
+
+source-wb40n:
+	$(MAKE) -C buildroot O=output/wb40n source
+
+source-wb45n:
+	$(MAKE) -C buildroot O=output/wb45n source
+
+source: source-wb40n source-wb45n
 
 clean-wb40n:
 	$(MAKE) -C buildroot O=output/wb40n clean
@@ -65,5 +76,5 @@ cleanall:
                 -not -name sdc -not -name sdc-closed-source -not -name '.svn' -exec rm -rf "{}" ";"
 	rm -f unpack.stamp
 
-.PHONY: default clean cleanall clean-wb40n clean-wb45n wb40n wb45n
+.PHONY: default clean cleanall clean-wb40n clean-wb45n wb40n wb45n source source-wb40n source-wb45n
 .NOTPARALLEL:
