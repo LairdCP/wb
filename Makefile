@@ -27,8 +27,6 @@ unpack.stamp: $(ARCHV)
 	tar xf $(ARCHV) --xform "s/^$(PKG)/buildroot/"
 	# patch buildroot to add the sdc properties
 	patch -p0 < buildroot-patches/buildroot-sdc-board-config.patch
-	# buildroot patch to work with non-standard placement of wb40n bootstrap board directory
-	patch -p0 < buildroot-patches/at91bootstrap-wb40n.patch
 	# backport custom patch config for at91bootstrap on 2011.11
 	test "$(VER)" = 2011.11 && patch -p0 < buildroot-patches/at91bootstrap-custom-patch-dir.patch
 	# add uboot version 2011.09 as an option
