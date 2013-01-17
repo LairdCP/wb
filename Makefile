@@ -22,6 +22,7 @@ wb40n wb45n: unpack.stamp
 	$(MAKE) O=output/$@ -C buildroot
 	$(MAKE) -C images $@
 
+unpack: unpack.stamp
 unpack.stamp: $(ARCHV)
 	# unpack buildroot, rename the directory to 'buildroot' for easier management versions
 	tar xf $(ARCHV) --xform "s/^$(PKG)/buildroot/"
@@ -74,5 +75,5 @@ cleanall:
                 -not -name sdc -not -name sdc-closed-source -not -name '.svn' -exec rm -rf "{}" ";"
 	rm -f unpack.stamp
 
-.PHONY: default all clean cleanall clean-wb40n clean-wb45n wb40n wb45n source source-wb40n source-wb45n
+.PHONY: default all unpack clean cleanall clean-wb40n clean-wb45n wb40n wb45n source source-wb40n source-wb45n
 .NOTPARALLEL:
