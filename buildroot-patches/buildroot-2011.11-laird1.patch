@@ -4567,28 +4567,6 @@ diff -Naur old/package/openssl/openssl.mk new/package/openssl/openssl.mk
  	# libraries gets installed read only, so strip fails
  	chmod +w $(TARGET_DIR)/usr/lib/engines/lib*.so
  	for i in $(addprefix $(TARGET_DIR)/usr/lib/,libcrypto.so.* libssl.so.*); \
-diff -Naur old/package/openvpn/openvpn.mk new/package/openvpn/openvpn.mk
---- old/package/openvpn/openvpn.mk	2011-11-30 23:08:44.000000000 +0000
-+++ new/package/openvpn/openvpn.mk	2011-12-16 02:51:39.281250000 +0000
-@@ -23,15 +23,15 @@
- define OPENVPN_INSTALL_TARGET_CMDS
- 	$(INSTALL) -m 755 $(@D)/openvpn \
- 		$(TARGET_DIR)/usr/sbin/openvpn
--	if [ ! -f $(TARGET_DIR)/etc/init.d/openvpn ]; then \
-+	if [ ! -f $(TARGET_DIR)/etc/init.d/opt/openvpn ]; then \
- 		$(INSTALL) -m 755 -D package/openvpn/openvpn.init \
--			$(TARGET_DIR)/etc/init.d/openvpn; \
-+			$(TARGET_DIR)/etc/init.d/opt/openvpn; \
- 	fi
- endef
- 
- define OPENVPN_UNINSTALL_TARGET_CMDS
- 	rm -f $(TARGET_DIR)/usr/sbin/openvpn
--	rm -f $(TARGET_DIR)/etc/init.d/openvpn
-+	rm -f $(TARGET_DIR)/etc/init.d/opt/openvpn
- endef
- 
- $(eval $(call AUTOTARGETS))
 diff -Naur old/package/pppd/pppd-2.4.5-maxconfreq-30000.patch new/package/pppd/pppd-2.4.5-maxconfreq-30000.patch
 --- old/package/pppd/pppd-2.4.5-maxconfreq-30000.patch	1970-01-01 01:00:00.000000000 +0100
 +++ new/package/pppd/pppd-2.4.5-maxconfreq-30000.patch	2012-09-05 03:38:02.578125000 +0100
