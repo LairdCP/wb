@@ -13,7 +13,7 @@ VER   := 2011.11
 PKG   := buildroot-$(VER)
 ARCHV := $(PKG).tar.bz2
 
-default: wb40n wb45n
+default all: wb40n wb45n
 
 wb40n wb45n: unpack.stamp
 	# install the config file
