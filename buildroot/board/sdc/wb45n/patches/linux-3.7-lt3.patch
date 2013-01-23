@@ -204,7 +204,7 @@ diff -urN a/arch/arm/boot/dts/at91sam9x5cm.dtsi b/arch/arm/boot/dts/at91sam9x5cm
 diff -urN a/arch/arm/configs/wb45n_defconfig b/arch/arm/configs/wb45n_defconfig
 --- a/arch/arm/configs/wb45n_defconfig	1969-12-31 19:00:00.000000000 -0500
 +++ b/arch/arm/configs/wb45n_defconfig	2012-12-11 08:24:25.000000000 -0500
-@@ -0,0 +1,2319 @@
+@@ -0,0 +1,2318 @@
 +#
 +# Automatically generated file; DO NOT EDIT.
 +# Linux/arm 3.7.0 Kernel Configuration
@@ -235,7 +235,6 @@ diff -urN a/arch/arm/configs/wb45n_defconfig b/arch/arm/configs/wb45n_defconfig
 +CONFIG_BROKEN_ON_SMP=y
 +CONFIG_INIT_ENV_ARG_LIMIT=32
 +CONFIG_CROSS_COMPILE="arm-sdc-linux-gnueabi-"
-+CONFIG_LOCALVERSION="-lt3"
 +# CONFIG_LOCALVERSION_AUTO is not set
 +CONFIG_HAVE_KERNEL_GZIP=y
 +CONFIG_HAVE_KERNEL_LZMA=y
@@ -3325,15 +3324,3 @@ diff -urN a/net/wireless/util.c b/net/wireless/util.c
  		case NL80211_IFTYPE_P2P_GO:
  		case NL80211_IFTYPE_AP:
  		case NL80211_IFTYPE_AP_VLAN:
-diff -urN a/scripts/setlocalversion b/scripts/setlocalversion
---- a/scripts/setlocalversion	2012-12-10 22:30:57.000000000 -0500
-+++ b/scripts/setlocalversion	2012-12-11 07:26:34.000000000 -0500
-@@ -169,7 +169,7 @@
- 	# LOCALVERSION= is not specified
- 	if test "${LOCALVERSION+set}" != "set"; then
- 		scm=$(scm_version --short)
--		res="$res${scm:++}"
-+#		res="$res${scm:++}"
- 	fi
- fi
- 

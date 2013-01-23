@@ -1,0 +1,12 @@
+diff -aur a/Makefile b/Makefile
+--- a/Makefile	2012-12-11 03:30:57.000000000 +0000
++++ b/Makefile	2013-01-23 12:50:35.362431365 +0000
+@@ -1,7 +1,7 @@
+ VERSION = 3
+ PATCHLEVEL = 7
+ SUBLEVEL = 0
+-EXTRAVERSION =
++EXTRAVERSION = -laird4
+ NAME = Terrified Chipmunk
+ 
+ # *DOCUMENTATION*
