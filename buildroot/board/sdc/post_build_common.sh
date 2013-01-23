@@ -36,4 +36,8 @@ if [ -d output/$BR2_SDC_PLATFORM/sdcbins ]; then
     cp -a output/$BR2_SDC_PLATFORM/sdcbins/* $TARGETDIR/
 fi
 
+# create missing symbolic link
+# TODO: we shouldn't have to do this here, this is a temporary workaround
+ln -sf "$TARGETDIR/usr/lib/libsdc_sdk.so.1.0" "$TARGETDIR/usr/lib/libsdc_sdk.so.1"
+
 echo "COMMON POST BUILD script: done."
