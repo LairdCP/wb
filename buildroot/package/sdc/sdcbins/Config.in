@@ -3,3 +3,12 @@ config BR2_PACKAGE_SDCBINS
 	help
       SDC Binaries artefacts (sdcsupp, sdcsdk, sdc_cli, etc)
 
+if BR2_PACKAGE_SDCBINS
+
+config BR2_SDCBINS_VERSION
+	string "SDC/Laird Binaries version"
+	help
+	  Specify the version of sdcbins to use.
+	  E.g. svn18163-25jan13.
+
+endif
