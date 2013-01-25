@@ -38,6 +38,6 @@ fi
 
 # create missing symbolic link
 # TODO: we shouldn't have to do this here, this is a temporary workaround
-ln -sf "$TARGETDIR/usr/lib/libsdc_sdk.so.1.0" "$TARGETDIR/usr/lib/libsdc_sdk.so.1"
+(cd $TARGETDIR/usr/lib && ln -sf "libsdc_sdk.so.1.0" "libsdc_sdk.so.1")
 
 echo "COMMON POST BUILD script: done."
