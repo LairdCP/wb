@@ -18,7 +18,7 @@ DHD_MAKE_ENV = CC="$(TARGET_CC)" \
 DHD_BT_FW1 = BCM4329B1_002.002.023.0924.1027.hcd
 DHD_BT_FW2 = BCM4329B1_002.002.023.0924.1032.hcd
 DHD_FIRMWARE_FILENAME_1 = 4329b1_4_220_55_sdio-ag-cdc-full11n-reclaim-roml-wme-aoe-pktfilter-keepalive-extsup.bin
-DHD_FIRMWARE_FILENAME_2 = 41329b1_4_220_55_sdio-ag-cdc-reclaim-roml-wme-aoe-pktfilter-keepalive-ccxv4-extsup-minccx.bin
+DHD_FIRMWARE_FILENAME_2 = 4329b1_4_220_55_sdio-ag-cdc-reclaim-roml-wme-aoe-pktfilter-keepalive-ccxv4-extsup-minccx.bin
 DHD_DEBUG = -debug
 DHD_TARGET_DIR = $(O)/sdcbins
 
