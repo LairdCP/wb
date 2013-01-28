@@ -3,19 +3,16 @@
 
 URL = http://$(shell hostname)/wb/$(PRODUCT)
 
-IMAGES = ../../buildroot/output/$(PRODUCT)/images
+TOPDIR = ../../..
+IMAGES = $(TOPDIR)/buildroot/output/$(PRODUCT)/images
 
 all: fw.txt fw_update fw_select
 
-fw_%: ../../buildroot/board/sdc/rootfs-additions-common/usr/sbin/fw_%
+fw_%: $(TOPDIR)/buildroot/board/sdc/rootfs-additions-common/usr/sbin/fw_%
 	cp $+ $@
 
 fw.txt: kernel.bin rootfs.bin bootstrap.bin u-boot.bin
-	echo -n > $@
-	echo "$(URL)/bootstrap.bin `md5sum bootstrap.bin | cut -d ' ' -f 1`" >> $@
-	echo "$(URL)/u-boot.bin    `md5sum u-boot.bin    | cut -d ' ' -f 1`" >> $@
-	echo "$(URL)/kernel.bin    `md5sum kernel.bin    | cut -d ' ' -f 1`" >> $@
-	echo "$(URL)/rootfs.bin    `md5sum rootfs.bin    | cut -d ' ' -f 1`" >> $@
+	$(TOPDIR)/images/mkfwtxt.sh $(URL)
 
 kernel.bin: $(IMAGES)/uImage
 	cp $+ $@
@@ -29,8 +26,5 @@ bootstrap.bin: $(IMAGES)/$(PRODUCT).bin
 u-boot.bin: $(IMAGES)/u-boot.bin
 	cp $+ $@
 
-clean:
-	rm -f bootstrap.bin u-boot.bin kernel.bin rootfs.bin fw.txt
-
-.PHONY: clean
+.PHONY: all
 

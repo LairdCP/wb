@@ -1,3 +1,9 @@
+export PRODUCT = wb40n
+DATE := $(shell date "+%Y%m%d")
 
-PRODUCT = wb40n
-include ../common.mk
+all:
+	mkdir -p "$(DATE)"
+	$(MAKE) -f ../../common.mk -C "$(DATE)"
+	ln -sf "$(DATE)/fw.txt" fw.txt
+
+.PHONY: all
