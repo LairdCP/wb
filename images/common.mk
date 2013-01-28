@@ -5,6 +5,11 @@ URL = http://$(shell hostname)/wb/$(PRODUCT)
 
 IMAGES = ../../buildroot/output/$(PRODUCT)/images
 
+all: fw.txt fw_update fw_select
+
+fw_%: ../../buildroot/board/sdc/rootfs-additions-common/usr/sbin/fw_%
+	cp $+ $@
+
 fw.txt: kernel.bin rootfs.bin bootstrap.bin u-boot.bin
 	echo -n > $@
 	echo "$(URL)/bootstrap.bin `md5sum bootstrap.bin | cut -d ' ' -f 1`" >> $@
