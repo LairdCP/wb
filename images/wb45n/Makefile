@@ -1,5 +1,5 @@
 export PRODUCT = wb45n
-DATE := $(shell date "+%Y%m%d")
+export DATE := $(shell date "+%Y%m%d")
 
 all:
 	mkdir -p "$(DATE)"

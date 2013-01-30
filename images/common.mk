@@ -12,7 +12,7 @@ fw_%: $(TOPDIR)/buildroot/board/sdc/rootfs-additions-common/usr/sbin/fw_%
 	cp $+ $@
 
 fw.txt: kernel.bin rootfs.bin bootstrap.bin u-boot.bin
-	$(TOPDIR)/images/mkfwtxt.sh $(URL)
+	$(TOPDIR)/images/mkfwtxt.sh $(URL)/$(DATE)
 
 kernel.bin: $(IMAGES)/uImage
 	cp $+ $@
