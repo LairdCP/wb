@@ -101,6 +101,7 @@ echo "$ets$action" >>$rcS_log
 for spn in `ls $o /etc/init.d/S??* 2>/dev/null`
 do
   [ -f $spn ] && sn=${spn##*/} || continue
+  [ -x $spn ] || continue
   
   # setup watchdog for this item, cancel priorpid
   ( rcS_watchdog $pp $sn )&
