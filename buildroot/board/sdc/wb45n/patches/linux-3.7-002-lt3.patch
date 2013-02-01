@@ -48,8 +48,8 @@ diff -urN a/arch/arm/boot/dts/at91sam9g25ek.dts b/arch/arm/boot/dts/at91sam9g25e
 -			atmel,vbus-gpio = <&pioD 19 1
 -					   &pioD 20 1
 -					  >;
-+			num-ports = <1>;
-+			atmel,vbus-gpio = <&pioB 12 1>;
++			num-ports = <2>;
++			atmel,vbus-gpio = <&pioB 12 0 &pioA 31 0>;
 +			atmel,oc-gpio = <&pioB 13 1>;
  		};
  
