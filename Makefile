@@ -8,6 +8,7 @@ LAIRD_DL_DIR := $(BUILDROOT_DL_DIR)
 LAIRD_ARCHIVES := archive/AT91Bootstrap-v3.4.4.tar.xz \
                   archive/iproute2-2.6.39.tar.gz \
                   archive/libedit-20110802-3.0.tar.gz \
+                  archive/wireless-regdb-2011.04.28.tar.bz2 \
                   archive/sdcbins*tar.gz
 endif
 
