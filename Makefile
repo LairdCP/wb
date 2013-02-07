@@ -1,5 +1,15 @@
 # This makefile downloads buildroot from the buildroot website
-# and prepares it for SDC WB40/45 building
+# and prepares it for Laird WB40/45 building
+
+# if BUILDROOT_DL_DIR is set, archives are downloaded to BUILDROOT_DL_DIR
+LAIRD_DL_DIR := archive
+ifdef BUILDROOT_DL_DIR
+LAIRD_DL_DIR := $(BUILDROOT_DL_DIR)
+LAIRD_ARCHIVES := archive/AT91Bootstrap-v3.4.4.tar.xz \
+                  archive/iproute2-2.6.39.tar.gz \
+                  archive/libedit-20110802-3.0.tar.gz \
+                  archive/sdcbins*tar.gz
+endif
 
 URL   := http://buildroot.uclibc.org/downloads/
 VER   := 2011.11
@@ -16,9 +26,13 @@ wb40n wb45n: unpack.stamp
 	$(MAKE) -C images $@
 
 unpack: unpack.stamp
-unpack.stamp: $(ARCHV)
+unpack.stamp: $(LAIRD_DL_DIR)/$(ARCHV)
+ifdef BUILDROOT_DL_DIR
+	# copy the Laird archives into the override buildroot directory
+	cp -n $(LAIRD_ARCHIVES) $(BUILDROOT_DL_DIR)/
+endif
 	# unpack buildroot, rename the directory to 'buildroot' for easier management versions
-	tar xf $(ARCHV) --xform "s/^$(PKG)/buildroot/"
+	tar xf $(LAIRD_DL_DIR)/$(ARCHV) --xform "s/^$(PKG)/buildroot/"
 	# patch buildroot to add the sdc properties
 	patch -p0 < buildroot-patches/buildroot-sdc-board-config.patch
 	# backport custom patch config for at91bootstrap on 2011.11
@@ -40,8 +54,8 @@ unpack.stamp: $(ARCHV)
 	# mark operation as done
 	touch unpack.stamp
 
-$(ARCHV):
-	wget -c $(URL)$(ARCHV)
+$(LAIRD_DL_DIR)/$(ARCHV):
+	wget -c $(URL)$(ARCHV) -O $@
 
 source-wb40n:
 	$(MAKE) -C buildroot O=output/wb40n source
