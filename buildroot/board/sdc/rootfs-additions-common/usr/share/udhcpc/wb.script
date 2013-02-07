@@ -1,0 +1,153 @@
+#!/usr/bin/env ash
+# /usr/share/udhcpc/wb.script
+# Action script for pre/post udhcpc configuration, on wbNNx platforms.
+# jon.hefling@lairdtech.com 20120521 20130113
+#
+
+# apply settings from config file in lieu of items exported in 'udhcpc_Settings'
+source /etc/dhcp/udhcpc.conf 2>/dev/null
+eval $udhcpc_Settings 2>/dev/null
+# otherwise use the right-most string, as default
+LEASES_FILE=${leases_file:-${LEASES_FILE:-'/var/lib/dhcp/dhclient.leases'}}
+BOOTFILE_HOOK=${bootfile_hook:-${BOOTFILE_HOOK:-''}}
+RESOLV_CONF=${resolv_conf:-${RESOLV_CONF:-'/etc/resolv.conf'}}
+RESOLV_HOOK=${resolv_hook:-${RESOLV_HOOK:-''}}
+LOG_FILE=${log_file:-${LOG_FILE:-'/dev/null'}}
+VERBOSE=${vb:-${VERBOSE:-''}}
+
+
+write_leases_file() {
+  #date_now=`date +%Y/%m/%d\ %H:%M:%S`
+  let date00=`date +%s`
+  let date24=$date00+${lease:-0}
+  date_expire=`date +%Y/%m/%d\ %H:%M:%S -d @$date24`
+  let eN=0 
+  
+  # default DHCPACK and trim leading zero
+  opt53=${opt53:-5} && opt53=${opt53##*0}
+
+  # create /tmp destination for leases file, if necessary
+  [ -d ${LEASES_FILE%/*} ] || ln -s /tmp ${LEASES_FILE%/*}
+
+  # get previous (last) lease-entry and append current lease-entry
+  sed -n '/^lease/h;/^lease/!H;$!b;x;p' $1 2>/dev/null >$1~
+  cat >>$1~<<-	\
+	lease-entry
+	lease {
+	  interface "$interface";
+	  option fixed-address $ip;
+	  option subnet-mask $subnet;
+	  option routers $router;
+	  option dhcp-lease-time $lease;
+	  option dhcp-message-type $opt53;
+	  option domain-name-servers $dns;
+	  option dhcp-server-identifier $serverid;
+	  option broadcast-address $broadcast;
+	  option domain-name "$domain";
+	  expire $eN $date_expire;
+	}
+	lease-entry
+  mv -f $1~ $1
+}
+
+exit_err() { echo "__${0} - error $@" >/dev/stderr; exit 1; }
+
+# verbose-mode is a special case to use an indented echo
+[ -n "$VERBOSE" ] && VERBOSE='eval echo \ \ ' || VERBOSE=:
+
+# limit log_file size to 100-blocks
+if [ -f "$LOG_FILE" ]
+then
+  let sz=$( ls -s $LOG_FILE 2>/dev/null |sed 's/\ *\([0-9]\+\).*/\1/' )+0
+  if [ $sz -le 99 ]
+  then
+    echo "`date +'%b %e %H:%M:%S'` __${0} - ${@}" >>$LOG_FILE
+  else
+    LOG_FILE=/dev/null
+  fi
+fi
+
+case "$1" in
+  deconfig)
+    ifconfig $interface 0.0.0.0 || exit_err ${interface:-<interface>?}
+    # This de-configures the interface, so packets can't use it...
+    # And removes (flushes) all relative entries from the routing table.
+    # It is still (up) and accessible to the IP layer (kernel-resident).
+    ;;
+
+  renew|bound)
+    [ "$1" == "bound" ] \
+    && $VERBOSE "...server:; env |sed -n '/_/d;s/^[a-z]/  &/p'" >>$LOG_FILE
+
+    # Ensure the <interface> is set.
+    [ -n "$interface" ] || exit_err ${interface:-<interface>?}
+    
+    # Copy to a 'variable_set-value' for some.
+    [ -n "$subnet" ] && netmask_sv="netmask $subnet"
+    [ -n "$broadcast" ] && broadcast_sv="broadcast $broadcast"
+    [ -n "$bootfile" ] && bootfile_sv="bootfile $bootfile"
+    
+    # Call a bootfile-option-handler if set and it exists.
+    if [ -f "$BOOTFILE_HOOK" -a -n "$bootfile" ]
+    then
+      $VERBOSE \
+      source $BOOTFILE_HOOK
+      source $BOOTFILE_HOOK >>$LOG_FILE 2>&1
+    fi
+
+    # Configure the interface.
+    $VERBOSE \
+    ifconfig $interface ${ip:-up} $broadcast_sv $netmask_sv
+    ifconfig $interface ${ip:-up} $broadcast_sv $netmask_sv \
+    || exit_err args: $interface ${ip:-up} $broadcast_sv $netmask_sv
+
+    # Re-write entries in routing table, only for this interface.
+    if [ -z "$router" ]
+    then
+      $VERBOSE ...warning: router not set, so not updating table
+    else
+      while route del default gw 0.0.0.0 dev $interface 2>/dev/null
+      do
+        $VERBOSE \
+        route del default gw 0.0.0.0 dev $interface
+      done
+      for x in $router
+      do
+        $VERBOSE \
+        route add default gw $x dev $interface
+        route add default gw $x dev $interface
+      done
+    fi
+
+    # Call on resolv-conf-handler if setup or write a default one.
+    if [ -f "$RESOLV_HOOK" ]
+    then
+      $VERBOSE \
+      source $RESOLV_HOOK
+      source $RESOLV_HOOK >>$LOG_FILE 2>&1
+    elif [ -n "$RESOLV_CONF" ]
+    then
+      $VERBOSE ...writing $RESOLV_CONF
+      echo -n >$RESOLV_CONF
+      [ -n "$domain" ] && echo search $domain >>$RESOLV_CONF
+      for x in $dns; do echo nameserver $x >>$RESOLV_CONF; done
+    fi
+
+    # Update leases file.
+    write_leases_file ${LEASES_FILE/leases/$interface.leases}
+    ;;
+
+  nak)
+    $VERBOSE ...got nak
+    ;;
+    
+  leasefail)
+    $VERBOSE ...no lease
+    ;;
+  
+  *)
+    exit_err script arg ${1:-missing}
+    ;;
+esac
+
+exit 0
