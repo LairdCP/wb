@@ -1,12 +1,5 @@
 # This makefile downloads buildroot from the buildroot website
-# and prepares it for SDC WB40/45 building by doing the following:
-# * unpack the tarfile
-# * create a symbolic link for the uildroot directory names buildroot
-# * add the SDC packages by linking
-#     buildroot/packages/sdc -> package/sdc
-#   and patching package/Config.in to include the sdc folder
-# * create a symbolic link from
-#     buildroot/board/sdc -> board/sdc
+# and prepares it for SDC WB40/45 building
 
 URL   := http://buildroot.uclibc.org/downloads/
 VER   := 2011.11
