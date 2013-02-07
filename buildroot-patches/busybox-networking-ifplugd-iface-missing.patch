@@ -1,0 +1,23 @@
+--- busybox-1.19.3/networking/ifplugd.c	2013-01-14 22:52:56.001007445 -0600
++++ busybox-1.19.3/networking/ifplugd.c	2013-01-14 22:51:11.949004402 -0600
+@@ -685,6 +685,9 @@
+ 						G.iface_exists ? "" : "dis");
+ 				if (G.iface_exists)
+ 					maybe_up_new_iface();
++				else
++					iface_status_old = IFSTATUS_ERR;
++					/* new state:  error -> down */
+ 			}
+ 		}
+ 
+@@ -693,6 +696,7 @@
+ 		if (iface_status == IFSTATUS_ERR) {
+ 			if (!(opts & FLAG_MONITOR))
+ 				goto exiting;
++
+ 			iface_status = IFSTATUS_DOWN;
+ 		}
+ 		iface_status_str = strstatus(iface_status);
+;
+; Allow script notification of a disappeared iface, so can take action.
+;
