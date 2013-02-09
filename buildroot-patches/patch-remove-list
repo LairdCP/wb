@@ -1,20 +1,25 @@
  -> buildroot-2011.11-laird1.patch
+Review the following diff/patch snippets:
 
-The following diff/patch snippets can be removed:
-
-package/busybox/busybox-1.18.x.config
-package/busybox/busybox.mk
-package/busybox/S01logging
-package/busybox/udhcpc.conf
+? package/busybox/busybox-1.18.x.config
   ...unnecessary
+  
+- package/busybox/busybox.mk
+- package/busybox/S01logging
+- package/busybox/udhcpc.conf
+  ...unnecessary, removed
 
-package/input-event-daemon/input-event-daemon.mk  
+? package/input-event-daemon/input-event-daemon.mk  
   ...probably not necessary
 
-package/lighttpd/...
+? package/lighttpd/...
   ...contains demo content and conflicts with copied files in rootfs-additions-common
 
-package/netsnmp/...
+? package/netsnmp/...
   ...contains added content for demo/testing (but not currently used)
 
 
+
++ updated the "device_table.txt" patch snippet
+
+Have added the busybox-ifplugd patch to the Makefile.
