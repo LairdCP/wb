@@ -9,22 +9,22 @@ export rcS_awaitscript
 #   Each script name and its relative starting init time, is logged.
 #
 #   An init-script can be made rcS aware, via the 'rcS_' flag.
-#   For optional scripts, best practice is to employ a symlink to it in opt/.
+#   For optional scripts, good practice is to employ a symlink to it in opt/.
 #
 #   This rcS is designed for speed, and some operations can be backgrounded.
 #   However, caution must be exercised when backgrounding operations, and it
-#   is up to the scripts to ensure dependencies are in place.
+#   is up to the scripts to ensure dependencies are in place!!
 #
-#   The internal rcS_watchdog awaits an init script until the timeout value
+#   The rcS_watchdog (internal) awaits an init-script until the timeout value
 #   expires, and then kills off that script if it has not already finished.
-#   This prevents an init script from 'hanging' the system.
+#   This prevents an init-script from 'hanging' the system.
 #
-#   The external rcS_awaitscript function can be used by other scripts to
-#   wait on a specified init script to finish, before proceeding. This can
-#   be useful for backgrounded scripts. (be careful doing this)
+#   The rcS_awaitscript (exported) function can be used by other scripts to
+#   wait on a specified init-script to finish, before proceeding. This can
+#   be useful for backgrounded scripts.  (Be careful doing this!!)
 #
 #   Suffixes:  (all other scripts are run normally)
-#   *.bg  (run in a backgrounded subshell, caution!!!)
+#   *.bg  (run in a backgrounded subshell [caution])
 #   *.sh  (sourced in a subshell)
 #
 #   jon.hefling@lairdtech.com,29-Jun'12
@@ -37,9 +37,11 @@ rcS_log=/var/log/rcS.log
 rcS_wdto=240
 
 # 
-# exported function for use in init-scripts
-# usage:  eval $rcS_awaitscript
-#         rcS_awaitsript <script-base-name>
+# function for use in init-scripts
+# setup:
+#   eval $rcS_awaitscript
+# usage:
+#   rcS_awaitsript <script-base-name>
 #
 rcS_awaitscript=\
 'rcS_awaitscript() { '\
@@ -80,8 +82,8 @@ rcS_timestamp() {
   echo "${ets:0:$n}+${us}s  $@" >>$rcS_log
 }
 
+# options for test or disable
 [ "${1:0:1}" == "-" ] && set $1    
-
 [ -f /etc/default/${0##*/}.disable ] \
 && { echo "/etc/default/${0##*/}.disable exists"; exit 0; }
 
@@ -100,12 +102,14 @@ echo -en \\\r
 echo "$ets$action" >>$rcS_log
 for spn in `ls $o /etc/init.d/S??* 2>/dev/null`
 do
-  [ -f $spn ] && sn=${spn##*/} || continue
+  # skip if non-executable scriptpathname
+  [ -x $spn ] && sn=${spn##*/} || continue
   
-  # setup watchdog for this item, cancel priorpid
+  # setup watchdog for this scriptname, cancel priorpid
   ( rcS_watchdog $pp $sn )&
   pp=$!
-  
+
+  # run method based on suffix
   case $spn in
 
     *\.sh) ## source in subshell
@@ -118,7 +122,7 @@ do
       continue
       ;;
   
-    *\.bg|*\.\.\.) ## fork as subprocess to background
+    *\.bg) ## fork as subprocess to background
       if [ "$action" == "start" ]
       then
         rcS_timestamp $sn backgrounded
@@ -129,7 +133,7 @@ do
       ;;
   esac
 
-  ## run normally
+  # run normally
   rcS_timestamp $sn
   $spn $action  #|tee -a $rcS_log
 done
