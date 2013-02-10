@@ -5,6 +5,10 @@ echo "COMMON POST BUILD script: starting..."
 # enable tracing and exit on errors
 set -x -e
 
+# create firmware release file
+echo "SDC Linux Release `date +%Y%m%d`" \
+  > $TARGETDIR/etc/summit-release
+
 # Set root password to ’root’. Password generated with
 # mkpasswd, from the ’whois’ package in Debian/Ubuntu.
 ## sed -i ’s%^root::%root:8kfIfYHmcyQEE:%’ $TARGETDIR/etc/shadow
@@ -20,7 +24,7 @@ set -x -e
 tar c --exclude=.svn -C board/sdc/rootfs-additions-common/ . | tar x -C $TARGETDIR/
 
 # delete the default ssh init file
-rm -f $TARGETDIR/etc/init.d/S50sshd
+#rm -f $TARGETDIR/etc/init.d/S50sshd
 
 # install libnl*.so.3 links
 (   cd "$TARGETDIR/usr/lib" &&
