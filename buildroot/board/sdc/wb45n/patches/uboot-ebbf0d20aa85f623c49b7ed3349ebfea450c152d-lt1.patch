@@ -1,6 +1,6 @@
-diff -urN a/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c b/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c
---- a/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c	2012-11-27 11:20:01.000000000 -0500
-+++ b/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c	2012-12-23 15:05:28.208621705 -0500
+diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c
+--- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c	2012-12-14 15:43:22.000000000 -0600
++++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c	2013-02-10 11:35:31.737920191 -0600
 @@ -167,16 +167,16 @@
  #ifdef CONFIG_MACB
  void at91_macb_hw_init(void)
@@ -28,9 +28,9 @@ diff -urN a/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c b/arch/arm/cpu/arm926
  
  #ifndef CONFIG_RMII
  	at91_set_b_periph(AT91_PIO_PORTC, 25, 0);	/* ECRS */
-diff -urN a/board/atmel/at91sam9x5ek/at91sam9x5ek.c b/board/atmel/at91sam9x5ek/at91sam9x5ek.c
---- a/board/atmel/at91sam9x5ek/at91sam9x5ek.c	2012-11-27 11:20:01.000000000 -0500
-+++ b/board/atmel/at91sam9x5ek/at91sam9x5ek.c	2012-12-23 15:05:28.208621705 -0500
+diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/at91sam9x5ek.c uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/at91sam9x5ek.c
+--- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/at91sam9x5ek.c	2012-12-14 15:43:22.000000000 -0600
++++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/at91sam9x5ek.c	2013-02-10 11:35:31.737920191 -0600
 @@ -61,11 +61,12 @@
  	/* Enable CS3 */
  	csa = readl(&matrix->ebicsa);
@@ -69,15 +69,15 @@ diff -urN a/board/atmel/at91sam9x5ek/at91sam9x5ek.c b/board/atmel/at91sam9x5ek/a
  }
  #endif
  
-diff -urN a/board/atmel/at91sam9x5ek/config.mk b/board/atmel/at91sam9x5ek/config.mk
---- a/board/atmel/at91sam9x5ek/config.mk	2012-11-27 11:20:01.000000000 -0500
-+++ b/board/atmel/at91sam9x5ek/config.mk	2012-12-23 15:05:28.208621705 -0500
+diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/config.mk uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/config.mk
+--- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/config.mk	2012-12-14 15:43:22.000000000 -0600
++++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/config.mk	2013-02-10 11:35:31.737920191 -0600
 @@ -1 +1 @@
 -CONFIG_SYS_TEXT_BASE = 0x26f00000
 +CONFIG_SYS_TEXT_BASE = 0x23f00000
-diff -urN a/boards.cfg b/boards.cfg
---- a/boards.cfg	2012-12-23 14:59:43.000000000 -0500
-+++ b/boards.cfg	2012-12-23 15:05:28.208621705 -0500
+diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/boards.cfg uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/boards.cfg
+--- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/boards.cfg	2012-12-14 15:43:22.000000000 -0600
++++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/boards.cfg	2013-02-10 11:35:31.741920264 -0600
 @@ -96,6 +96,7 @@
  at91sam9m10g45ek_nandflash   arm         arm926ejs   at91sam9m10g45ek    atmel          at91        at91sam9m10g45ek:AT91SAM9M10G45,SYS_USE_NANDFLASH
  at91sam9rlek_dataflash       arm         arm926ejs   at91sam9rlek        atmel          at91        at91sam9rlek:AT91SAM9RL,SYS_USE_DATAFLASH
@@ -86,9 +86,9 @@ diff -urN a/boards.cfg b/boards.cfg
  at91sam9x5ek_nandflash       arm         arm926ejs   at91sam9x5ek        atmel          at91        at91sam9x5ek:AT91SAM9X5,SYS_USE_NANDFLASH
  at91sam9x5ek_spiflash        arm         arm926ejs   at91sam9x5ek        atmel          at91        at91sam9x5ek:AT91SAM9X5,SYS_USE_SPIFLASH
  at91sam9x5ek_mmc             arm         arm926ejs   at91sam9x5ek        atmel          at91        at91sam9x5ek:AT91SAM9X5,SYS_USE_MMC
-diff -urN a/common/env_common.c b/common/env_common.c
---- a/common/env_common.c	2012-12-23 14:53:15.000000000 -0500
-+++ b/common/env_common.c	2012-12-23 15:05:28.209621705 -0500
+diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/common/env_common.c uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/common/env_common.c
+--- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/common/env_common.c	2012-12-14 15:43:22.000000000 -0600
++++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/common/env_common.c	2013-02-10 11:35:31.741920264 -0600
 @@ -141,6 +141,7 @@
  		error("Environment import failed: errno = %d\n", errno);
  
@@ -97,9 +97,9 @@ diff -urN a/common/env_common.c b/common/env_common.c
  }
  
  
-diff -urN a/drivers/mtd/nand/atmel_nand.c b/drivers/mtd/nand/atmel_nand.c
---- a/drivers/mtd/nand/atmel_nand.c	2012-11-27 11:20:01.000000000 -0500
-+++ b/drivers/mtd/nand/atmel_nand.c	2012-12-23 15:05:28.209621705 -0500
+diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/drivers/mtd/nand/atmel_nand.c uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/drivers/mtd/nand/atmel_nand.c
+--- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/drivers/mtd/nand/atmel_nand.c	2012-12-14 15:43:22.000000000 -0600
++++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/drivers/mtd/nand/atmel_nand.c	2013-02-10 11:35:31.741920264 -0600
 @@ -720,10 +720,10 @@
   * several NAND_CMD_RNDOUT during read
   */
@@ -114,9 +114,9 @@ diff -urN a/drivers/mtd/nand/atmel_nand.c b/drivers/mtd/nand/atmel_nand.c
  	},
  };
  
-diff -urN a/include/configs/wb45n.h b/include/configs/wb45n.h
---- a/include/configs/wb45n.h	1969-12-31 19:00:00.000000000 -0500
-+++ b/include/configs/wb45n.h	2012-12-23 15:05:28.210621705 -0500
+diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb45n.h uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb45n.h
+--- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb45n.h	1969-12-31 18:00:00.000000000 -0600
++++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb45n.h	2013-02-10 11:37:13.353924401 -0600
 @@ -0,0 +1,286 @@
 +/*
 + * Copyright (C) 2012 Atmel Corporation
@@ -350,8 +350,8 @@ diff -urN a/include/configs/wb45n.h b/include/configs/wb45n.h
 +
 +#define MTDIDS_DEFAULT                  "nand0=atmel_nand"
 +#define MTDPARTS_DEFAULT                "mtdparts=atmel_nand:" \
-+                                        "128K(at91bs)ro," \
-+                                        "512K(u-boot)ro," \
++                                        "128K(at91bs)," \
++                                        "512K(u-boot)," \
 +                                        "128K(u-boot-env)," \
 +                                        "128K(redund-env)," \
 +                                        "2560K(kernel-a)," \
@@ -391,7 +391,7 @@ diff -urN a/include/configs/wb45n.h b/include/configs/wb45n.h
 +        "\0"
 +#else
 +/*
-+ * Setup (default) minimal support for platform-init and fw_update/select
++ * Setup (default) minimal support for platform-init and fw_update/select.
 + */
 +#define CONFIG_EXTRA_ENV_SETTINGS       \
 +        "_mtd=mtdparts default; set bootargs ${bootargs} ${wbti} ${mtdparts}\0" \
@@ -404,9 +404,35 @@ diff -urN a/include/configs/wb45n.h b/include/configs/wb45n.h
 +//#define CONFIG_AT91SAM9_WATCHDOG        1
 +#endif
 +
-diff -urN a/tools/env/fw_env_main.c b/tools/env/fw_env_main.c
---- a/tools/env/fw_env_main.c	2012-12-23 14:59:43.000000000 -0500
-+++ b/tools/env/fw_env_main.c	2012-12-23 15:05:28.210621705 -0500
+diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env.config uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env.config
+--- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env.config	2012-12-14 15:43:22.000000000 -0600
++++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env.config	2013-02-10 11:35:31.741920264 -0600
+@@ -1,19 +1,6 @@
+ # Configuration file for fw_(printenv/saveenv) utility.
+ # Up to two entries are valid, in this case the redundant
+ # environment sector is assumed present.
+-# Notice, that the "Number of sectors" is ignored on NOR and SPI-dataflash.
+-# Futhermore, if the Flash sector size is ommitted, this value is assumed to
+-# be the same as the Environment size, which is valid for NOR and SPI-dataflash
+-
+-# NOR example
+-# MTD device name	Device offset	Env. size	Flash sector size	Number of sectors
+-/dev/mtd1		0x0000		0x4000		0x4000
+-/dev/mtd2		0x0000		0x4000		0x4000
+-
+-# MTD SPI-dataflash example
+-# MTD device name	Device offset	Env. size	Flash sector size	Number of sectors
+-#/dev/mtd5		0x4200		0x4200
+-#/dev/mtd6		0x4200		0x4200
+-
+-# NAND example
+-#/dev/mtd0		0x4000		0x4000		0x20000			2
++# MTD device name	Device offset	Env. size	Flash sector size
++/dev/mtd2		0x00000		0x20000		0x20000
++/dev/mtd3		0x00000		0x20000		0x20000
+diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env_main.c uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env_main.c
+--- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env_main.c	2012-12-14 15:43:22.000000000 -0600
++++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env_main.c	2013-02-10 11:35:31.741920264 -0600
 @@ -94,7 +94,7 @@
  	int lockfd = -1;
  	int retval = EXIT_SUCCESS;
@@ -416,13 +442,3 @@ diff -urN a/tools/env/fw_env_main.c b/tools/env/fw_env_main.c
  	if (-1 == lockfd) {
  		fprintf(stderr, "Error opening lock file %s\n", lockname);
  		return EXIT_FAILURE;
-diff -urN a/tools/env/wb45n-fw_env.config b/tools/env/wb45n-fw_env.config
---- a/tools/env/wb45n-fw_env.config	1969-12-31 19:00:00.000000000 -0500
-+++ b/tools/env/wb45n-fw_env.config	2012-12-23 15:05:28.210621705 -0500
-@@ -0,0 +1,6 @@
-+# Configuration file for fw_(printenv/saveenv) utility.
-+# Up to two entries are valid, in this case the redundant
-+# environment sector is assumed present.
-+# MTD device name	Device offset	Env. size	Flash sector size
-+/dev/mtd2		0x00000		0x20000		0x20000
-+/dev/mtd3		0x00000		0x20000		0x20000
