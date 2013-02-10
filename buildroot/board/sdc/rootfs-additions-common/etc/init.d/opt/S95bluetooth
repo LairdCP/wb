@@ -1,7 +1,7 @@
 #!/bin/sh
 # enable/disable bluetooth functionality for wb
 #trap "" 1 15
-
+WIFI_MACADDR=/etc/summit/wifi_interface
 
 bt_start() {
   echo "Enabling Bluetooth..."
@@ -28,8 +28,7 @@ bt_start() {
   source /etc/summit/bluetooth.conf
 
   # get WL mac address, and ensure it is valid
-  wlmac=$( sed -n 's/^WIFI_MACADDR=\(..:..:..:..:..:..\)/\1/p' \
-          /etc/summit/wifi_interface.conf 2>/dev/null )
+  wlmac=$( grep -s ..:..:..:..:..:.. $WIFI_MACADDR )
   wlmac=${wlmac:-00:17:23:00:00:00}
   # set btmac to wlmac+1
   maca=${wlmac:9}
