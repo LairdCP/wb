@@ -42,15 +42,16 @@ endif
 	test "$(VER)" = 2011.11 && patch -p0 < buildroot-patches/uboot-2011-09.patch
 	# backport of at91bootstrap3 package
 	patch -d buildroot -p1 < buildroot-patches/at91bootstrap3.patch
-	# sync to dev_linux/buildroot/2011.11 rev 17920
+	# sync to dev_linux/buildroot/2011.11
 	patch -d buildroot -p1 < buildroot-patches/buildroot-2011.11-laird1.patch
 	# fix iproute parallel buiild race
 	cp buildroot-patches/iproute2-fix-parallel-build-yacc.patch buildroot/package/iproute2/
 	# backport the dtb table support
 	test "$(VER)" = 2011.11 && patch -p0 < buildroot-patches/buildroot-linux-dtb-backport.patch
 	# install .config files so that buildroot is ready to go
-	mkdir -p buildroot/output/wb40n buildroot/output/wb45n
+	mkdir -p buildroot/output/wb40n
 	cp buildroot/board/sdc/wb40n/configs/$(PKG).config buildroot/output/wb40n/.config
+	mkdir -p buildroot/output/wb45n
 	cp buildroot/board/sdc/wb45n/configs/$(PKG).config buildroot/output/wb45n/.config
 	# mark operation as done
 	touch unpack.stamp

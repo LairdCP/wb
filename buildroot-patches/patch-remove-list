@@ -21,5 +21,4 @@ Review the following diff/patch snippets:
 
 
 + updated the "device_table.txt" patch snippet
-
-Have added the busybox-ifplugd patch to the Makefile.
++ package/busybox/busybox-networking_ifplugd_iface_err.patch

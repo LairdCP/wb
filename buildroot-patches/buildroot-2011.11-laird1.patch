@@ -3482,7 +3482,7 @@ diff -Naur old/package/netsnmp/netsnmp-laird_mib.patch new/package/netsnmp/netsn
 --- old/package/netsnmp/netsnmp-laird_mib.patch	1970-01-01 01:00:00.000000000 +0100
 +++ new/package/netsnmp/netsnmp-laird_mib.patch	2012-10-04 17:49:01.984375000 +0100
 @@ -0,0 +1,329 @@
-+--- netsnmp-5.7.1.orig/agent/mibgroup/laird-mib/laird_scalars.c	1969-12-31 19:00:00.000000000 -0500
++--- netsnmp-5.7.1/agent/mibgroup/laird-mib/laird_scalars.c	1969-12-31 19:00:00.000000000 -0500
 ++++ netsnmp-5.7.1/agent/mibgroup/laird-mib/laird_scalars.c	2012-09-11 14:13:38.749815996 -0400
 +@@ -0,0 +1,114 @@
 ++/**  @LAIRD laird_scalars.c
@@ -3599,7 +3599,7 @@ diff -Naur old/package/netsnmp/netsnmp-laird_mib.patch new/package/netsnmp/netsn
 ++                                    NULL);                                    
 ++
 ++}
-+--- netsnmp-5.6.1.1.orig/agent/mibgroup/laird-mib/laird_scalars.h	1969-12-31 19:00:00.000000000 -0500
++--- netsnmp-5.6.1.1/agent/mibgroup/laird-mib/laird_scalars.h	1969-12-31 19:00:00.000000000 -0500
 ++++ netsnmp-5.6.1.1/agent/mibgroup/laird-mib/laird_scalars.h	2012-09-11 14:13:38.545816001 -0400
 +@@ -0,0 +1,14 @@
 ++#ifndef LAIRD_SCALARS_H
@@ -3616,7 +3616,7 @@ diff -Naur old/package/netsnmp/netsnmp-laird_mib.patch new/package/netsnmp/netsn
 ++#endif
 ++
 ++#endif                          /* LAIRD_SCALARS_H */
-+--- netsnmp-5.6.1.1.orig/agent/mibgroup/laird-mib/laird_strings.c	1969-12-31 19:00:00.000000000 -0500
++--- netsnmp-5.6.1.1/agent/mibgroup/laird-mib/laird_strings.c	1969-12-31 19:00:00.000000000 -0500
 ++++ netsnmp-5.6.1.1/agent/mibgroup/laird-mib/laird_strings.c	2012-09-11 14:13:38.445816011 -0400
 +@@ -0,0 +1,166 @@
 ++/*
@@ -3785,7 +3785,7 @@ diff -Naur old/package/netsnmp/netsnmp-laird_mib.patch new/package/netsnmp/netsn
 ++    netsnmp_register_watched_instance(reginfo, &statusAPIPWI);
 ++    
 ++}
-+--- netsnmp-5.6.1.1.orig/agent/mibgroup/laird-mib/laird_strings.h	1969-12-31 19:00:00.000000000 -0500
++--- netsnmp-5.6.1.1/agent/mibgroup/laird-mib/laird_strings.h	1969-12-31 19:00:00.000000000 -0500
 ++++ netsnmp-5.6.1.1/agent/mibgroup/laird-mib/laird_strings.h	2012-09-11 14:13:38.645816000 -0400
 +@@ -0,0 +1,14 @@
 ++#ifndef LAIRD_STRINGS_H
@@ -3803,7 +3803,7 @@ diff -Naur old/package/netsnmp/netsnmp-laird_mib.patch new/package/netsnmp/netsn
 ++
 ++#endif /* LAIRD_STRINGS_H */
 +\ No newline at end of file
-+--- netsnmp-5.6.1.1.orig/agent/mibgroup/laird-mib.h	1969-12-31 19:00:00.000000000 -0500
++--- netsnmp-5.6.1.1/agent/mibgroup/laird-mib.h	1969-12-31 19:00:00.000000000 -0500
 ++++ netsnmp-5.6.1.1/agent/mibgroup/laird-mib.h	2012-09-11 14:13:38.289816011 -0400
 +@@ -0,0 +1,5 @@
 ++/* Laird's Public Enterprise Number as assigned by IANA */
@@ -4805,3 +4805,29 @@ diff -Naur old/target/generic/device_table.txt new/target/generic/device_table.t
 -/usr/share/udhcpc/default.script   f  755   0  0  -  -  -  -  -
 -# uncomment this to allow starting x as non-root
 -#/usr/X11R6/bin/Xfbdev          f  4755  0  0  -  -  -  -  -
+--- old/package/busybox/busybox-networking_ifplugd_iface_err.patch	1969-12-31 18:00:00.000000000 -0600
++++ new/package/busybox/busybox-networking_ifplugd_iface_err.patch	2013-02-09 23:50:21.460710414 -0600
+@@ -0,0 +1,23 @@
++--- busybox-1.19.3/networking/ifplugd.c	2013-01-14 22:52:56.001007445 -0600
+++++ busybox-1.19.3/networking/ifplugd.c	2013-01-14 22:51:11.949004402 -0600
++@@ -685,6 +685,9 @@
++ 						G.iface_exists ? "" : "dis");
++ 				if (G.iface_exists)
++ 					maybe_up_new_iface();
+++				else
+++					iface_status_old = IFSTATUS_ERR;
+++					/* new state:  error -> down */
++ 			}
++ 		}
++ 
++@@ -693,6 +696,7 @@
++ 		if (iface_status == IFSTATUS_ERR) {
++ 			if (!(opts & FLAG_MONITOR))
++ 				goto exiting;
+++
++ 			iface_status = IFSTATUS_DOWN;
++ 		}
++ 		iface_status_str = strstatus(iface_status);
++;
++; Allow script notification of a disappeared iface, so can take action.
++;
