@@ -2326,6 +2326,33 @@ diff -Naur old/package/busybox/busybox-1.19.x.config new/package/busybox/busybox
  CONFIG_KLOGD=y
  CONFIG_FEATURE_KLOGD_KLOGCTL=y
  CONFIG_LOGGER=y
+diff -Naur old/package/busybox/busybox-networking_ifplugd_iface_err.patch new/package/busybox/busybox-networking_ifplugd_iface_err.patch
+--- old/package/busybox/busybox-networking_ifplugd_iface_err.patch	1969-12-31 18:00:00.000000000 -0600
++++ new/package/busybox/busybox-networking_ifplugd_iface_err.patch	2013-02-09 23:50:21.460710414 -0600
+@@ -0,0 +1,23 @@
++--- busybox-1.19.3/networking/ifplugd.c	2013-01-14 22:52:56.001007445 -0600
+++++ busybox-1.19.3/networking/ifplugd.c	2013-01-14 22:51:11.949004402 -0600
++@@ -685,6 +685,9 @@
++ 						G.iface_exists ? "" : "dis");
++ 				if (G.iface_exists)
++ 					maybe_up_new_iface();
+++				else
+++					iface_status_old = IFSTATUS_ERR;
+++					/* new state:  error -> down */
++ 			}
++ 		}
++ 
++@@ -693,6 +696,7 @@
++ 		if (iface_status == IFSTATUS_ERR) {
++ 			if (!(opts & FLAG_MONITOR))
++ 				goto exiting;
+++
++ 			iface_status = IFSTATUS_DOWN;
++ 		}
++ 		iface_status_str = strstatus(iface_status);
++;
++; Allow script notification of a disappeared iface, so can take action.
++;
 diff -Naur old/package/Config.in new/package/Config.in
 --- old/package/Config.in	2011-11-30 23:08:44.000000000 +0000
 +++ new/package/Config.in	2012-12-04 17:15:15.187500000 +0000
@@ -4805,29 +4832,3 @@ diff -Naur old/target/generic/device_table.txt new/target/generic/device_table.t
 -/usr/share/udhcpc/default.script   f  755   0  0  -  -  -  -  -
 -# uncomment this to allow starting x as non-root
 -#/usr/X11R6/bin/Xfbdev          f  4755  0  0  -  -  -  -  -
---- old/package/busybox/busybox-networking_ifplugd_iface_err.patch	1969-12-31 18:00:00.000000000 -0600
-+++ new/package/busybox/busybox-networking_ifplugd_iface_err.patch	2013-02-09 23:50:21.460710414 -0600
-@@ -0,0 +1,23 @@
-+--- busybox-1.19.3/networking/ifplugd.c	2013-01-14 22:52:56.001007445 -0600
-++++ busybox-1.19.3/networking/ifplugd.c	2013-01-14 22:51:11.949004402 -0600
-+@@ -685,6 +685,9 @@
-+ 						G.iface_exists ? "" : "dis");
-+ 				if (G.iface_exists)
-+ 					maybe_up_new_iface();
-++				else
-++					iface_status_old = IFSTATUS_ERR;
-++					/* new state:  error -> down */
-+ 			}
-+ 		}
-+ 
-+@@ -693,6 +696,7 @@
-+ 		if (iface_status == IFSTATUS_ERR) {
-+ 			if (!(opts & FLAG_MONITOR))
-+ 				goto exiting;
-++
-+ 			iface_status = IFSTATUS_DOWN;
-+ 		}
-+ 		iface_status_str = strstatus(iface_status);
-+;
-+; Allow script notification of a disappeared iface, so can take action.
-+;
