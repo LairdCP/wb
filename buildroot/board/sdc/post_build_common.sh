@@ -18,6 +18,9 @@ set -x -e
 # delete the default ssh init file, real one is in init.d/opt
 rm -f $TARGETDIR/etc/init.d/S50sshd
 
+# need to fix this init-script before ready to use
+rm -f $TARGETDIR/etc/init.d/openvpn
+
 # remove bash cruft
 rm -fr $TARGETDIR/etc/bash*
 rm -f $TARGETDIR/root/.bash*
