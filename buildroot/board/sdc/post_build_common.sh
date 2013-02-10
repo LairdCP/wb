@@ -5,10 +5,6 @@ echo "COMMON POST BUILD script: starting..."
 # enable tracing and exit on errors
 set -x -e
 
-# create firmware release file
-echo "SDC Linux Release `date +%Y%m%d`" \
-  > $TARGETDIR/etc/summit-release
-
 # Set root password to ’root’. Password generated with
 # mkpasswd, from the ’whois’ package in Debian/Ubuntu.
 ## sed -i ’s%^root::%root:8kfIfYHmcyQEE:%’ $TARGETDIR/etc/shadow
@@ -19,12 +15,22 @@ echo "SDC Linux Release `date +%Y%m%d`" \
 ## echo "/dev/mtdblock7\t\t/applog\tjffs2\tdefaults\t\t0\t0" \
 ## >> $TARGETDIR/etc/fstab
 
+# delete the default ssh init file, real one is in init.d/opt
+rm -f $TARGETDIR/etc/init.d/S50sshd
+
+# remove bash cruft
+rm -fr $TARGETDIR/etc/bash*
+rm -f $TARGETDIR/root/.bash*
+
+# remove debian cruft
+rm -fr $TARGETDIR/etc/network/if-*
+
+# remove conflicting rcK
+rm -f $TARGETDIR/etc/init.d/rcK
+
 # Copy the common rootfs additions first so that they can be overriden,
 # if necessary, by the product specific rootfs-additions
 tar c --exclude=.svn -C board/sdc/rootfs-additions-common/ . | tar x -C $TARGETDIR/
-
-# delete the default ssh init file
-#rm -f $TARGETDIR/etc/init.d/S50sshd
 
 # install libnl*.so.3 links
 (   cd "$TARGETDIR/usr/lib" &&
@@ -43,5 +49,9 @@ fi
 # create missing symbolic link
 # TODO: we shouldn't have to do this here, this is a temporary workaround
 (cd $TARGETDIR/usr/lib && ln -sf "libsdc_sdk.so.1.0" "libsdc_sdk.so.1")
+
+# create firmware release file
+echo "SDC Linux Release `date +%Y%m%d`" \
+  > $TARGETDIR/etc/summit-release
 
 echo "COMMON POST BUILD script: done."
