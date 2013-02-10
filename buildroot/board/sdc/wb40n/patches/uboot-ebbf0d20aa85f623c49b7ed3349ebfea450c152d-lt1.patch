@@ -1,6 +1,6 @@
-diff -urN a/arch/arm/config.mk b/arch/arm/config.mk
---- a/arch/arm/config.mk	2012-11-27 11:20:01.072534449 -0500
-+++ b/arch/arm/config.mk	2012-12-23 15:32:07.934785794 -0500
+diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/config.mk 2/uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/config.mk
+--- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/config.mk	2012-12-14 15:43:22.000000000 -0600
++++ 2/uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/config.mk	2013-02-10 10:58:19.053857720 -0600
 @@ -21,7 +21,7 @@
  # MA 02111-1307 USA
  #
@@ -10,9 +10,9 @@ diff -urN a/arch/arm/config.mk b/arch/arm/config.mk
  
  ifndef CONFIG_STANDALONE_LOAD_ADDR
  ifeq ($(SOC),omap3)
-diff -urN a/arch/arm/cpu/arm926ejs/at91/reset.c b/arch/arm/cpu/arm926ejs/at91/reset.c
---- a/arch/arm/cpu/arm926ejs/at91/reset.c	2012-11-27 11:20:01.077534454 -0500
-+++ b/arch/arm/cpu/arm926ejs/at91/reset.c	2012-12-23 15:32:07.934785794 -0500
+diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/cpu/arm926ejs/at91/reset.c 2/uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/cpu/arm926ejs/at91/reset.c
+--- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/cpu/arm926ejs/at91/reset.c	2012-12-14 15:43:22.000000000 -0600
++++ 2/uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/cpu/arm926ejs/at91/reset.c	2013-02-10 10:58:19.053857720 -0600
 @@ -26,11 +26,16 @@
  #include <asm/io.h>
  #include <asm/arch/hardware.h>
@@ -30,9 +30,9 @@ diff -urN a/arch/arm/cpu/arm926ejs/at91/reset.c b/arch/arm/cpu/arm926ejs/at91/re
  
  	writel(AT91_RSTC_KEY
  		| AT91_RSTC_CR_PROCRST	/* Processor Reset */
-diff -urN a/board/atmel/wb40n/Makefile b/board/atmel/wb40n/Makefile
---- a/board/atmel/wb40n/Makefile	1969-12-31 19:00:00.000000000 -0500
-+++ b/board/atmel/wb40n/Makefile	2012-12-23 15:32:07.934785794 -0500
+diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/wb40n/Makefile 2/uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/wb40n/Makefile
+--- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/wb40n/Makefile	1969-12-31 18:00:00.000000000 -0600
++++ 2/uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/wb40n/Makefile	2013-02-10 10:58:19.053857720 -0600
 @@ -0,0 +1,54 @@
 +#
 +# (C) Copyright 2003-2008
@@ -88,9 +88,9 @@ diff -urN a/board/atmel/wb40n/Makefile b/board/atmel/wb40n/Makefile
 +sinclude $(obj).depend
 +
 +#########################################################################
-diff -urN a/board/atmel/wb40n/wb40n.c b/board/atmel/wb40n/wb40n.c
---- a/board/atmel/wb40n/wb40n.c	1969-12-31 19:00:00.000000000 -0500
-+++ b/board/atmel/wb40n/wb40n.c	2012-12-23 15:32:07.934785794 -0500
+diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/wb40n/wb40n.c 2/uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/wb40n/wb40n.c
+--- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/wb40n/wb40n.c	1969-12-31 18:00:00.000000000 -0600
++++ 2/uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/wb40n/wb40n.c	2013-02-10 10:58:19.053857720 -0600
 @@ -0,0 +1,206 @@
 +/*
 + * Copyright (c) 2010-2012, Laird Technologies
@@ -298,9 +298,9 @@ diff -urN a/board/atmel/wb40n/wb40n.c b/board/atmel/wb40n/wb40n.c
 +#endif
 +	return rc;
 +}
-diff -urN a/boards.cfg b/boards.cfg
---- a/boards.cfg	2012-12-23 15:31:37.770782700 -0500
-+++ b/boards.cfg	2012-12-23 15:32:07.935785794 -0500
+diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/boards.cfg 2/uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/boards.cfg
+--- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/boards.cfg	2012-12-14 15:43:22.000000000 -0600
++++ 2/uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/boards.cfg	2013-02-10 10:58:19.057857601 -0600
 @@ -93,6 +93,7 @@
  at91sam9g20ek_dataflash_cs0  arm         arm926ejs   at91sam9260ek       atmel          at91        at91sam9260ek:AT91SAM9G20,SYS_USE_DATAFLASH_CS0
  at91sam9g20ek_dataflash_cs1  arm         arm926ejs   at91sam9260ek       atmel          at91        at91sam9260ek:AT91SAM9G20,SYS_USE_DATAFLASH_CS1
@@ -309,9 +309,9 @@ diff -urN a/boards.cfg b/boards.cfg
  at91sam9m10g45ek_nandflash   arm         arm926ejs   at91sam9m10g45ek    atmel          at91        at91sam9m10g45ek:AT91SAM9M10G45,SYS_USE_NANDFLASH
  at91sam9rlek_dataflash       arm         arm926ejs   at91sam9rlek        atmel          at91        at91sam9rlek:AT91SAM9RL,SYS_USE_DATAFLASH
  at91sam9rlek_nandflash       arm         arm926ejs   at91sam9rlek        atmel          at91        at91sam9rlek:AT91SAM9RL,SYS_USE_NANDFLASH
-diff -urN a/common/env_common.c b/common/env_common.c
---- a/common/env_common.c	2012-12-23 14:53:15.504546549 -0500
-+++ b/common/env_common.c	2012-12-23 15:32:07.935785794 -0500
+diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/common/env_common.c 2/uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/common/env_common.c
+--- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/common/env_common.c	2012-12-14 15:43:22.000000000 -0600
++++ 2/uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/common/env_common.c	2013-02-10 10:58:19.057857601 -0600
 @@ -141,6 +141,7 @@
  		error("Environment import failed: errno = %d\n", errno);
  
@@ -320,9 +320,9 @@ diff -urN a/common/env_common.c b/common/env_common.c
  }
  
  
-diff -urN a/include/configs/wb40n.h b/include/configs/wb40n.h
---- a/include/configs/wb40n.h	1969-12-31 19:00:00.000000000 -0500
-+++ b/include/configs/wb40n.h	2012-12-23 15:32:07.936785795 -0500
+diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb40n.h 2/uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb40n.h
+--- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb40n.h	1969-12-31 18:00:00.000000000 -0600
++++ 2/uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb40n.h	2013-02-10 10:58:19.057857601 -0600
 @@ -0,0 +1,195 @@
 +/*
 + * Copyright (c) 2010-2012 Laird technologies
@@ -519,12 +519,31 @@ diff -urN a/include/configs/wb40n.h b/include/configs/wb40n.h
 +#define CONFIG_HW_WATCHDOG		1
 +#define CONFIG_AT91SAM9_WATCHDOG	1
 +
-diff -urN a/tools/env/wb40n-fw_env.config b/tools/env/wb40n-fw_env.config
---- a/tools/env/wb40n-fw_env.config	1969-12-31 19:00:00.000000000 -0500
-+++ b/tools/env/wb40n-fw_env.config	2012-12-23 15:32:07.936785795 -0500
-@@ -0,0 +1,5 @@
-+# Configuration file for fw_(printenv/saveenv) utility.
-+# Up to two entries are valid, in this case the redundant
-+# environment sector is assumed present.
+diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env.config 2/uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env.config
+--- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env.config	2012-12-14 15:43:22.000000000 -0600
++++ 2/uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env.config	2013-02-10 11:23:24.453900038 -0600
+@@ -1,19 +1,6 @@
+ # Configuration file for fw_(printenv/saveenv) utility.
+-# Up to two entries are valid, in this case the redundant
+-# environment sector is assumed present.
+-# Notice, that the "Number of sectors" is ignored on NOR and SPI-dataflash.
+-# Futhermore, if the Flash sector size is ommitted, this value is assumed to
+-# be the same as the Environment size, which is valid for NOR and SPI-dataflash
+-
+-# NOR example
+-# MTD device name	Device offset	Env. size	Flash sector size	Number of sectors
+-/dev/mtd1		0x0000		0x4000		0x4000
+-/dev/mtd2		0x0000		0x4000		0x4000
+-
+-# MTD SPI-dataflash example
+-# MTD device name	Device offset	Env. size	Flash sector size	Number of sectors
+-#/dev/mtd5		0x4200		0x4200
+-#/dev/mtd6		0x4200		0x4200
+-
+-# NAND example
+-#/dev/mtd0		0x4000		0x4000		0x20000			2
++# Up to two entries are valid.
++# A second entry is for the redundant environment sector, then assumed present.
++#
 +# MTD device name	Device offset	Env. size	Flash sector size
 +/dev/mtd2		0x0000		0x20000		0x20000
