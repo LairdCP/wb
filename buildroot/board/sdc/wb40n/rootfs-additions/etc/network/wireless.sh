@@ -136,6 +136,7 @@ wifi_start()
     modprobe at91_mci  # init SDIO bus and find hardware, loads mmc_core
 
     ## load driver using interface prefix
+    msg "firmware: ${WIFI_FW##*/} -> `ls -l $WIFI_FW |grep -o '[^ /]*$' 2>/dev/null`"
     msg -en "loading: `ls -l $WIFI_MODULE |grep -o '[^ /]*$' 2>/dev/null`"
     [ -n "$driver_load_fw" ] && echo -en " +fw"
     [ -n "$driver_load_nv" ] && echo -en " +nv"
