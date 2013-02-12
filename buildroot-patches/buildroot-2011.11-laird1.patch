@@ -4554,6 +4554,7 @@ diff -Naur old/package/uboot-tools/uboot-tools.mk new/package/uboot-tools/uboot-
 +  install -m 0644 $(@D)/tools/env/fw_env.config $(TARGET_DIR)/etc
  endef
  endif
+ 
 diff -Naur old/package/udev/Config.in new/package/udev/Config.in
 --- old/package/udev/Config.in	2011-11-30 23:08:44.000000000 +0000
 +++ new/package/udev/Config.in	2012-08-12 15:54:38.203125000 +0100
