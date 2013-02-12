@@ -1002,3 +1002,15 @@ diff -urN a/net/wireless/util.c b/net/wireless/util.c
  		case NL80211_IFTYPE_P2P_GO:
  		case NL80211_IFTYPE_AP:
  		case NL80211_IFTYPE_AP_VLAN:
+diff -urN a/arch/arm/mach-at91/board-dt.c b/arch/arm/mach-at91/board-dt.c
+--- a/arch/arm/mach-at91/board-dt.c	2013-02-12 16:58:35.948041107 -0500
++++ b/arch/arm/mach-at91/board-dt.c	2013-02-12 16:59:28.096040610 -0500
+@@ -50,7 +50,7 @@
+ 	NULL
+ };
+ 
+-DT_MACHINE_START(at91sam_dt, "Atmel AT91SAM (Device Tree)")
++DT_MACHINE_START(at91sam_dt, "Workgroup Bridge 45N - Atmel AT91SAM (dt)")
+ 	/* Maintainer: Atmel */
+ 	.timer		= &at91sam926x_timer,
+ 	.map_io		= at91_map_io,
