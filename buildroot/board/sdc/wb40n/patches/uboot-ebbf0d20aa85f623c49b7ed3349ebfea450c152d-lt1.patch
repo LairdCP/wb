@@ -519,3 +519,15 @@ diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb40n.
 +#define CONFIG_HW_WATCHDOG		1
 +#define CONFIG_AT91SAM9_WATCHDOG	1
 +
+diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env_main.c uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env_main.c
+--- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env_main.c	2012-12-14 15:43:22.000000000 -0600
++++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env_main.c	2013-02-10 11:35:31.741920264 -0600
+@@ -94,7 +94,7 @@
+ 	int lockfd = -1;
+ 	int retval = EXIT_SUCCESS;
+ 
+-	lockfd = open(lockname, O_WRONLY | O_CREAT | O_TRUNC);
++	lockfd = open(lockname, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+ 	if (-1 == lockfd) {
+ 		fprintf(stderr, "Error opening lock file %s\n", lockname);
+ 		return EXIT_FAILURE;
