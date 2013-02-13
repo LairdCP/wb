@@ -4544,17 +4544,6 @@ diff -Naur old/package/uboot-tools/uboot-tools-2011.03-can-change-ethaddr.patch 
 + 		if (*++nxt == '\0') {
 + 			*env = '\0';
 + 		} else {
-diff -Naur old/package/uboot-tools/uboot-tools.mk new/package/uboot-tools/uboot-tools.mk
---- old/package/uboot-tools/uboot-tools.mk	2011-11-30 17:08:44.000000000 -0600
-+++ new/package/uboot-tools/uboot-tools.mk	2013-02-12 11:46:15.651078508 -0600
-@@ -19,6 +19,7 @@
- 
- ifeq ($(BR2_PACKAGE_UBOOT_TOOLS_FWPRINTENV),y)
- define UBOOT_TOOLS_INSTALL_FWPRINTENV
-+	install -m 0644 -D $(@D)/tools/env/fw_env.config $(TARGET_DIR)/etc
- 	install -m 0755 -D $(@D)/tools/env/fw_printenv $(TARGET_DIR)/usr/sbin
- 	ln -sf fw_printenv $(TARGET_DIR)/usr/sbin/fw_setenv
- endef
 diff -Naur old/package/udev/Config.in new/package/udev/Config.in
 --- old/package/udev/Config.in	2011-11-30 23:08:44.000000000 +0000
 +++ new/package/udev/Config.in	2012-08-12 15:54:38.203125000 +0100
