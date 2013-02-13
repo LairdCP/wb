@@ -519,31 +519,3 @@ diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb40n.
 +#define CONFIG_HW_WATCHDOG		1
 +#define CONFIG_AT91SAM9_WATCHDOG	1
 +
-diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env.config uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env.config
---- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env.config	2012-12-14 15:43:22.000000000 -0600
-+++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env.config	2013-02-10 11:23:24.453900038 -0600
-@@ -1,19 +1,6 @@
- # Configuration file for fw_(printenv/saveenv) utility.
--# Up to two entries are valid, in this case the redundant
--# environment sector is assumed present.
--# Notice, that the "Number of sectors" is ignored on NOR and SPI-dataflash.
--# Futhermore, if the Flash sector size is ommitted, this value is assumed to
--# be the same as the Environment size, which is valid for NOR and SPI-dataflash
--
--# NOR example
--# MTD device name	Device offset	Env. size	Flash sector size	Number of sectors
--/dev/mtd1		0x0000		0x4000		0x4000
--/dev/mtd2		0x0000		0x4000		0x4000
--
--# MTD SPI-dataflash example
--# MTD device name	Device offset	Env. size	Flash sector size	Number of sectors
--#/dev/mtd5		0x4200		0x4200
--#/dev/mtd6		0x4200		0x4200
--
--# NAND example
--#/dev/mtd0		0x4000		0x4000		0x20000			2
-+# Up to two entries are valid.
-+# A second entry is for the redundant environment sector, then assumed present.
-+#
-+# MTD device name	Device offset	Env. size	Flash sector size
-+/dev/mtd2		0x0000		0x20000		0x20000
