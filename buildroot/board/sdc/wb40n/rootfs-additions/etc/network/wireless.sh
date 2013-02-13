@@ -25,6 +25,12 @@ WIFI_80211=-Dnl80211                            ## supplicant driver nl80211
 
 wifi_config()
 {
+  ## Note: The pre-existence of the profiles.conf file is mandatory!!!
+  # Simply calling the sdc_cli will regenerate the profiles.conf file.
+  # If it is regenerated while the driver is loaded, trouble awaits...
+  [ -f $WIFI_PROFILES ] \
+  || { msg "re-generating $WIFI_PROFILES"; $SDC_CLI quit; }
+
   # determine firmware to use
   ccx=$( sed -n '/CCXfeatures/s/.*=//p' $WIFI_PROFILES \
         || $SDC_CLI global show ccx-features |cut -d: -f2 )
@@ -110,12 +116,6 @@ wifi_start()
   then
     wifi_queryinterface
   else
-    ## Note: The pre-existence of the profiles.conf file is mandatory!!!
-    # Simply calling the sdc_cli will regenerate the profiles.conf file.
-    # If it is regenerated while the driver is loaded, trouble awaits...
-    [ -f $WIFI_PROFILES ] \
-    || { msg "re-generating $WIFI_PROFILES"; $SDC_CLI quit; }
-
     ## check for 'slot_b=' setting in kernel args
     grep -o 'slot_b=.' /proc/cmdline \
     && msg "warning: \"slot_b\" setting in bootargs"
