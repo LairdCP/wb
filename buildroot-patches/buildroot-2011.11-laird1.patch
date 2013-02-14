@@ -4778,8 +4778,8 @@ diff -Naur old/package/vpnc/vpnc.mk new/package/vpnc/vpnc.mk
  		MANDIR=/usr/share/man \
  		VERSION=$(VPNC_VERSION) \
 diff -Naur old/boot/uboot/uboot.mk new/boot/uboot/uboot.mk
---- boot/uboot/uboot.mk	2011-11-30 18:08:44.000000000 -0500
-+++ boot/uboot/uboot.mk	2013-02-14 01:07:57.706937117 -0500
+--- old/boot/uboot/uboot.mk	2011-11-30 18:08:44.000000000 -0500
++++ new/boot/uboot/uboot.mk	2013-02-14 01:07:57.706937117 -0500
 @@ -82,10 +82,17 @@
  	$(TARGET_CONFIGURE_OPTS) $(UBOOT_CONFIGURE_OPTS) 	\
  		$(MAKE) -C $(@D) $(UBOOT_MAKE_OPTS) 		\
