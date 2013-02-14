@@ -4777,6 +4777,33 @@ diff -Naur old/package/vpnc/vpnc.mk new/package/vpnc/vpnc.mk
  		ETCDIR=/etc/vpnc \
  		MANDIR=/usr/share/man \
  		VERSION=$(VPNC_VERSION) \
+diff -Naur old/boot/uboot/uboot.mk new/boot/uboot/uboot.mk
+--- boot/uboot/uboot.mk	2011-11-30 18:08:44.000000000 -0500
++++ boot/uboot/uboot.mk	2013-02-14 01:07:57.706937117 -0500
+@@ -82,10 +82,17 @@
+ 	$(TARGET_CONFIGURE_OPTS) $(UBOOT_CONFIGURE_OPTS) 	\
+ 		$(MAKE) -C $(@D) $(UBOOT_MAKE_OPTS) 		\
+ 		$(UBOOT_MAKE_TARGET)
++	# build env tool from same source
++	$(MAKE) -C $(@D) $(UBOOT_MAKE_OPTS) \
++		HOSTCC=$(TARGET_CROSS)gcc HOSTSTRIP=$(TARGET_CROSS)strip env
+ endef
+ 
+ define UBOOT_INSTALL_IMAGES_CMDS
+ 	cp -dpf $(@D)/$(UBOOT_BIN) $(BINARIES_DIR)/
++	# install env tool
++	install -m 0644 -D $(@D)/tools/env/fw_env.config $(TARGET_DIR)/etc
++	install -m 0755 -D $(@D)/tools/env/fw_printenv $(TARGET_DIR)/usr/sbin
++	ln -sf fw_printenv $(TARGET_DIR)/usr/sbin/fw_setenv
+ endef
+ 
+ $(eval $(call GENTARGETS))
+@@ -98,3 +105,5 @@
+ endif
+ endif
+ endif
++
++
 diff -Naur old/target/generic/device_table_dev.txt new/target/generic/device_table_dev.txt
 --- old/target/generic/device_table_dev.txt	2011-11-30 23:08:44.000000000 +0000
 +++ new/target/generic/device_table_dev.txt	2011-12-14 03:58:49.265625000 +0000
