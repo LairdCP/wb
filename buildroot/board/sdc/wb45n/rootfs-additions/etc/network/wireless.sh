@@ -1,15 +1,34 @@
 #!/usr/bin/env ash
 # /etc/network/wireless.sh - driver-&-firmware configuration
-# Supports the Atheros ath6kl series driver.
 # jon.hefling@lairdtech.com 20120520
 #
-WIFI_SUPP=/usr/bin/sdcsupp
-WIFI_CONFIG=/etc/summit/wifi_interface.conf
-WIFI_PROFILES=/etc/summit/profiles.conf
-WIFI_LOG=/var/log/wifi
+WIFI_PREFIX=wlan                                ## iface prefix to be enumerated
+WIFI_DRIVER="ath6kl_sdio"                       ## device driver "name"
+WIFI_MODULE=/lib/modules/`uname -r`/kernel/drivers/net/wireless/ath/ath6kl/ath6kl_sdio.ko
+#WIFI_FWPATH=/lib/firmware                       ## location of 'fw' symlink
+#WIFI_NVRAM=/lib/nvram/nv
 
-usleep='busybox usleep'
-trap "" 1 15
+WIFI_PROFILES=/etc/summit/profiles.conf         ## sdc_cli profiles.conf
+WIFI_MACADDR=/etc/summit/wifi_interface         ## persistent mac-address file
+
+# wpa_supplicant and cli
+# (comment-out to disable, must do 'stop' first)
+SDC_SUPP=/usr/bin/sdcsupp
+SDC_CLI=/usr/bin/sdc_cli
+# supplicant options
+WIFI_80211=-Dnl80211                            ## supplicant driver nl80211
+#WIFI_DEBUG=-tdddd                               ## supplicant debug option 
+
+
+
+wifi_config()
+{
+  ## Note: The pre-existence of the profiles.conf file is mandatory!!!
+  # Simply calling the sdc_cli will regenerate the profiles.conf file.
+  # If it is regenerated while the driver is loaded, trouble awaits...
+  [ -f $WIFI_PROFILES ] \
+  || { msg "re-generating $WIFI_PROFILES"; ${SDC_CLI:-:} quit; }
+}
 
 msg()
 {
@@ -26,15 +45,13 @@ wifi_waitforlink()
   while [ $cn -lt $1 ]
   do
     { read -r link </sys/class/net/$WIFI_DEV/wireless/link; } 2>/dev/null
-    [ -n "$link" ] && [ $link -gt 0 ] && break
-    #
-    sleep 1
+    let $link+0 && break || sleep 1
     cn_='\033[1K\r'
     let cn+=1 && msg -en .
     let sn=$cn%11
     if [ $sn -eq 0 ]
     then
-      ps |grep -q "[ ]$WIFI_SUPP" \
+      ps |grep -q "[ ]$SDC_SUPP" \
       || { msg "supplicant not running, aborted"; return 1; }
     fi
   done
@@ -44,238 +61,188 @@ wifi_waitforlink()
   || { msg -e "${cn_}  ...failed to associate in ${cn}s"; return 1; }
 }
 
-wifi_checkinterface()
+wifi_awaitinterface()
 {
-  # arg1 is timeout (10*mSec)
-  msg "  ...checking $WIFI_DEV"
+  # arg1 is timeout (10*mSec) to await availability
   let x=0
   while [ $x -lt $1 ]
   do
-    grep -q $WIFI_DEV /proc/net/dev && break
+    grep -q "${WIFI_DEV:-xx}" /proc/net/dev && break
     $usleep 10000 && { let x+=1; msg -en .; }
   done
-  [ $x -gt 0 ] && msg
+  #[ $x -gt 0 ] && msg
   [ $x -lt $1 ] && return 0 || return 1
 }
 
 wifi_queryinterface()
 {
-  [ -n "$1" ] \
-  && WIFI_DEV=`sed -n "s/^device \(.*\).*/\1/p" $1 2>/dev/null`
-  
-  [ -z "$WIFI_DEV" ] \
-  && WIFI_DEV=$( grep -s $WIFI_DRIVER /sys/class/net/*/device/uevent \
+  # determine iface via path with matching device/uevent (do not quote token)
+  WIFI_DEV=$( grep -s $WIFI_DRIVER /sys/class/net/*/device/uevent \
                |sed -n 's,/sys/class/net/\([a-z0-9]\+\)/device.*,\1,p' )
-  
-  [ -n "$WIFI_DEV" ] && return 0 || return 1
+
+  if [ -z "$WIFI_DEV" ]
+  then
+    return 1
+  elif let $1+0
+  then
+    wifi_awaitinterface $1 || return 1
+  fi
+  return 0
 }
 
 wifi_start()
 {
-  if grep -q ath6k /proc/modules
+  if grep -q ${module/.ko/} /proc/modules
   then
-    wifi_queryinterface $WIFI_LOG
+    wifi_queryinterface
   else
-    echo -n >$WIFI_LOG
-    ## Note: The pre-existence of the profiles.conf file is mandatory!!!
-    # Simply calling the sdc_cli will regenerate the profiles.conf file.
-    # If it is regenerated while the driver is loaded, trouble awaits...
-    [ -f $WIFI_PROFILES ] \
-    || { msg "re-generating $WIFI_PROFILES"; sdc_cli quit; }
+    ## check for 'slot_b=' setting in kernel args
+    grep -o 'slot_b=.' /proc/cmdline \
+    && msg "warning: \"slot_b\" setting in bootargs"
 
     ## load the driver
     modprobe ath6kl_sdio \
     || { msg "  ...driver failed to load"; exit 1; }
 
-    ## enumerated interface should be available upon load
-    wifi_queryinterface \
-    || { msg "  ...driver init failed, aborted"; return 1; }
-    sed "s/^WIFI_INTERFACE.*/WIFI_INTERFACE=$WIFI_DEV/g" -i $WIFI_CONFIG
-    echo "device $WIFI_DEV" >>$WIFI_LOG
+    ## await enumerated interface
+    wifi_queryinterface 67 \
+    || { msg "  ...driver init failure, iface not available: ${WIFI_DEV:-?}"; return 1; }
+    #&& { msg "  ...success"; } \
+  fi
 
-    ## wait some (10*mSec) for interface to be ready
-    wifi_checkinterface 67 \
-    && { msg "  ...driver loaded, interface $WIFI_DEV available"; } \
-    || { echo "  ...error, interface $WIFI_DEV is not available/usable"; return 1; }
-  fi  
-  msg activating $WIFI_DEV
-
-  # try to enable interface  
+  # enable interface  
   [ -n "$WIFI_DEV" ] \
-  && /sbin/ifconfig $WIFI_DEV up 2>>$WIFI_LOG \
+  && { msg "activate: $WIFI_DEV  ...`ifconfig $WIFI_DEV up 2>&1 && echo okay`"; } \
   || { msg iface $WIFI_DEV n/a, maybe fw issue, try: wireless restart; return 1; }
 
   # save MAC address for WIFI if necessary
-  if [ -z "$WIFI_MACADDR" ]
-  then
-    WIFI_MACADDR=`cat /sys/class/net/$WIFI_DEV/address 2>/dev/null`
-    sed "s/^WIFI_MACADDR.*/WIFI_MACADDR=$WIFI_MACADDR/g" -i $WIFI_CONFIG
-  fi
+  grep -sq ..:..:..:..:..:.. $WIFI_MACADDR \
+  || cat /sys/class/net/$WIFI_DEV/address >$WIFI_MACADDR
 
   # launch supplicant as daemon if not running
-  if ! ps |grep -q "[ ]$WIFI_SUPP"
+  if test -e "$SDC_SUPP" && ! ps |grep -q "[ ]$SDC_SUPP" && let n=33
   then
-    msg -en launching: $WIFI_SUPP -i$WIFI_DEV $WIFI_80211 $WIFI_DEBUG -s'  '
-    $WIFI_SUPP -i$WIFI_DEV $WIFI_80211 $WIFI_DEBUG -s >/dev/null 2>&1 &
-    # the 'daemonize' option may have issues, but would allow dynamic usleep
-    while [ ! -e /tmp/wpa_supplicant ]; do msg -en .; $usleep 1000000; done
-    ps |grep -q "[ ]$WIFI_SUPP" || { msg ..error; return 1; }
+    wpa_sd=/run/wpa_supplicant
+    msg -en executing: $SDC_SUPP -i$WIFI_DEV $WIFI_80211 $WIFI_DEBUG -s'  '
+    $SDC_SUPP -i$WIFI_DEV $WIFI_80211 $WIFI_DEBUG -s >/dev/null 2>&1 &
+    # the 'daemonize' option may have issues, so using dynamic wait instead
+    until test -e $wpa_sd || ! let n=$n-1; do msg -en .; $usleep 1000000; done
+    ps |grep -q "[ ]$SDC_SUPP" || { msg ..error; return 1; }
     msg ..okay
   fi
   return 0
 }
 
-wifi_stop() {
-  ##
+wifi_stop()
+{
   ## Stopping means packets can't use wifi and interface will be removed.
   ##
   if [ -n "$WIFI_DEV" ] \
   && grep -q $WIFI_DEV /proc/net/dev
   then
-    ## de-configure the interface (flush settings) so packets don't use it
-    # This step allows for a cleaner shutdown of the interface...
-    # Otherwise, stale settings can remain.  Try 'ifconfig -a'.
+    ## de-configure the interface
+    # This step allows for a cleaner shutdown by flushing settings,
+    # so packets don't use it.  Otherwise stale settings can remain.
     ifconfig $WIFI_DEV 0.0.0.0 && msg "  ...de-configured"
 
     ## terminate the supplicant
-    if killall ${WIFI_SUPP##*/} 2>/dev/null
+    if killall ${SDC_SUPP##*/} 2>/dev/null
     then
       msg -en "supplicant terminating"
-      while ps |grep -q "[ ]$WIFI_SUPP"; do $usleep 100000; msg -en .; done; msg
+      while ps |grep -q "[ ]$SDC_SUPP"; do $usleep 100000; msg -en .; done; msg
     fi
-     
+
     ## down the interface
+    # There have been occasional problems when the driver is unloaded
+    # while the iface is still being used.
     msg -en "disabling interface  "
-    ifconfig $WIFI_DEV down \
-    && { $usleep 100000; msg ...down; } || msg
+  # ${SDC_CLI:-:} disable
+    ifconfig $WIFI_DEV down && { $usleep 100000; msg ...down; } || msg
   fi
-  ## and unload driver module
-  if grep -q dhd /proc/modules
+  ## unload driver module
+  if grep -q ${module/.ko/} /proc/modules
   then
-    msg -en "unloading ath6k driver  "
-    /sbin/modprobe -r ath6kl_sdio || { msg ...error; return 1; }
+    msg -en "unloading ${module/.ko/} driver  "
+    /sbin/modprobe -r ${module/.ko/} || { msg ...error; return 1; }
     msg ...okay
   fi
   return 0
 }
 
-# read configuration
-if [ ! -f $WIFI_CONFIG ]
-then
-  echo "re-generating $WIFI_CONFIG"
-  cat >$WIFI_CONFIG<<-	\
-	wifi-configuration-file-block
-	# $WIFI_CONFIG                                                           
-	# This auto-generated file is read by the wireless.sh script.
-	# Settings intended for the wb45nbt.
-	# Edits can be made.
-
-	# The interface name is enumerated from the following prefix.
-	WIFI_PREFIX=wlan
-
-	# Autoprobed if not set.
-	WIFI_INTERFACE=
-
-	# Autoprobed if not set.
-	WIFI_MACADDR=
-
-	# Timeout for association in seconds.
-	WIFI_TIMEOUT=60
-
-	# Driver device "name"
-	WIFI_DRIVER="ath6kl_sdio"
-
-	# The kernel driver module, firmware and nvram to load. (can be symlinks)
-	WIFI_MODULE="/lib/modules/\`uname -r\`/kernel/drivers/net/wireless/ath/ath6kl/ath6kl_sdio.ko"
-   WIFI_FIRMWARE=/lib/firmware/ath6kl
-   WIFI_NVRAM=                       
-	
-	# Supplicant debugging can be set here or via commandline.
-	#WIFI_DEBUG=-tdddd                                               
-
-	# Supplicant can use nl80211
-	WIFI_80211=-Dnl80211
-	
-	wifi-configuration-file-block
-fi
-source $WIFI_CONFIG || { echo "conf error"; exit 1; }
-
 # ensure this script is available as system command
 [ -x /sbin/wireless ] || ln -sf /etc/network/wireless.sh /sbin/wireless
 
 # setting debug-mode from cmdline, overrides conf
-[ "${1:0:1}" == "-" ] && WIFI_DEBUG=${1} && shift
-[ -z "${WIFI_DEBUG:1}" ] && WIFI_DEBUG= #|| echo 6 >/proc/sys/kernel/printk
+case $1 in
+  -[td]*)
+    WIFI_DEBUG=${1} && shift
+    ;;
+esac
+#[ -z "${WIFI_DEBUG:1}" ] && WIFI_DEBUG= || echo 6 >/proc/sys/kernel/printk
 
 # optionally, wait on this script for a link
 [ "$2" == "wait" ] && wfl=true || wfl=false
 
+module=${WIFI_MODULE##*/}
+usleep='busybox usleep'
+trap "" 1 15
+
 # command
-case "$1" in
+case $1 in
   
   stop|down)
-    wifi_queryinterface $WIFI_LOG
+    wifi_queryinterface
     echo \ \ Stopping wireless $WIFI_DEV
     wifi_stop
-    exit $?
     ;;
 
   start|up)
     echo \ \ Starting wireless
-    wifi_start && $wfl && wifi_waitforlink $WIFI_TIMEOUT
-    exit $?
+    wifi_config && wifi_start && $wfl && wifi_waitforlink 60
     ;;
 
   restart)
-    $0 $WIFI_DEBUG stop
-    $0 $WIFI_DEBUG start $2
+    $0 $WIFI_DEBUG stop && exec $0 $WIFI_DEBUG start $2
     ;;
 
-  stat*)
-    # show module
-    lsmod |grep '^[Ma][ot][dh]'
-    grep -q dhd /proc/modules || echo "  ...not loaded" 
-    # show processes
-    echo -e "\nAtheros:"
-    ps -o pid,args |grep '[a]th'
-    # show supplicant
-    echo -e "\nSupplicant:"
-    ps -o pid,args |grep 'sup[p]' || echo "  ...not running"
+  '')
+    module=${module/.ko/}
+    lsmod |grep -e ^Module -e "$module"
+    grep -q "^$module" /proc/modules \
+    || echo "  ...not loaded" 
+
+    echo -e "\nProcesses related for this driver and supplicant:"
+    top -bn1 |sed -n '/sed/d;4H;/supp/H;/'"$module"'/{H;x;p;}' |uniq |grep . \
+    || echo "  ...not found"
+
+    if wifi_queryinterface
+    then
+      sed 's/^Inter-/\n\/proc\/net\/wireless:\n&/;$a' /proc/net/wireless
+      iw dev $WIFI_DEV link |sed "s/onnected/ssociated/; s/cs/as/ ;s/Cs/As/"
+    fi
     echo
-    echo "/proc/net/wireless:"
-    cat /proc/net/wireless 2>/dev/null
-    # try to find wireless interface and show if associated
-    echo
-    for x in /sys/class/net/*/wireless
-    do
-      x=${x##*/sys/class/net/}; x=${x%%/*}; [ "$x" != \* ] \
-      && iw dev $x link |sed "s/onnected/ssociated/; s/cs/as/ ;s/Cs/As/"
-    done
-    echo
-    exit 0
     ;;
     
-  conf*)
-    cat $WIFI_CONFIG
-    exit $?
-    ;;
-    
-  log)
-    cat $WIFI_LOG
-    exit $?
-    ;;
-    
-  *)
-    module=`ls -l "$WIFI_MODULE" |grep -o '[^ /]*$'`
+  \?|-h|--help)
     echo "$0"
-    echo "Sets up the wireless ${module:-<-?->} driver and configures support for it."
-    echo "Reads $WIFI_CONFIG.  (regenerated w/defaults, if missing)"
+    echo "  ...stop/start/restart the '$WIFI_PREFIX#' interface"
+    echo "Manages the '$WIFI_DRIVER' wireless device driver: $module"
     echo
-    echo "AP association is governed by the 'sdc_cli' and an active valid profile."
-    echo "External calls to this script can wait on it, by adding option 'wait'."
+    echo "AP association is governed by the 'sdc_cli' and an active profile."
+    echo "External calls can wait on association, by adding option 'wait'."
+    echo
+    [ "settings" == "$2" ] && grep "^WIFI_[A-Z]*=" $0 && echo
+    echo "Flags:  (passed to supplicant)"
+    echo "  -t  timestamp debug messages"
+    echo "  -d  debug verbosity (-dd even more)"
     echo
     echo "Usage:"
-    echo "# ${0##*/} [<-tdd...>] {start|stop|restart|status|conf|log} [{wait}]"
-    exit 1
+    echo "# ${0##*/} [-tdddd] {stop|start|restart|status} [wait]"
+    ;;
+
+  *)
+    echo "$0 ? [settings]"
+    false
     ;;
 esac
+exit $?

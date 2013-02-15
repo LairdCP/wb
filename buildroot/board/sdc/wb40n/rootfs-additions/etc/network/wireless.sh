@@ -15,6 +15,7 @@ WIFI_USE_DHD_TO_LOAD_FW=no                      ## legacy fw load method
 WIFI_ACTIVATE_SETTINGS=no                       ## legacy sdc_cli method
 
 # wpa_supplicant and cli
+# (comment-out to disable, must do 'stop' first)
 SDC_SUPP=/usr/bin/sdcsupp
 SDC_CLI=/usr/bin/sdc_cli
 # supplicant options
@@ -29,11 +30,10 @@ wifi_config()
   # Simply calling the sdc_cli will regenerate the profiles.conf file.
   # If it is regenerated while the driver is loaded, trouble awaits...
   [ -f $WIFI_PROFILES ] \
-  || { msg "re-generating $WIFI_PROFILES"; $SDC_CLI quit; }
+  || { msg "re-generating $WIFI_PROFILES"; ${SDC_CLI:-:} quit; }
 
   # determine firmware to use
-  ccx=$( sed -n '/CCXfeatures/s/.*=//p' $WIFI_PROFILES \
-        || $SDC_CLI global show ccx-features |cut -d: -f2 )
+  ccx=$( ${SDC_CLI:-:} global show ccx-features |cut -d: -f2 )
 
   if [ $ccx"" != 2 -a $ccx"" != off ]
   then
@@ -112,7 +112,7 @@ wifi_queryinterface()
 
 wifi_start()
 {
-  if grep -q dhd /proc/modules
+  if grep -q ${module/.ko/} /proc/modules
   then
     wifi_queryinterface
   else
@@ -165,19 +165,20 @@ wifi_start()
 
   # legacy activation method
   [ "${WIFI_ACTIVATE_SETTINGS:0:1}" == "y" ] \
-  && printf activate_global_settings\\\nactivate_current\\\n |$SDC_CLI
+  && printf activate_global_settings\\\nactivate_current\\\n |${SDC_CLI:-:}
 
   # save MAC address for WIFI if necessary
   grep -sq ..:..:..:..:..:.. $WIFI_MACADDR \
   || cat /sys/class/net/$WIFI_DEV/address >$WIFI_MACADDR
 
   # launch supplicant as daemon if not running
-  if ! ps |grep -q "[ ]$SDC_SUPP"
+  if test -e "$SDC_SUPP" && ! ps |grep -q "[ ]$SDC_SUPP" && let n=33
   then
+    wpa_sd=/run/wpa_supplicant
     msg -en executing: $SDC_SUPP -i$WIFI_DEV $WIFI_80211 $WIFI_DEBUG -s'  '
     $SDC_SUPP -i$WIFI_DEV $WIFI_80211 $WIFI_DEBUG -s >/dev/null 2>&1 &
-    # the 'daemonize' option may have issues, but would allow dynamic usleep
-    while [ ! -e /tmp/wpa_supplicant ]; do msg -en .; $usleep 1000000; done
+    # the 'daemonize' option may have issues, so using dynamic wait instead
+    until test -e $wpa_sd || ! let n=$n-1; do msg -en .; $usleep 1000000; done
     ps |grep -q "[ ]$SDC_SUPP" || { msg ..error; return 1; }
     msg ..okay
   fi
@@ -207,14 +208,14 @@ wifi_stop()
     # There have been occasional problems when the driver is unloaded
     # while the iface is still being used.
     msg -en "disabling interface  "
-  # $SDC_CLI disable
+  # ${SDC_CLI:-:} disable
     ifconfig $WIFI_DEV down && { $usleep 100000; msg ...down; } || msg
   fi
   ## unload driver module
-  if grep -q dhd /proc/modules
+  if grep -q ${module/.ko/} /proc/modules
   then
-    msg -en "unloading dhd driver  "
-    rmmod dhd || { msg ...error; return 1; }
+    msg -en "unloading ${module/.ko/} driver  "
+    rmmod ${module/.ko/} || { msg ...error; return 1; }
     msg ...okay
   fi
   return 0
@@ -283,7 +284,7 @@ case $1 in
     echo "External calls can wait on association, by adding option 'wait'."
     echo
     [ "settings" == "$2" ] && grep "^WIFI_[A-Z]*=" $0 && echo
-    echo "Flags:  ("
+    echo "Flags:  (passed to supplicant)"
     echo "  -t  timestamp debug messages"
     echo "  -d  debug verbosity (-dd even more)"
     echo
