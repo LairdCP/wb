@@ -377,7 +377,7 @@ case $1 in
       let size=`cat $mtd/size`
       mtd=${mtd##/sys/class/mtd/mtd}
       [ $mtd -gt 0 -a $mtd -eq $kip -o $mtd -eq $rip ] && ap='->' || ap='  ' 
-      printf "%s% 2d:  0x%08x  0x%08x  %s\n" "$ap" $mtd $addr $size $name
+      printf "%s% 2d:  0x%08x  0x%08x  %s\n" "$ap" $mtd $addr $size "$name"
       let addr+=$size
     done
     echo
