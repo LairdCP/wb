@@ -212,7 +212,8 @@ case $1 in
     || echo "  ...not loaded" 
 
     echo -e "\nProcesses related for this driver and supplicant:"
-    top -bn1 |sed -n '/sed/d;4H;/supp/H;/'"$module"'/{H;x;p;}' |uniq |grep . \
+    top -bn1 \
+    |sed -n '/sed/d;4H;/supp/H;/'"${module%%_*}"'/{H;x;p;}' |uniq |grep . \
     || echo "  ...not found"
 
     if wifi_queryinterface
