@@ -1,9 +1,6 @@
  -> buildroot-2011.11-laird1.patch
 Review the following diff/patch snippets:
 
-? package/busybox/busybox-1.18.x.config
-  ...unnecessary
-  
 - package/busybox/busybox.mk
 - package/busybox/S01logging
 - package/busybox/udhcpc.conf

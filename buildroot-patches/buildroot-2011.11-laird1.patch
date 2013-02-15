@@ -1867,24 +1867,6 @@ diff -Naur old/package/bluez_utils/bluez_utils.mk new/package/bluez_utils/bluez_
  
  # BlueZ 3.x compatibility
  ifeq ($(BR2_PACKAGE_BLUEZ_UTILS_COMPAT),y)
-diff -Naur old/package/busybox/busybox-1.18.x.config new/package/busybox/busybox-1.18.x.config
---- old/package/busybox/busybox-1.18.x.config	2011-11-30 23:08:44.000000000 +0000
-+++ new/package/busybox/busybox-1.18.x.config	2011-09-19 16:29:39.156250000 +0100
-@@ -553,11 +553,11 @@
- CONFIG_LOSETUP=y
- CONFIG_LSPCI=y
- CONFIG_LSUSB=y
--CONFIG_MDEV=y
--CONFIG_FEATURE_MDEV_CONF=y
-+# CONFIG_MDEV=y
-+# CONFIG_FEATURE_MDEV_CONF=y
- # CONFIG_FEATURE_MDEV_RENAME is not set
- # CONFIG_FEATURE_MDEV_RENAME_REGEXP is not set
--CONFIG_FEATURE_MDEV_EXEC=y
-+# CONFIG_FEATURE_MDEV_EXEC=y
- # CONFIG_FEATURE_MDEV_LOAD_FIRMWARE is not set
- CONFIG_MKSWAP=y
- # CONFIG_FEATURE_MKSWAP_UUID is not set
 diff -Naur old/package/busybox/busybox-1.19.x.config new/package/busybox/busybox-1.19.x.config
 --- old/package/busybox/busybox-1.19.x.config	2011-11-30 23:08:44.000000000 +0000
 +++ new/package/busybox/busybox-1.19.x.config	2012-10-22 21:26:01.156250000 +0100
