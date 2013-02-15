@@ -3190,45 +3190,6 @@ diff -Naur old/package/libnl/libnl.mk new/package/libnl/libnl.mk
  LIBNL_SOURCE = libnl-$(LIBNL_VERSION).tar.gz
  LIBNL_SITE = http://www.infradead.org/~tgr/libnl/files/
  LIBNL_INSTALL_STAGING = YES
-diff -Naur old/package/lighttpd/lighttpd.conf new/package/lighttpd/lighttpd.conf
-diff -Naur old/package/lighttpd/lighttpd.password new/package/lighttpd/lighttpd.password
-diff -Naur old/package/lighttpd/S99lighttpd new/package/lighttpd/S99lighttpd
-diff -Naur old/package/lighttpd/www/docs/css/header.css new/package/lighttpd/www/docs/css/header.css
-diff -Naur old/package/lighttpd/www/docs/css/homepage.css new/package/lighttpd/www/docs/css/homepage.css
-diff -Naur old/package/lighttpd/www/docs/css/products.css new/package/lighttpd/www/docs/css/products.css
-diff -Naur old/package/lighttpd/www/docs/img/920.jpg new/package/lighttpd/www/docs/img/920.jpg
-diff -Naur old/package/lighttpd/www/docs/img/bullet_minor.bmp new/package/lighttpd/www/docs/img/bullet_minor.bmp
-diff -Naur old/package/lighttpd/www/docs/img/Cisco_Compatible_35x30.gif new/package/lighttpd/www/docs/img/Cisco_Compatible_35x30.gif
-diff -Naur old/package/lighttpd/www/docs/img/CONNECTED.jpg new/package/lighttpd/www/docs/img/CONNECTED.jpg
-diff -Naur old/package/lighttpd/www/docs/img/favicon.ico new/package/lighttpd/www/docs/img/favicon.ico
-diff -Naur old/package/lighttpd/www/docs/img/logo.jpg new/package/lighttpd/www/docs/img/logo.jpg
-diff -Naur old/package/lighttpd/www/docs/img/mb.bmp new/package/lighttpd/www/docs/img/mb.bmp
-diff -Naur old/package/lighttpd/www/docs/img/SearchA.jpg new/package/lighttpd/www/docs/img/SearchA.jpg
-diff -Naur old/package/lighttpd/www/docs/img/SearchB.jpg new/package/lighttpd/www/docs/img/SearchB.jpg
-diff -Naur old/package/lighttpd/www/docs/img/ss/450x210A.jpg new/package/lighttpd/www/docs/img/ss/450x210A.jpg
-diff -Naur old/package/lighttpd/www/docs/img/ss/450x210B.jpg new/package/lighttpd/www/docs/img/ss/450x210B.jpg
-diff -Naur old/package/lighttpd/www/docs/img/ss/450x210C.jpg new/package/lighttpd/www/docs/img/ss/450x210C.jpg
-diff -Naur old/package/lighttpd/www/docs/img/ss/450x210D.jpg new/package/lighttpd/www/docs/img/ss/450x210D.jpg
-diff -Naur old/package/lighttpd/www/docs/img/ss/450x210E.jpg new/package/lighttpd/www/docs/img/ss/450x210E.jpg
-diff -Naur old/package/lighttpd/www/docs/img/ss/450x210F.jpg new/package/lighttpd/www/docs/img/ss/450x210F.jpg
-diff -Naur old/package/lighttpd/www/docs/img/ss/buttons/BlueOff.jpg new/package/lighttpd/www/docs/img/ss/buttons/BlueOff.jpg
-diff -Naur old/package/lighttpd/www/docs/img/ss/buttons/BlueOn.jpg new/package/lighttpd/www/docs/img/ss/buttons/BlueOn.jpg
-diff -Naur old/package/lighttpd/www/docs/img/ss/buttons/GreyOff.jpg new/package/lighttpd/www/docs/img/ss/buttons/GreyOff.jpg
-diff -Naur old/package/lighttpd/www/docs/img/ss/buttons/GreyOn.jpg new/package/lighttpd/www/docs/img/ss/buttons/GreyOn.jpg
-diff -Naur old/package/lighttpd/www/docs/img/WiFi-abg.jpg new/package/lighttpd/www/docs/img/WiFi-abg.jpg
-diff -Naur old/package/lighttpd/www/docs/img/WiFi-abgn.jpg new/package/lighttpd/www/docs/img/WiFi-abgn.jpg
-diff -Naur old/package/lighttpd/www/docs/img/WiFi-bg.jpg new/package/lighttpd/www/docs/img/WiFi-bg.jpg
-diff -Naur old/package/lighttpd/www/docs/index.html new/package/lighttpd/www/docs/index.html
-diff -Naur old/package/lighttpd/www/docs/js/clear-default-text.js new/package/lighttpd/www/docs/js/clear-default-text.js
-diff -Naur old/package/lighttpd/www/docs/js/crossfade.js new/package/lighttpd/www/docs/js/crossfade.js
-diff -Naur old/package/lighttpd/www/docs/js/expand.js new/package/lighttpd/www/docs/js/expand.js
-diff -Naur old/package/lighttpd/www/docs/js/menu_items.js new/package/lighttpd/www/docs/js/menu_items.js
-diff -Naur old/package/lighttpd/www/docs/js/menu.js new/package/lighttpd/www/docs/js/menu.js
-diff -Naur old/package/lighttpd/www/docs/js/menu_tpl.js new/package/lighttpd/www/docs/js/menu_tpl.js
-diff -Naur old/package/lighttpd/www/docs/js/tabs.js new/package/lighttpd/www/docs/js/tabs.js
-diff -Naur old/package/lighttpd/www/docs/js/util-functions.js new/package/lighttpd/www/docs/js/util-functions.js
-diff -Naur old/package/lighttpd/www/secure/images/connected.jpg new/package/lighttpd/www/secure/images/connected.jpg
-diff -Naur old/package/lighttpd/www/secure/index.html new/package/lighttpd/www/secure/index.html
 diff -Naur old/package/lockfile-progs/lockfile-progs.mk new/package/lockfile-progs/lockfile-progs.mk
 --- old/package/lockfile-progs/lockfile-progs.mk	2011-11-30 23:08:44.000000000 +0000
 +++ new/package/lockfile-progs/lockfile-progs.mk	2011-12-14 03:58:49.265625000 +0000

@@ -12,9 +12,6 @@ Review the following diff/patch snippets:
 ? package/input-event-daemon/input-event-daemon.mk  
   ...probably not necessary
 
-? package/lighttpd/...
-  ...contains demo content and conflicts with copied files in rootfs-additions-common
-
 ? package/netsnmp/...
   ...contains added content for demo/testing (but not currently used)
 
