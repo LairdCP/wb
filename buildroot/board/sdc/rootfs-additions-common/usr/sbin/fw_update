@@ -90,17 +90,20 @@ __END-OF-XML-NOTIFICATION-BLOCK
 
 leds() {
   led=led0
-  read -r max </sys/class/leds/$led/max_brightness
-  let max=$max+0
-  let min=0
-  if let ms=$1+0
+  if [ -d "/sys/class/leds/$led" ]
   then
-    echo $max >/sys/class/leds/$led/brightness
-    echo timer >/sys/class/leds/$led/trigger
-    echo $ms >/sys/class/leds/$led/delay_off
-    echo ${2:-$ms} >/sys/class/leds/$led/delay_on
-  else
-    echo $min >/sys/class/leds/$led/brightness
+    read -r max </sys/class/leds/$led/max_brightness
+    let max=$max+0
+    let min=0
+    if let ms=$1+0
+    then
+      echo $max >/sys/class/leds/$led/brightness
+      echo timer >/sys/class/leds/$led/trigger
+      echo $ms >/sys/class/leds/$led/delay_off
+      echo ${2:-$ms} >/sys/class/leds/$led/delay_on
+    else
+      echo $min >/sys/class/leds/$led/brightness
+    fi
   fi
 }
 
@@ -162,6 +165,13 @@ nc=$tm\ nc
 copy=$tm\ cat
 wget=wget
 [ "$1" == "bb-wget" ] && { shift; wget='busybox wget'; }
+
+# check fw_printenv
+if ! fw_printenv >/dev/null
+then
+  [ -f /etc/fw_env.config ] || echo "fw_env.config missing"
+  exit 1
+fi
 
 # ensure this is the expected embedded architecture
 if ! grep -q ARM926 /proc/cpuinfo \

@@ -68,9 +68,12 @@ cp=$tm\ cp
 reboot=$tm\ reboot
 flash_erase=$tm\ flash_erase
 fw_setenv=$tm\ fw_setenv
-
 fw_printenv=fw_printenv 
-
+if ! fw_printenv >/dev/null
+then
+  [ -f /etc/fw_env.config ] || echo "fw_env.config missing"
+  exit 1
+fi
 
 # ensure this is the expected embedded architecture
 if ! grep -q ARM926 /proc/cpuinfo \
