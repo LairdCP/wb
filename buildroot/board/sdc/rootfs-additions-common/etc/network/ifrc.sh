@@ -514,7 +514,7 @@ then
   fi  
 fi  
 
-# determine netlink rule to apply
+# determine netlink event rule to apply
 if [ -n "$ifnl_s" ]
 then
   ## run via nl daemon, so consume remaining args
@@ -533,19 +533,20 @@ then
         msg1 $dev is gone, so allowing deconfiguration
         IFRC_ACTION=dn
       else
-        msg 1 ignoring down event for dhcp method - iface is back
+        msg1 ignoring dn event for dhcp method - iface is back
         IFRC_ACTION=xxx
       fi
     else
       if [ "$IFRC_METHOD" == "dhcp" ]
       then
-        msg1 ignoring down event for dhcp method
+        msg1 deconfigure iface for dhcp method - still active
+        ifconfig $dev 0.0.0.0 2>/dev/null
         IFRC_ACTION=xxx
       fi
     fi
   fi
   
-  ## event rules for current '->up'
+  ## event rules for '->up'
   if [ "${IFRC_STATUS##*->}" == "up" ]
   then
     if [ "$IFRC_METHOD" == "dhcp" ]
@@ -564,7 +565,7 @@ msg @. ifrc_s/d/a/m: "$IFRC_STATUS" $IFRC_DEVICE ${IFRC_ACTION:-.} $IFRC_METHOD
 #
 # Do not really 'down' or 'up' an interface here with: 'ifconfig <dev> down/up'
 # We leave that to the init/driver scripts instead, so they handle stop/start.
-#
+# 
 # This script uses down/up with respect to interface (de)configuration only!!
 #
 case $IFRC_ACTION in
