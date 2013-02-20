@@ -3141,25 +3141,6 @@ diff -Naur old/package/kmod/kmod.mk new/package/kmod/kmod.mk
 +endif
 +
 +$(eval $(call AUTOTARGETS))
-diff -Naur old/package/libedit/Config.in new/package/libedit/Config.in
---- old/package/libedit/Config.in	1970-01-01 01:00:00.000000000 +0100
-+++ new/package/libedit/Config.in	2012-09-20 00:01:15.796875000 +0100
-@@ -0,0 +1,5 @@
-+config BR2_PACKAGE_LIBEDIT
-+	bool "libedit"
-+	help
-+      libedit
-+
-diff -Naur old/package/libedit/libedit.mk new/package/libedit/libedit.mk
---- old/package/libedit/libedit.mk	1970-01-01 01:00:00.000000000 +0100
-+++ new/package/libedit/libedit.mk	2012-09-20 00:37:44.390625000 +0100
-@@ -0,0 +1,6 @@
-+LIBEDIT_VERSION = 20110802-3.0
-+LIBEDIT_SOURCE = libedit-$(LIBEDIT_VERSION).tar.gz
-+LIBEDIT_DEPENDENCIES = ncurses host-pkg-config
-+LIBEDIT_INSTALL_STAGING = YES
-+
-+$(eval $(call AUTOTARGETS))
 diff -Naur old/package/libnl/libnl.mk new/package/libnl/libnl.mk
 --- old/package/libnl/libnl.mk	2011-11-30 23:08:44.000000000 +0000
 +++ new/package/libnl/libnl.mk	2012-11-27 13:26:43.046875000 +0000
