@@ -218,8 +218,7 @@ show_interface_config_and_status()
   [ -z "$dev" -a -n "$ida" ] \
   && echo "       Available, but not configured: $ida"
   echo
-  ifconfig |sed -n "/${dev}/,/^$/p" \
-           |sed '/packe/d; /queue/d; /nterr/d; /cope/d' \
+  ifconfig |sed -n "/packe/d;/queue/d;/nterr/d;/cope/d;/$dev/,/^$/p" \
            |sed 's/^\(.......\)\ *\([^ ].*[^ ]\)\ */\1\2/g; s/0-0/0:0/g; $d' \
            |grep ....... || return 1
 
@@ -228,13 +227,11 @@ show_interface_config_and_status()
   if [ -n "$dev" ] \
   && grep -q $dev /proc/net/wireless 2>/dev/null
   then
-    wlstat=$( ps -o args \
-            |sed -n 's/.*[w]ireless.*\([uds].*\)/initializing - \1/p' )
-    echo -e "\nWiFi:\t$wlstat"
+    echo -e "\nWiFi:"
     #iwconfig 2>/dev/null
     iw dev $dev link 2>/dev/null \
-      |sed "s/^Connec/Associa/;s/t connec.*/t associated (on $dev)/" \
-      |sed "s/^\t/              /"
+      |sed 's/^Connec/Associa/;s/t connec.*/t associated (on '$dev')/' \
+      |sed '/[RT]X:/d;/^$/,$d;s/^\t/              /'
   
     # too slow
     #sdc_cli profile list |sed -n 's/\(.*\) ACTIVE/WiFi profile: \1/p'
