@@ -13,10 +13,6 @@ SDCSDK_MAKE_ENV = CFLAGS="$(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include/libnl3" 
                   LIBS="-l nl-3 -lnl-genl-3"
 SDCSDK_TARGET_DIR = $(O)/sdcbins
 
-define SDCSDK_CONFIGURE_CMDS
-    patch -d $(@D) < package/sdc-closed-source/sdcsdk/makefile.patch
-endef
-
 define SDCSDK_BUILD_CMDS
     $(MAKE) -C $(@D) clean
 	$(SDCSDK_MAKE_ENV) $(MAKE) -j 1 -C $(@D) ARCH=$(KERNEL_ARCH) CROSS_COMPILE="$(TARGET_CROSS)"
