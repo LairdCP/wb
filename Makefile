@@ -52,6 +52,8 @@ endif
 	cp buildroot/board/sdc/wb40n/configs/$(PKG).config buildroot/output/wb40n/.config
 	mkdir -p buildroot/output/wb45n
 	cp buildroot/board/sdc/wb45n/configs/$(PKG).config buildroot/output/wb45n/.config
+	# create link to welch_allyn defconfig
+	cd buildroot/configs && ln -s ../board/sdc/customers/welch_allyn/configs/$(PKG).config welch_allyn_defconfig
 	# mark operation as done
 	touch unpack.stamp
 
