@@ -11,6 +11,5 @@ source "board/sdc/post_build_common.sh" "$TARGETDIR"
 tar c --exclude=.svn -C board/sdc/wb45n/rootfs-additions/ . | tar x -C $TARGETDIR/
 
 # Services to disable by default
-chmod a-x "$TARGETDIR/etc/init.d/S91g_ether"
 
 echo "WB45n POST BUILD script: done."
