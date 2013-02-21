@@ -9,8 +9,7 @@ SDCSDK_SITE = package/sdc-closed-source/externals/sdk
 SDCSDK_SITE_METHOD = local
 SDCSDK_DEPENDENCIES = libnl
 SDCSDK_INSTALL_STAGING = YES
-SDCSDK_MAKE_ENV = CFLAGS="$(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include/libnl3" \
-                  LIBS="-l nl-3 -lnl-genl-3"
+SDCSDK_MAKE_ENV = CFLAGS="$(TARGET_CFLAGS)"
 SDCSDK_TARGET_DIR = $(O)/sdcbins
 
 define SDCSDK_BUILD_CMDS
