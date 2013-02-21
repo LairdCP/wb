@@ -2,12 +2,10 @@
 # FirmWare Update Utility for WB40NBT/WB45NBT Linux
 # Jon Hefling, jon.hefling@lairdtech.com, 29-Jun'12
 #
-VERSION=20130211
+VERSION=20130219
 SELF=${0##*/}
-
-NWBPS=1000000
-
 NS_PORT=2012
+TM_FILE=/etc/default/$SELF.test
 
 # firmware-update-list file containing md5sums
 FWUL=/tmp/fw.txt
@@ -88,7 +86,8 @@ xml_notification() {
 __END-OF-XML-NOTIFICATION-BLOCK
 }
 
-leds() {
+led0() {
+  # args: <mS_off> [<mS_on>]
   led=led0
   if [ -d "/sys/class/leds/$led" ]
   then
@@ -107,53 +106,45 @@ leds() {
   fi
 }
 
-msg() {
-  echo -e \# $wb ${tm:++tm} $@
-}
-
 exit_error() {
   # arg1 is optional exit-context-message
-  [ -n "$1" ] && echo -e \ \ ..."$@" >/dev/stderr
-  rm -f $FIFO
+  [ -n "$1" ] && echo -e \ \ ..."$@" >&2
   if [ -n "$nsap" ]
   then
     $0 --n $nsap update_error
   fi
-  leds 0
+  led0 0
   exit 1
 }
 
-exit_okay() {
-  # arg1 is optional exit-context-message
-  leds 500 500
-  [ -n "$1" ] && echo -e \ \ ..."$@"
-  rm -f $FIFO
+sync_updated() {
+  echo
+  led0 500 500
   if [ -n "$nsap" ]
   then
     if $0 --n $nsap update_pending
     then
       echo -en Listening for remote update message...
-      rum=$( $nc -l -w 7 -p ${nsap##*:} 2>/dev/null |sed -n "/->|<-\ */s/^.....\ *//p" )
-      echo
+      rum=$( $nc -l -w 7 -p ${nsap##*:} 2>/dev/null \
+           |sed -n "/->|<-\ */s/^.....\ *//p" )
+      echo ${rum:+OK}
     fi
     nsap="nsap=$nsap"
   fi
+  [ -n "$at91bs" ] && at91bs=at91bs=$at91bs
+  [ -n "$u_boot" ] && u_boot=u_boot=$u_boot
   [ -n "$kernel" ] && kernel=kernel=$kernel && $fw_setenv bootcmd $bootcmd
   [ -n "$rootfs" ] && rootfs=rootfs=$rootfs && $fw_setenv bootargs $bootargs
-  echo Updating platform parameters... $kernel $rootfs $nsap
-  $fw_setenv updated_% "$nsap $kernel $rootfs $rum"
+  echo Updating platform parameters... $at91bs $u_boot $kernel $rootfs $nsap
+  $fw_setenv updated_% "$nsap $at91bs $u_boot $kernel $rootfs $rum"
+  led0 200 800
   sync
-  leds 200 800
-  if [ -z "$tm" ]
-  then
-    read -p "Rebooting in 3s...[Y/n]? " -t3 -n1 -s a; $eraseln
-    [ "$a" != "n" ] && reboot
-  fi
-  exit 0
 }
 
-# if the following file exists, then set testmode
-[ -f /etc/default/$SELF.test ] && tm=echo || tm=
+
+# set testmode if TM_FILE exists
+[ -f "$TM_FILE" ] && tm=echo\ -e || tm=
+grep -sq verbose "$TM_FILE" && set -x
 
 # set command utilities
 fw_printenv=fw_printenv
@@ -189,9 +180,6 @@ case $md in
   'Workgroup Bridge 45N'*) ## arch/arm/mach-at91/board-dt.c
     wb=wb45nbt
     ;;                                                                       
-  'Atmel AT91SAM (Device Tree)') ## arch/arm/mach-at91/board-dt.c (depreciated)
-    wb=wb45nbt                                                                 
-    ;;
   *)
     exit_error "unsupported: $md"
     ;;
@@ -207,7 +195,7 @@ case $1 in
     ;;
 
   --show) ## show the MD5sum's in Flash and in the FWUL (if available)
-    msg md5sums
+    echo -e \# $wb ${tm:++tm} md5sums
     echo -e "\nu-boot:"
     fw_printenv |sed -n '/md5_/s/\(.*\)=\(.*\)/\t\t\2\r\1/p'
     echo -e "\n$FWUL:"
@@ -217,11 +205,6 @@ case $1 in
     exit 0
     ;;
 
-  --led)
-    leds $2 $3
-    exit 0
-    ;;
-  
   --url) ## remote upgrade via http:// or ftp://<server/path/to/images>/fw.txt
     [ -n "$2" ] \
     || exit_error "specify URL to retrieve the firmware-update-list from"
@@ -230,7 +213,7 @@ case $1 in
     # try to get optionally given nsap or rely on the implied nsap as backup
     # parse specified nsap or parse url server address w/default port for nsap
     nsap="${2##*${FWUL##*/}} $( echo ~nsap=${2##*//} |cut -d/ -f1 ):$NS_PORT "
-#    [ -n "$tm" ] && echo --url nsap: $nsap
+#    ${tm:-:} --url nsap: $nsap
     nsap=$( echo "$nsap" |sed -n "s/.*nsap=\(.*:[0-9]*\) .*/\1/p" )
 #    nsap=$( echo $@ |sed -n "s/.*[ ?]nsap=\(.*\)/\1/p ;\
 #            s/.*tp:\/\/\([0-9a-z.-\_]*[^/]*\)\/.*/\1:$NS_PORT/p" )
@@ -241,22 +224,20 @@ case $1 in
     ;;
     
   --tm) ## set testmode [{verbose|off}]
-    [ "$2" == "off" ] \
-    && rm -fv /etc/default/$SELF.test \
-    || echo $2 >/etc/default/$SELF.test
+    [ "$2" == "off" ] && rm -fv $TM_FILE || echo $2 >$TM_FILE
     exit 0
     ;;
     
   --n*) ## notify remote via udp <addr:port> <status> [<message>]
+    echo -e "Notifying update configuration server: $3"
     nc --version 2>&1 |grep -q BusyBox \
-    || exit_error "must have busybox version of netcat to use notify"
+    || { echo "  ...error: must have busybox netcat"; exit 1; }
     [ $# -ge 3 ] \
-    || exit_error "invalid parameters for notify"
+    || { echo "  ...error: invalid parameters"; exit 1; }
     sync
     $nc -u $2 -e echo $( xml_notification $3 "$4" ) \
-    && { let n=0; echo "notified server"; } \
-    || { let n=1; echo "$1:$2 failed tx"; }
-    exit $n
+    || { echo "  ...failed tx: $1:$2"; exit 1; }
+    exit 0
     ;;
     
   --) ## affirm executable, version and mode
@@ -275,7 +256,6 @@ case $1 in
     exit_error "unknown option specified"
 esac
 
-#
 # process a firmware update list URL, if we have one
 if [ -n "$fwul_url" ]
 then
@@ -315,17 +295,20 @@ then
   || exit_error "could not retrieve \"${FWUL##*/}\""
 fi
 
-#
 # parse the firmware-update-list FILE of md5sums, if we have one
 # otherwise, we search local media, using optionally specified path
 if [ -f $FWUL ]
 then
   echo "Accessing images via remote server."
-  [ -n "$tm" ] && echo -e "${FWUL}:\n`cat ${FWUL} |sed -n 's/\(^[hf].*bin\).*/\1/p'`"
-  eval `sed -n "/^[^#].*$AT91BS_IMG/s/^\(.*\)[, ]\(.*\)/AT91BS_IMG=\1 AT91BS_MD5=\2/p" $FWUL`
-  eval `sed -n "/^[^#].*$U_BOOT_IMG/s/^\(.*\)[, ]\(.*\)/U_BOOT_IMG=\1 U_BOOT_MD5=\2/p" $FWUL`
-  eval `sed -n "/^[^#].*$KERNEL_IMG/s/^\(.*\)[, ]\(.*\)/KERNEL_IMG=\1 KERNEL_MD5=\2/p" $FWUL`
-  eval `sed -n "/^[^#].*$ROOTFS_IMG/s/^\(.*\)[, ]\(.*\)/ROOTFS_IMG=\1 ROOTFS_MD5=\2/p" $FWUL`
+  ${tm:-:} "${FWUL}:\n`cat ${FWUL} |sed -n 's/\(^[^#].*bin\).*/  \1/p'`"
+  eval AT91BS_IMG=`sed -n "/^[^#].*\/$AT91BS_IMG/\
+                       s/^\(.*\)[, ]\([0-9a-f]\+\)/'\1' AT91BS_MD5=\2/p" $FWUL`
+  eval U_BOOT_IMG=`sed -n "/^[^#].*\/$U_BOOT_IMG/\
+                       s/^\(.*\)[, ]\([0-9a-f]\+\)/'\1' U_BOOT_MD5=\2/p" $FWUL`
+  eval KERNEL_IMG=`sed -n "/^[^#].*\/$KERNEL_IMG/\
+                       s/^\(.*\)[, ]\([0-9a-f]\+\)/'\1' KERNEL_MD5=\2/p" $FWUL`
+  eval ROOTFS_IMG=`sed -n "/^[^#].*\/$ROOTFS_IMG/\
+                       s/^\(.*\)[, ]\([0-9a-f]\+\)/'\1' ROOTFS_MD5=\2/p" $FWUL`
 else
   echo "Accessing images via locally attached media."
   [ -n "$1" ] && path=${1%/} || path=`pwd`
@@ -336,10 +319,25 @@ else
   ROOTFS_IMG=$path/$ROOTFS_IMG
 fi
 
-mkfifo $FIFO
+# check for previous update 
+eval $( $fw_printenv -n updated_% 2>/dev/null \
+      |grep -oE "at91bs=.|u_boot=.|kernel=.|rootfs=." )
+if [ -n "$at91bs$u_boot$kernel$rootfs" ]
+then
+  echo -e "Previous update detected:" \
+          ${at91bs:+\\\n\\\tbootstrap} \
+          ${u_boot:+\\\n\\\tbootloader} \
+          ${kernel:+\\\n\\\tkernel-${kernel}} \
+          ${rootfs:+\\\n\\\trootfs-${rootfs}}
+  # ask
+  a=; read -p "Proceed? [y/N]" -t4 -n1 -s a; $eraseln
+  [ "$a" == "y" ] || exit_error "aborted"
+  echo "  ...proceeding"
+fi
 
 case $wb in
   wb40n*) ## settings for imageset a/a, add to get b/b
+    NWBPS=1000000
     UBM=0x21000000
     KIS=0x00200000
     KIA=0x000a0000
@@ -348,6 +346,7 @@ case $wb in
     RIP_opt=
     ;;
   wb45n*) ## settings for imageset a/a, add to get b/b
+    NWBPS=2000000
     UBM=0x22000000
     KIS=0x00280000
     KIA=0x000e0000
@@ -357,24 +356,7 @@ case $wb in
     ;;
 esac
 
-# check for previous update 
-eval $( $fw_printenv -n updated_% 2>/dev/null \
-      |grep -oE "at91bs=.|u_boot=.|kernel=.|rootfs=." )
-if [ -n "$at91bs$u_boot$kernel$rootfs" ]
-then
-  echo -e "Previous update detected:" \
-          ${at91bs:+\\\n\\\tbootstrap} \
-          ${u_boot:+\\\n\\\tbooloader} \
-          ${kernel:+\\\n\\\tkernel-${kernel}} \
-          ${rootfs:+\\\n\\\trootfs-${rootfs}}
-  # ask
-  read -p "Proceed? [y/N]" -t4 -n1 -s a; $eraseln
-  [ "$a" == "y" ] || exit_error "aborted"
-  echo "  ...proceeding"
-fi
 
-
-#
 # special functions can process arithimetic expressions
 iszero() { ! let ${1:-0} && return 0 || return 1; }
 hexify() { let x=${1:-0}; printf "0x%08x" $x; }
@@ -396,20 +378,19 @@ bootcmd_x() {
 #  || [ $BC_kia != $KIA -a $BC_kia != $( hexify  $KIA+$KIS ) ]
 #  then
 #    #[ "auto" == "$1" ] && return 0
-#    echo "  ...incompatible bootcmd set in u-boot_env" >/dev/stderr
+#    echo "  ...incompatible bootcmd set in u-boot_env" >&2
 #    #touch /tmp/incompatible_u-boot_env
 #    BC_kia=$( hexify )
 #    return 1
 #  fi
   return 0
-
 }
 
 kernel_x() {
   # report the kernel partition booted from... (pseudo-static)
   if bootcmd_x
   then
-    iszero $BC_kia-$KIA ] && echo $KIP || echo `expr $KIP + 1`
+    iszero $BC_kia-$KIA && echo $KIP || echo `expr $KIP + 1`
   else
     echo 0
   fi
@@ -420,74 +401,70 @@ rootfs_x() {
   sed -n 's/.*ubi.mtd=\(.\).*/\1/p' /proc/cmdline
 }
 
+check_image() {
+  # args: <url/path/file> <the_md5sum>
+  # report the size, md5sum, local/remote, url/path/file
+  led0 300
+  [ -n "$1" ] || { echo update; return 1; }
 
-# arg1 is url/path/file
-# arg2 is (the included) md5sum
-# returns status and size, md5sum, local/remote, url/path/file
-check_image()
-{
-  leds 300
-  let rv=0
   if echo $1 |grep -q tp://
   then
-    # using a transfer-protocol
+    # check server is responsive
+    ping -W 1 -c 1 "`echo ${1##*//} |cut -d/ -f1`" >/dev/null 2>&1 \
+    || { echo server; return 1; }
+    # get file info
+    lr=remote
+    md5=$2
     if [ "$WGET_VERSION" == "gnu" ]
     then
-      ### the following works for ftp:// or http://  ...if using the gnu_wget
       sz=$( $wget --spider $1 2>&1 \
           |sed -n 's/.*SIZE.* \([0-9]*\)/\1/p;s/Length: \([0-9]*\)\ .*/\1/p' )
     else
-      ### determine file size by reading it (can take awhile)
+      ## determine file size by reading it (length not provided via spider)
       sz=$( $wget -q -O - $1 |wc -c )
-      ### skip the size check, file exists but cannot determine size
-      #$wget -q --spider $1 >/dev/null 2>&1 && sz=1 || sz=0
     fi
-    md5=$2
-    lr=remote
   else
-    # assume it's local
+    lr=local
+    md5=`[ -f $1 ] && md5sum $1 |cut -d' ' -f1`
     sz=$( F='\([^ ][^ ]*\)\ *'; ls -l $1 2>/dev/null \
         |sed -n "s/^$F$F$F$F$F.*/\5/p" )
-    md5=`[ -f $1 ] && md5sum $1 |cut -d' ' -f1`
-    lr=local
   fi
-
-  let sz+=0
-  [ $sz -gt 0 ] || let rv+=1
-
-  # report resulting params
-  echo $sz $md5 $lr $1 $rv
-  return $rv
+  let sz+=0 \
+  && { echo $sz $md5 $lr $1; return 0; } \
+  || { echo file; return 1; }
 }
 
-# arg1 is md5 from update
-# arg2 is md5 from flash-env
-# compare md5sums and prompt if same
-compare_image_md5()
-{
-  a=y
-  [ -n "$tm" ] && echo -e \?: $2 == $1
-  if [ -n "$2" -a "$2" == "$1" ]
+compare_image_md5() {
+  # args: <md5_from_image> <md5_from_flash>
+  # compare the two md5sums and prompt if same
+  ${tm:-:} \?: ${2:-unknown} :: $1
+  a=n
+  if [ "$2" != "$1" ]
   then
-    echo "image-update & flash are the same"
-    read -p "Update the flash anyway? [y/N ...5s]" -t10 -n1 -s a; $eraseln
-  else
     echo
+    return 0
+  else
+    echo -e "OK"
+    read -p "  ...new image matches, update the flash anyway? [y/N ...9s]" \
+         -t10 -n1 -s a; $eraseln
   fi
-  [ "$a" != "y" ] && return 1 || return 0
+  [ -n "$2" -a "$a" != "y" ] && return 1 || return 0
 }
 
 flash_image_procedure() {
-  # args: <mtd> <label> <et> <loc/rem> <image-src> [<nw_opt>]
+  # args: <mtd> <label> <size> <loc|rem> <image-src> [<nw_opt>]
   #
-  leds 100
+  let $3 || { echo "  ...file is zero-length, aborted"; return 1; }
+  let et=${3:-0}/$NWBPS 
   echo -e "Updating $2 from $4...\n  $5"
+  mkfifo $FIFO 2>/dev/null
+  led0 100
   echo -en "  erasing, "
   $flash_erase -q /dev/$1 0 0 \
-  || { echo "  ...unable to erase, skipping"; return 1; }
-  echo -en "writing...($3s) "
-  leds 50 100
-  [ -n "$tm" ] && sleep $3
+  || { echo "  ...skipping"; return 1; }
+  led0 50 100
+  echo -en "writing...(${et}s) "
+  [ -n "$tm" ] && sleep ${et}
   $nandwrite -mpq $6 /dev/$1 < $FIFO &
   if [ "$4" != "local" ]
   then
@@ -498,62 +475,40 @@ flash_image_procedure() {
     || msg="image read failed"
   fi
   wait
-  if [ $? != 0 ]
-  then
-    exit_error "error\n - $msg"
-  fi
+  error=$?
+  rm -f $FIFO
+  let $error && exit_error "error\n - $msg"
   return 0
 }
 
-# arg1 is partition
-# arg2 is image size
-# arg3 is image md5sum
-# arg4 is local or remote
-# arg5 is image url/path/-name
-update_bootstrap_mtd()
-{
-  [ -n "$tm" ] && echo -e \\\n@: $1 $2 $3 $4\\\n@: $5 $6
-  [ $2 -gt 0 ] || return
-  let et=$2/$NWBPS 
+update_bootstrap_mtd() {
+  # args: <mtd> <size> <md5sum> <loc|rem> <url/path/-name>
+  ${tm:-:} \\\n@: $1 $2 $3 $4\\\n@: $5
   # set target partition
   mtd=mtd$1
   compare_image_md5 $3 $( $fw_printenv -n md5_bootstrap 2>/dev/null ) || return
-  if flash_image_procedure $mtd bootstrap $et $4 $5
+  if flash_image_procedure $mtd bootstrap $2 $4 $5
   then
-    $fw_setenv md5_bootstrap $3 && echo "OK"
+    $fw_setenv md5_bootstrap $3 && at91bs=x && echo OK
   fi
 }
 
-# arg1 is partition
-# arg2 is image size
-# arg3 is image md5sum
-# arg4 is local or remote
-# arg5 is image url/path/-name
-update_bootloader_mtd()
-{
-  [ -n "$tm" ] && echo -e \\\n@: $1 $2 $3 $4\\\n@: $5 $6
-  [ $2 -gt 0 ] || return
-  let et=$2/$NWBPS 
+update_bootloader_mtd() {
+  # args: <mtd> <size> <md5sum> <loc|rem> <url/path/-name>
+  ${tm:-:} \\\n@: $1 $2 $3 $4\\\n@: $5
   # set target partition
   mtd=mtd$1
   compare_image_md5 $3 $( $fw_printenv -n md5_u-boot 2>/dev/null ) || return
-  if flash_image_procedure $mtd bootloader $et $4 $5
+  if flash_image_procedure $mtd bootloader $2 $4 $5
   then
-    $fw_setenv md5_u-boot $3 && echo "OK"
+    $fw_setenv md5_u-boot $3 && u_boot=x && echo OK
   fi
 }
 
-# arg1 is partition
-# arg2 is image size
-# arg3 is image md5sum
-# arg4 is local or remote
-# arg5 is image url/path/-name
-update_kernel_mtd()
-{
-  [ -n "$tm" ] && echo -e \\\n@: $1 $2 $3 $4\\\n@: $5 $6
-  [ $2 -gt 0 ] || return
-  let et=$2/$NWBPS 
-  # swap current partition to target for update
+update_kernel_mtd() {
+  # args: <mtd> <size> <md5sum> <loc|rem> <url/path/-name>
+  ${tm:-:} \\\n@: $1 $2 $3 $4\\\n@: $5
+  # swap current partition to target alternate for update
   let kip_a=$KIP
   let kip_b=$KIP+1
   case $1 in
@@ -561,30 +516,17 @@ update_kernel_mtd()
     $kip_b) mtd=mtd${kip_a}; ab=a; kia=$( hexify $KIA );;
   esac
   bootcmd="nand read $UBM $kia $KIS; $BC_boot"
-  if [ -n "$kernel" ]
-  then
-    echo -e "\nPrevious update detected: kernel-${kernel}"
-    read -p "Proceed...[n/Y]? " -t3 -n1 -s a; $eraseln
-    [ "$a" != "n" ] && reboot
-  fi
   compare_image_md5 $3 $( $fw_printenv -n md5_kernel-$ab 2>/dev/null ) || return
-  if flash_image_procedure $mtd kernel-$ab $et $4 $5
+  if flash_image_procedure $mtd kernel-$ab $2 $4 $5
   then
-    $fw_setenv md5_kernel-$ab $3 && kernel=$ab && echo "OK"
+    $fw_setenv md5_kernel-$ab $3 && kernel=$ab && echo OK
   fi
 }
 
-# arg1 is partition
-# arg2 is image size
-# arg3 is image md5sum
-# arg4 is local or remote
-# arg5 is image url/path/-name
-update_rootfs_mtd()
-{
-  [ -n "$tm" ] && echo -e \\\n@: $1 $2 $3 $4\\\n@: $5 $6
-  [ $2 -gt 0 ] || return
-  let et=$2/$NWBPS 
-  # swap partition to target
+update_rootfs_mtd() {
+  # args: <mtd> <size> <md5sum> <loc|rem> <url/path/-name>
+  ${tm:-:} \\\n@: $1 $2 $3 $4\\\n@: $5
+  # swap current partition to target alternate for update
   let rip_a=$RIP
   let rip_b=$RIP+1
   case $1 in
@@ -593,60 +535,64 @@ update_rootfs_mtd()
   esac
   bootargs=$( $fw_printenv -n bootargs |sed "s/ubi.mtd=./ubi.mtd=${mtd##*mtd}/" )
   compare_image_md5 $3 $( $fw_printenv -n md5_rootfs-$ab 2>/dev/null ) || return
-  if flash_image_procedure $mtd rootfs-$ab $et $4 $5 $RIP_opt
+  if flash_image_procedure $mtd rootfs-$ab $2 $4 $5 $RIP_opt
   then
-    $fw_setenv md5_rootfs-$ab $3 && rootfs=$ab && echo "OK"
+    $fw_setenv md5_rootfs-$ab $3 && rootfs=$ab && echo OK
   fi
 }
 
 
-
-msg update && bootcmd_x
+echo -e \# $wb ${tm:++tm} update && bootcmd_x
 #
-# We check and update each of the platform partitions in order:
+# Check and update each of the platform partitions in order:
 # bootstrap-loader, uboot-bootloader, linux-kernel-a/b, linux-rootfs-a/b
-#
-# Each image source is evaluated to ensure it's really there. (non-zero len)
+# 
+# Each image source is evaluated to ensure it's really there. (non-zero length)
+# And the image's md5sum is compared to the stored value in Flash to avoid
+# redundant updates (will be prompted to override).
+# 
 # The kernel-a/b and rootfs-a/b partitions, each, are alternately targetted.
-#
-# In testmode, don't do any writes to flash or network.
-[ -n "$tm" ] \
-&& echo -e "  ...remove '/etc/default/$SELF.test' to disable testmode, try: '--tm off'\n" \
-  >/dev/stderr
+# 
+# In testmode, no writes to flash or the network, are made.
+${tm:-:} "  ...remove '$TM_FILE' to disable testmode, try: '--tm off'" >&2
 
-grep -sq verbose /etc/default/$SELF.test && set -x
-
-echo -en "Checking Bootstrap Loader... "
+echo -en "${tm:+\n}Checking Bootstrap Loader... "
 if params=$( check_image $AT91BS_IMG $AT91BS_MD5 )
 then
   update_bootstrap_mtd 0 $params
 else
-  echo "n/a"
+  echo -e $params "n/a"
 fi
 
-echo -en "Checking U-Boot Loader... "
+echo -en "${tm:+\n}Checking U-Boot Loader... "
 if params=$( check_image $U_BOOT_IMG $U_BOOT_MD5 )
 then
   update_bootloader_mtd 1 $params
 else
-  echo "n/a"
+  echo -e $params "n/a"
 fi
 
-echo -en "Checking Linux Kernel... "
+echo -en "${tm:+\n}Checking Linux Kernel... "
 if params=$( check_image $KERNEL_IMG $KERNEL_MD5 )
 then
   update_kernel_mtd `kernel_x` $params
 else
-  echo "n/a"
+  echo -e $params "n/a"
 fi
 
-echo -en "Checking Root Filesystem... "
+echo -en "${tm:+\n}Checking Root Filesystem... "
 if params=$( check_image $ROOTFS_IMG $ROOTFS_MD5 )
 then
   update_rootfs_mtd `rootfs_x` $params
 else
-  echo "n/a"
+  echo -e $params "n/a"
 fi
 
-exit_okay "Done"
+sync_updated
+if test -z "${tm/:/}"
+then
+  a=; read -p "Rebooting in 3s ...[Y/n]? " -t3 -n1 -s a; $eraseln
+  [ "$a" != "n" ] && reboot
+fi
+exit 0
 
