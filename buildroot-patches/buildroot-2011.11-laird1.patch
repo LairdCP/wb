@@ -1986,21 +1986,3 @@ diff -Naur old/target/generic/device_table_dev.txt new/target/generic/device_tab
  
  #Tun/tap driver
  /dev/net	d	755	0	0	-	-	-	-	-
-diff -Naur old/target/generic/device_table.txt new/target/generic/device_table.txt
---- old/target/generic/device_table.txt	2011-11-30 23:08:44.000000000 +0000
-+++ new/target/generic/device_table.txt	2012-05-25 22:07:28.531250000 +0100
-@@ -10,6 +10,7 @@
- /tmp					d	1777	0	0	-	-	-	-	-
- /etc					d	755	0	0	-	-	-	-	-
- /home/default				d	2755	1000	1000	-	-	-	-	-
-+/home/summit				d	2755	1001	1001	-	-	-	-	-
- /bin/busybox				f	4755	0	0	-	-	-	-	-
- /etc/shadow				f	600	0	0	-	-	-	-	-
- /etc/passwd				f	644	0	0	-	-	-	-	-
--/etc/network/if-up.d         d  755   0  0  -  -  -  -  -
--/etc/network/if-pre-up.d     d  755   0  0  -  -  -  -  -
--/etc/network/if-down.d       d  755   0  0  -  -  -  -  -
--/etc/network/if-post-down.d     d  755   0  0  -  -  -  -  -
--/usr/share/udhcpc/default.script   f  755   0  0  -  -  -  -  -
--# uncomment this to allow starting x as non-root
--#/usr/X11R6/bin/Xfbdev          f  4755  0  0  -  -  -  -  -
