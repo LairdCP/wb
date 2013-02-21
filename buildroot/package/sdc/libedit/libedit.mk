@@ -4,4 +4,5 @@ LIBEDIT_SOURCE = libedit-$(LIBEDIT_VERSION).tar.gz
 LIBEDIT_DEPENDENCIES = ncurses host-pkg-config
 LIBEDIT_INSTALL_STAGING = YES
 
-$(eval $(autotools-package))
+#$(eval $(autotools-package))
+$(eval $(call AUTOTARGETS))
