@@ -11,7 +11,7 @@ ATHTCMD_SITE_METHOD = local
 ATHTCMD_DEPENDENCIES = libtcmd
 
 define ATHTCMD_BUILD_CMDS
-    $(MAKE) -C $(@D) CC=$(TARGET_CC) AR=$(TARGET_AR) \
+    $(MAKE) -C $(@D) CC="$(TARGET_CC)" AR="$(TARGET_AR)" \
             PKGCONFIG=../../host/usr/bin/pkg-config \
             LIBTCMD_DIR=../libtcmd-local
 endef

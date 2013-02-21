@@ -12,7 +12,7 @@ LIBTCMD_DEPENDENCIES = libnl
 LIBTCMD_INSTALL_STAGING = YES
 
 define LIBTCMD_BUILD_CMDS
-    $(MAKE) -C $(@D) CC=$(TARGET_CC) AR=$(TARGET_AR) \
+    $(MAKE) -C $(@D) CC="$(TARGET_CC)" AR="$(TARGET_AR)" \
             PKGCONFIG=../../host/usr/bin/pkg-config
 endef
 
