@@ -58,13 +58,13 @@ fi
 
 # set common permissions
 # handled here, instead of in a device_table.txt, which is processed later
-chmod 4755 /bin/busybox
-chmod 600 /etc/shadow
-chmod 644 /etc/passwd
-chmod -R 755 /etc
-chmod -R 1777 /tmp
-chmod -R 2744 /home/summit
-chown -R summit:summit /home/summit
+#chmod 4755 /bin/busybox
+#chmod 600 /etc/shadow
+#chmod 644 /etc/passwd
+#chmod -R 755 /etc
+#chmod -R 1777 /tmp
+#chmod -R 2744 /home/summit
+#chown -R summit:summit /home/summit
 
 # create firmware release file
 echo "SDC Linux Release `date +%Y%m%d`" \
