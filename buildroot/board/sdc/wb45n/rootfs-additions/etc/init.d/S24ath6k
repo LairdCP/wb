@@ -1,6 +1,0 @@
-#!/bin/sh
-# manually load the atheros driver because there is a
-# problem if itais  done automatically
-
-modprobe ath6kl_sdio
-
