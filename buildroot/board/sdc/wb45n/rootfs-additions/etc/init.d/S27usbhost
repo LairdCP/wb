@@ -1,0 +1,4 @@
+# By default, go to host mode and be prepared to handle usb disks.
+
+modprobe ohci-hcd
+modprobe usb-storage
