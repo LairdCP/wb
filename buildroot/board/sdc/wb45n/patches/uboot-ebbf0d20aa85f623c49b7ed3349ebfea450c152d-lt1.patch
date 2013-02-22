@@ -286,7 +286,7 @@ diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb45n.
 +#define CONFIG_RMII
 +#define CONFIG_NET_RETRY_COUNT          20
 +#define CONFIG_MACB_SEARCH_PHY
-+#define CONFIG_ETHADDR                  00:17:23:00:00:45
++#define CONFIG_ETHADDR                  00:17:23:00:00:00
 +
 +
 +
