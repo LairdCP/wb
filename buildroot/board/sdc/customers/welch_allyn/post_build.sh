@@ -12,5 +12,6 @@ tar c --exclude=.svn -C board/sdc/customers/welch_allyn/rootfs-additions/ . | ta
 
 # Enable Welch Allyn service
 chmod a+x "$TARGETDIR/etc/init.d/S91g_ether"
+chmod a-x "$TARGETDIR/etc/init.d/S27usbhost"
 
 echo "Welch Allyn POST BUILD script: done."
