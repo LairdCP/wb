@@ -132,8 +132,8 @@ diff -Naur old/package/crda/crda.mk new/package/crda/crda.mk
 +CRDA_MAKE_ENV = PKG_CONFIG_PATH="$(STAGING_DIR)/usr/lib/pkgconfig" \
 +	PKG_CONFIG="$(HOST_DIR)/usr/bin/pkg-config" \
 +	GIT_DIR=$(CRDA_DIR) \
-+	CFLAGS="$(TARGET_CFLAGS) -I../libnl-3.2.16/include -I../openssl-1.0.1c/include" \
-+	LDFLAGS="$(TARGET_LDFLAGS) -L../../host/usr/arm-unknown-linux-gnueabi/sysroot/usr/lib -L../libnl-3.2.16/lib/.libs -L../openssl-1.0.1c" \
++	CFLAGS="$(TARGET_CFLAGS) -I../libnl-3.2.21/include -I../openssl-1.0.1c/include" \
++	LDFLAGS="$(TARGET_LDFLAGS) -L../../host/usr/arm-unknown-linux-gnueabi/sysroot/usr/lib -L../libnl-3.2.21/lib/.libs -L../openssl-1.0.1c" \
 +	RUNTIME_PUBKEY_DIR=/usr/lib/crda/pubkeys \
 +	USE_OPENSSL=1 \
 +	REG_BIN=$(TARGET_DIR)/$(REGULATORY_TARGET_BINARY) \
@@ -536,7 +536,7 @@ diff -Naur old/package/libnl/libnl.mk new/package/libnl/libnl.mk
  #############################################################
  
 -LIBNL_VERSION = 3.0
-+LIBNL_VERSION = 3.2.16
++LIBNL_VERSION = 3.2.21
  LIBNL_SOURCE = libnl-$(LIBNL_VERSION).tar.gz
  LIBNL_SITE = http://www.infradead.org/~tgr/libnl/files/
  LIBNL_INSTALL_STAGING = YES
@@ -1222,3 +1222,15 @@ diff -Naur old/target/generic/device_table_dev.txt new/target/generic/device_tab
  
  #Tun/tap driver
  /dev/net	d	755	0	0	-	-	-	-	-
+diff -urN a/linux/linux.mk b/linux/linux.mk
+--- old/linux/linux.mk	2011-11-30 18:08:44.000000000 -0500
++++ new/linux/linux.mk	2013-02-23 19:28:04.187319174 -0500
+@@ -108,7 +108,7 @@
+ 		if echo $$p | grep -q -E "^ftp://|^http://" ; then \
+ 			support/scripts/apply-patches.sh $(@D) $(DL_DIR) `basename $$p` ; \
+ 		elif test -d $$p ; then \
+-			support/scripts/apply-patches.sh $(@D) $$p linux-\*.patch ; \
++			support/scripts/apply-patches.sh $(@D) $$p linux-$(LINUX_VERSION)\*.patch ; \
+ 		else \
+ 			support/scripts/apply-patches.sh $(@D) `dirname $$p` `basename $$p` ; \
+ 		fi \
