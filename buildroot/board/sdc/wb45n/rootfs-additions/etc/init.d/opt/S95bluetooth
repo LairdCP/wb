@@ -1,0 +1,61 @@
+#!/bin/sh
+# enable/disable bluetooth functionality for wb45n
+
+#WIFI_MACADDR=/etc/summit/wifi_interface
+
+
+bt_start() {
+  echo "Enabling Bluetooth..."
+
+  # load BT kernel modules
+  modprobe ohci-hcd
+  modprobe btusb
+  modprobe hidp
+  modprobe rfcomm
+  modprobe bnep
+
+  ### developmental/testing...
+   # bnep
+   # rfcomm
+   # btusb
+   #  bluetooth - bnep, rfcomm, hidp, btusb
+   # ohci_hcd
+   # hidp
+   #  hid - hidp
+   #
+  
+  hciconfig hci0 reset
+  
+  # get BT config values
+#  source /etc/summit/bluetooth.conf
+}
+
+bt_stop() {
+  echo "Disabling Bluetooth..."
+
+  modprobe -r ohci-hcd btusb hidp rfcomm bnep
+}
+
+#trap "" 1 15
+
+case "$1" in
+  stop)
+    bt_stop
+    ;;
+
+  start)
+    bt_start
+    ;;
+
+  restart)
+    bt_stop
+    bt_start
+    ;;
+
+  *)
+    echo "Usage: $0 stop|start|restart}"
+    exit 1
+    ;;
+esac
+
+exit 0
