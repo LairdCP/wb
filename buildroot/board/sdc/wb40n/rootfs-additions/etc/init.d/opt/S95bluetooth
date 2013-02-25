@@ -1,7 +1,8 @@
 #!/bin/sh
-# enable/disable bluetooth functionality for wb
-#trap "" 1 15
+# enable/disable bluetooth functionality for wb40n
+
 WIFI_MACADDR=/etc/summit/wifi_interface
+
 
 bt_start() {
   echo "Enabling Bluetooth..."
@@ -60,6 +61,8 @@ bt_stop() {
   echo 0 > /sys/class/gpio/gpio107/value
   echo 107 > /sys/class/gpio/unexport
 }
+
+#trap "" 1 15
 
 case "$1" in
   stop)
