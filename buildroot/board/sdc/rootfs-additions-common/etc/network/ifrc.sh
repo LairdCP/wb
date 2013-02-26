@@ -225,7 +225,7 @@ show_interface_config_and_status()
   [ -n "$dev" ] || dev=$( sleuth_wl )
   # include association info for wireless dev
   if [ -n "$dev" ] \
-  && grep -q $dev /proc/net/wireless 2>/dev/null
+  && [ -d /sys/class/net/$dev/wireless ]
   then
     echo -e "\nWiFi:"
     #iwconfig 2>/dev/null
@@ -693,7 +693,7 @@ case $IFRC_ACTION in
   up) ## assume up action ->reconfigure . . .
     if [ "$dev" != "lo" ] \
     && [ "$devalias" != "wl" ] \
-    && ! grep -q $dev /proc/net/wireless 2>/dev/null
+    && [ ! -d /sys/class/net/$dev/wireless ]
     then
       msg1 "checking wired phy-hw"
       # detection of wired conflicts w/others
@@ -930,12 +930,9 @@ ifrc_validate_dhcp_method_params()
 check_link()
 {
   # check if associated when using wireless
-  if grep -q $dev /proc/net/wireless 2>/dev/null
+  if [ -d /sys/class/net/$dev/wireless ]
   then
-    link=`sed -n "s/${dev}: [0-9]*[ ]*\([0-9]*\).*/\1/p" \
-        /proc/net/wireless 2>/dev/null`
-
-    let $link+0 \
+    grep -q 1 /sys/class/net/${dev}/carrier \
     || { msg "  ...not associated, deferring"; exit 0; }
   fi
 
@@ -1105,7 +1102,7 @@ case ${IFRC_METHOD%% *} in
     check_link
 
     ## allow using a fixed-port-speed-duplex, intended only for wired ports
-    if ! grep -q $dev /proc/net/wireless && [ -n "$mii" ]
+    if [ ! -d /sys/class/net/$dev/wireless ] && [ -n "$mii" ]
     then
       [ -n "$fpsd" ] \
       && $mii -F $fpsd $dev 2>&1 |grep "[vb]a[ls][ue]" 
