@@ -338,7 +338,7 @@ case $1 in
 
   eni) ## edit the /e/n/i file
     cp -f $eni /tmp/ifrc.${eni##*/}~
-    if /bin/vi /tmp/ifrc.${eni##*/}~ \
+    if /bin/vi /tmp/ifrc.${eni##*/}~ -c /^iface\ $2 \
     && ! cmp -s /tmp/ifrc.${eni##*/}~ $eni
     then
       let $( ls -s /tmp/ifrc.${eni##*/}~ |sed 's/\ *\([0-9]\+\).*/\1/' )+0 \
@@ -666,8 +666,8 @@ case $IFRC_ACTION in
   dn|down) ## assume down action ->deconfigure
     if [ -n "$pre_dcfg_do" ]
     then
-      msg "   pre_dcfg_do"
-      ( eval $pre_dcfg_do )&
+      msg "   pre_dcfg_do $pre_dcfg_do"
+      ( eval $pre_dcfg_do |tee -a $ifrc_Log )&
               pre_dcfg_do=
     fi
     rm -fv /var/log/ifrc.$dev.lock
@@ -683,8 +683,8 @@ case $IFRC_ACTION in
     usleep 333333
     if [ -n "$post_dcfg_do" ]
     then
-      msg "   post_dcfg_do"
-      ( eval $post_dcfg_do )&
+      msg "   post_dcfg_do $post_dcfg_do"
+      ( eval $post_dcfg_do |tee -a $ifrc_Log )&
               post_dcfg_do=
     fi
     exit 0
@@ -1038,8 +1038,8 @@ gipa()
 
 if [ -n "$pre_cfg_do" ]
 then
-  msg "   pre_cfg_do"
-  ( eval $pre_cfg_do )&
+  msg "   pre_cfg_do $pre_cfg_do"
+  ( eval $pre_cfg_do |tee -a $ifrc_Log )&
           pre_cfg_do=
 fi
 #
@@ -1162,8 +1162,8 @@ esac
 #
 if [ -n "$post_cfg_do" ]
 then
-  msg "   post_cfg_do"
-  ( eval $post_cfg_do )&
+  msg "   post_cfg_do $post_cfg_do"
+  ( eval $post_cfg_do |tee -a $ifrc_Log )&
           post_cfg_do=
 fi
 exit 0 
