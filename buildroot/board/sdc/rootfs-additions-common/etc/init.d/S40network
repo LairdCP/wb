@@ -23,8 +23,9 @@ log=/var/log/network
 ifconfig=/sbin/ifconfig
 ifrc=/etc/network/ifrc.sh
 wifi=/etc/network/wireless.sh
-pppd=/etc/init.d/opt/S??pppd
 bridge=/etc/network/bridge.sh
+
+pppd=/etc/init.d/opt/S??pppd
 g_ether=/etc/init.d/opt/S??g_ether
 
 
@@ -91,7 +92,7 @@ bring() {
     usb*) ## usb-g_ether support
       $dn && $tm $ifrc $1 $2
       $tm $g_ether $3
-      $up && $tm $ifrc $1 $2 manual &
+      $up && $tm $ifrc $1 $2 $method &
       ;;
 
     wl*) ## wireless device support
