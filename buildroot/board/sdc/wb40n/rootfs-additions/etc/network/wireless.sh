@@ -270,7 +270,9 @@ case $1 in
 
     if wifi_queryinterface
     then
-      sed 's/^Inter-/\n\/proc\/net\/wireless:\n&/;$a' /proc/net/wireless
+      sed 's/^Inter-/\n\/proc\/net\/wireless:\n&/;$a' \
+        /proc/net/wireless 2>/dev/null || echo
+
       iw dev $WIFI_DEV link \
         |sed 's/onnec/ssocia/;s/cs/as/;s/Cs/As/;s/(.*)//;/[RT]X:/d;/^$/,$d'
     fi
