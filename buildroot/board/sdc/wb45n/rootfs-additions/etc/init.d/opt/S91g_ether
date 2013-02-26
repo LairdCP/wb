@@ -1,5 +1,5 @@
 #!/bin/sh
-# g_ether - init for wb40n
+# g_ether - init for wb45n
 #
 # This init only loads/unloads the hw-phy gadget driver for a USB interface.
 # Configuration is handled via helpers in /etc/network. See the /e/n/i file.
@@ -19,6 +19,7 @@ checkinterface() {
 start() {
   echo -e "Enabling USB gadget ethernet \c"
 
+  modprobe atmel_usba_udc
   modprobe g_ether
   
   # await 1.2 seconds for interface
