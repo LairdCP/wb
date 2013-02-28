@@ -20,8 +20,7 @@ default all: wb40n wb45n
 
 wb40n wb45n: unpack.stamp
 	# install the config file
-	cp buildroot/board/sdc/$@/configs/$(PKG).config buildroot/output/$@/.config
-	$(MAKE) O=output/$@ -C buildroot oldconfig
+	$(MAKE) O=output/$@ -C buildroot $@_defconfig
 	$(MAKE) O=output/$@ -C buildroot
 	$(MAKE) -C images $@
 
@@ -47,13 +46,10 @@ endif
 	cp buildroot-patches/iproute2-fix-parallel-build-yacc.patch buildroot/package/iproute2/
 	# backport the dtb table support
 	test "$(VER)" = 2011.11 && patch -p0 < buildroot-patches/buildroot-linux-dtb-backport.patch
-	# install .config files so that buildroot is ready to go
-	mkdir -p buildroot/output/wb40n
-	cp buildroot/board/sdc/wb40n/configs/$(PKG).config buildroot/output/wb40n/.config
-	mkdir -p buildroot/output/wb45n
-	cp buildroot/board/sdc/wb45n/configs/$(PKG).config buildroot/output/wb45n/.config
 	# create link to welch_allyn defconfig
 	cd buildroot/configs && ln -s ../board/sdc/customers/welch_allyn/configs/$(PKG).config welch_allyn_defconfig
+	cd buildroot/configs && ln -s ../board/sdc/wb40n/configs/$(PKG).config wb40n_defconfig
+	cd buildroot/configs && ln -s ../board/sdc/wb45n/configs/$(PKG).config wb45n_defconfig
 	# mark operation as done
 	touch unpack.stamp
 
