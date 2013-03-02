@@ -8,6 +8,8 @@ WIFI_MODULE=/lib/modules/`uname -r`/kernel/drivers/net/wireless/ath/ath6kl/ath6k
 #WIFI_FWPATH=/lib/firmware                       ## location of 'fw' symlink
 #WIFI_NVRAM=/lib/nvram/nv
 
+#WIFI_FIPS=y                                     ## enable FIPS mode
+
 WIFI_PROFILES=/etc/summit/profiles.conf         ## sdc_cli profiles.conf
 WIFI_MACADDR=/etc/summit/wifi_interface         ## persistent mac-address file
 
@@ -90,6 +92,25 @@ wifi_queryinterface()
   return 0
 }
 
+wifi_fips_mode()
+{
+  msg "enabling FIPS"
+  insmod /lib/modules/`uname -r`/extra/sdc2u.ko || exit 1
+  
+  major=$( sed -n '/sdc2u/s/^[ ]*\([0-9]*\).*/\1/p' /proc/devices )
+  minor=0
+  rm -f /dev/sdc2u0
+  mknod /dev/sdc2u0 c $major $minor || exit 1
+  ls -l /dev/sdc2u*
+  
+  sdcu &
+  # maybe need to check if successful...
+
+  # need to switch firmware link: fw-4.bin
+
+  insmod ${WIFI_MODULE%/*}/ath6kl_core.ko fips_mode=y || exit 1
+}
+
 wifi_start()
 {
   if grep -q ${module/.ko/} /proc/modules
@@ -100,6 +121,9 @@ wifi_start()
     grep -o 'slot_b=.' /proc/cmdline \
     && msg "warning: \"slot_b\" setting in bootargs"
 
+    ## start daemon for fips mode
+    test -n "$WIFI_FIPS" && wifi_fips_mode
+    
     ## load the driver
     modprobe ath6kl_sdio \
     || { msg "  ...driver failed to load"; exit 1; }
