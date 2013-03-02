@@ -7,7 +7,7 @@
 SDCSDK_VERSION = local
 SDCSDK_SITE = package/sdc-closed-source/externals/sdk
 SDCSDK_SITE_METHOD = local
-SDCSDK_DEPENDENCIES = libnl
+SDCSDK_DEPENDENCIES = libnl host-pkg-config
 SDCSDK_INSTALL_STAGING = YES
 SDCSDK_MAKE_ENV = CFLAGS="$(TARGET_CFLAGS)" PKG_CONFIG="$(HOST_DIR)/usr/bin/pkg-config"
 SDCSDK_TARGET_DIR = $(O)/sdcbins
