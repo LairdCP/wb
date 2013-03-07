@@ -8,19 +8,18 @@ WIFI_MODULE=/lib/modules/`uname -r`/kernel/drivers/net/wireless/ath/ath6kl/ath6k
 #WIFI_FWPATH=/lib/firmware                       ## location of 'fw' symlink
 #WIFI_NVRAM=/lib/nvram/nv
 
-#WIFI_FIPS=y                                     ## enable FIPS mode
-
 WIFI_PROFILES=/etc/summit/profiles.conf         ## sdc_cli profiles.conf
 WIFI_MACADDR=/etc/summit/wifi_interface         ## persistent mac-address file
 
-# wpa_supplicant and cli
-# (comment-out to disable, must do 'stop' first)
+# supplicant and cli - comment out to disable
 SDC_SUPP=/usr/bin/sdcsupp
 SDC_CLI=/usr/bin/sdc_cli
+
 # supplicant options
 WIFI_80211=-Dnl80211                            ## supplicant driver nl80211
 #WIFI_DEBUG=-tdddd                               ## supplicant debug option 
 
+WIFI_FIPS=y                                     ## enable FIPS mode
 
 
 wifi_config()
@@ -92,23 +91,20 @@ wifi_queryinterface()
   return 0
 }
 
-wifi_fips_mode()
+wifi_fips()
 {
-  msg "enabling FIPS"
-  insmod /lib/modules/`uname -r`/extra/sdc2u.ko || exit 1
-  
+  modprobe sdc2u
+  mode=664
+  grp=staff
   major=$( sed -n '/sdc2u/s/^[ ]*\([0-9]*\).*/\1/p' /proc/devices )
   minor=0
   rm -f /dev/sdc2u0
-  mknod /dev/sdc2u0 c $major $minor || exit 1
-  ls -l /dev/sdc2u*
-  
+  mknod /dev/sdc2u0 c $major $minor
+
   sdcu &
   # maybe need to check if successful...
 
-  # need to switch firmware link: fw-4.bin
-
-  insmod ${WIFI_MODULE%/*}/ath6kl_core.ko fips_mode=y || exit 1
+  WIFI_FIPS=wifi_fips=y
 }
 
 wifi_start()
@@ -122,10 +118,13 @@ wifi_start()
     && msg "warning: \"slot_b\" setting in bootargs"
 
     ## start daemon for fips mode
-    test -n "$WIFI_FIPS" && wifi_fips_mode
+    test -n "$WIFI_FIPS" && wifi_fips
     
     ## load the driver
-    modprobe ath6kl_sdio \
+    modprobe ath6kl_core
+    #modprobe ath6kl_sdio
+    
+    insmod $WIFI_MODULE $WIFI_FIPS \
     || { msg "  ...driver failed to load"; exit 1; }
 
     ## await enumerated interface
@@ -143,16 +142,21 @@ wifi_start()
   grep -sq ..:..:..:..:..:.. $WIFI_MACADDR \
   || cat /sys/class/net/$WIFI_DEV/address >$WIFI_MACADDR
 
-  # launch supplicant as daemon if not running
+  # launch supplicant if exists and not already running
   if test -e "$SDC_SUPP" && ! ps |grep -q "[ ]$SDC_SUPP" && let n=33
   then
-    wpa_sd=/run/wpa_supplicant
+    [ -f $wpa_sd/*.pid ] \
+    && { msg "$wpa_sd/*.pid exists"; return 1; }
+    
     msg -en executing: $SDC_SUPP -i$WIFI_DEV $WIFI_80211 $WIFI_DEBUG -s'  '
     $SDC_SUPP -i$WIFI_DEV $WIFI_80211 $WIFI_DEBUG -s >/dev/null 2>&1 &
+    #
     # the 'daemonize' option may have issues, so using dynamic wait instead
-    until test -e $wpa_sd || ! let n=$n-1; do msg -en .; $usleep 1000000; done
-    ps |grep -q "[ ]$SDC_SUPP" || { msg ..error; return 1; }
-    msg ..okay
+    until test -e $wpa_sd || ! let n=$n-1; do msg -en .; $usleep 500000; done
+    # check that supplicant is running and store its process id
+    pidof ${SDC_SUPP##*/} >$wpa_sd/${SDC_SUPP##*/}.pid \
+    && msg ..okay \
+    || { msg ..error; return 1; }
   fi
   return 0
 }
@@ -169,11 +173,12 @@ wifi_stop()
     # so packets don't use it.  Otherwise stale settings can remain.
     ifconfig $WIFI_DEV 0.0.0.0 && msg "  ...de-configured"
 
-    ## terminate the supplicant
-    if killall ${SDC_SUPP##*/} 2>/dev/null
+    ## terminate the supplicant by looking up its process id
+    let pid=$( grep -s ^ $wpa_sd/*.pid )+0 && rm -f $wpa_sd/*.pid
+    if kill $pid 2>/dev/null
     then
       msg -en "supplicant terminating"
-      while ps |grep -q "[ ]$SDC_SUPP"; do $usleep 100000; msg -en .; done; msg
+      while [ -d /proc/$pid ]; do $usleep 50000; msg -en .; done; msg
     fi
 
     ## down the interface
@@ -187,7 +192,7 @@ wifi_stop()
   if grep -q ${module/.ko/} /proc/modules
   then
     msg -en "unloading ${module/.ko/} driver  "
-    /sbin/modprobe -r ${module/.ko/} || { msg ...error; return 1; }
+    modprobe -r ${module/.ko/} || { msg ...error; return 1; }
     msg ...okay
   fi
   return 0
@@ -207,6 +212,7 @@ esac
 # optionally, wait on this script for a link
 [ "$2" == "wait" ] && wfl=true || wfl=false
 
+wpa_sd=/tmp/wpa_supplicant
 module=${WIFI_MODULE##*/}
 usleep='busybox usleep'
 trap "" 1 15
@@ -237,8 +243,8 @@ case $1 in
 
     echo -e "\nProcesses related for this driver and supplicant:"
     top -bn1 \
-    |sed -n '/sed/d;4H;/supp/H;/'"${module%%_*}"'/{H;x;p;}' |uniq |grep . \
-    || echo "  ...not found"
+    |sed -n '/sed/d;4H;/'"${SDC_SUPP##*/}"'/H;/'"${module%%_*}"'/{H;x;p;}' |uniq \
+    |grep . || echo "  ...not found"
 
     if wifi_queryinterface
     then
