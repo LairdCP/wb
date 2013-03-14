@@ -16,10 +16,28 @@ bridge_device="br0"
 bridge_ports="eth0 wlan0"
 bridge_setfd="0"
 bridge_stp="off"
-bridge_method="dhcp"
+bridge_method="manual"
 
 #echo " <> $0 $@"
 # arg1 is bridge_device name
+
+
+show_bridge_mode() {
+  bridge_info() {
+    [ 3 -eq $# ] \
+    && echo -e "Bridge mode interface '$1' active using '$2' and '$3'.\n"
+  }
+  if ps |grep -q 'S[0-9][0-9]bridge.*start'
+  then
+    echo -e "Bridge mode setting up...\n"
+  else
+    if grep -q 'br[0-9]' /proc/net/dev
+    then
+      bmi=$( brctl show |sed -n '2{p;n;p;}' |grep -o '[a-z][a-z][a-z]*[0-9]' )
+      bridge_info $bmi
+    fi
+  fi
+}   
 
 start() {
   echo Starting bridged network support.
@@ -48,7 +66,7 @@ start() {
     && ifrc $bridge_device up $bridge_method
   else
     echo \ \ bridge setup failed; exit 1
-  fi
+   fi
   brctl show
 }
 
@@ -112,6 +130,10 @@ case $cmd in
   restart)
     stop
     start
+    ;;
+
+  '')
+    show_bridge_mode
     ;;
 
   *)
