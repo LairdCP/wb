@@ -10,6 +10,6 @@ alias la='ls -lA'
 alias logs='ls -l /var/log/'
 
 # ps variants
-alias psu='ps |grep -v "[ ]\[.*\]"'
+alias psu='ps -o pid,stat,args |grep -vE "[ ]\[.*\]|[ ]ps\ "'
 alias psf='pstree -p'
- 
+
