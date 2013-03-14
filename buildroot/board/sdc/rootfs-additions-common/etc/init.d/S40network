@@ -2,18 +2,19 @@
 # network - init script for controlling all interfaces
 # jon.hefling@lairdtech.com 20120522
 #
-# This init-script serves to stop/start/restart all "auto" enabed interfaces by
-# checking the '/etc/network/interfaces' (/e/n/i) file.  This file is parsed
-# for "auto <iface>" stanzas.
+# This init-script serves to stop/start/restart all "auto" enabled interfaces
+# by checking the '/etc/network/interfaces' (/e/n/i) file.
+#
+# The /e/n/i file is parsed for '^auto <iface>' at each interface stanza. 
+# Alternately, this script can be invoked with a specific interface to act on. 
 #
 # Other setup-scripts in '/etc/network' and in '/etc/init.d/opt' may be called,
 # as necessary to create/remove an interface.  Most operations backgrounded.
 #
-# The ifrc.sh (interface-run-config) utility handles the configuration work.
-#
-# Alternately, this script can be invoked with a specific interface to act on. 
 # Some additional checks are made to determine whether a wired interface-phy
 # is really available to work with. This can be an issue with some hw setups.
+#
+# If available, ifrc.sh (interface-run-config) handles the configuration work.
 #
 # A testmode is invoked by appending ' -x' in the 1st line of the /e/n/i file.
 #
