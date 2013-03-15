@@ -19,7 +19,7 @@ SDC_CLI=/usr/bin/sdc_cli
 WIFI_80211=-Dnl80211                            ## supplicant driver nl80211
 #WIFI_DEBUG=-tdddd                               ## supplicant debug option 
 
-WIFI_FIPS=y                                     ## enable FIPS mode
+#WIFI_FIPS=y                                     ## enable FIPS mode
 
 
 wifi_config()
