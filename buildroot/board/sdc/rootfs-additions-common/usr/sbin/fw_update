@@ -2,7 +2,7 @@
 # FirmWare Update Utility for WB40NBT/WB45NBT Linux
 # Jon Hefling, jon.hefling@lairdtech.com, 29-Jun'12
 #
-VERSION=20130219
+VERSION=20130309
 SELF=${0##*/}
 NS_PORT=2012
 TM_FILE=/etc/default/$SELF.test
@@ -117,75 +117,95 @@ exit_error() {
   exit 1
 }
 
-sync_updated() {
-  echo
+n_sync_updated() {
   led0 500 500
-  if [ -n "$nsap" ]
+  echo
+  if [ -n "$nsap" ] \
+  && $0 --n $nsap update_pending
   then
-    if $0 --n $nsap update_pending
-    then
-      echo -en Listening for remote update message...
-      rum=$( $nc -l -w 7 -p ${nsap##*:} 2>/dev/null \
-           |sed -n "/->|<-\ */s/^.....\ *//p" )
-      echo ${rum:+OK}
-    fi
-    nsap="nsap=$nsap"
+    echo -en Awaiting remote update message.
+    { let ds=9; while let ds-=1; do sleep 1; echo -en .; done; }&
+    rum=$( $nc -l -w9 -p${nsap##*:} 2>/dev/null \
+         |sed -n "/->|<-\ */s/^.....\ *//p" )
+    echo ${rum:+OK}
   fi
+  [ -n "$nsap" ] && nsap=nsap=$nsap
   [ -n "$at91bs" ] && at91bs=at91bs=$at91bs
   [ -n "$u_boot" ] && u_boot=u_boot=$u_boot
-  [ -n "$kernel" ] && kernel=kernel=$kernel && $fw_setenv bootcmd $bootcmd
-  [ -n "$rootfs" ] && rootfs=rootfs=$rootfs && $fw_setenv bootargs $bootargs
-  echo Updating platform parameters... $at91bs $u_boot $kernel $rootfs $nsap
-  $fw_setenv updated_% "$nsap $at91bs $u_boot $kernel $rootfs $rum"
-  led0 200 800
+  [ -n "$kernel" ] && kernel=kernel=$kernel
+  [ -n "$rootfs" ] && rootfs=rootfs=$rootfs
+  echo -en Sync\'ing updated_% $nsap $at91bs $u_boot $kernel $rootfs ' ' #'
+  $tm
+  [ -n "$kernel" -a -n "$bootcmd" ] && $fw_setenv bootcmd $bootcmd
+  [ -n "$rootfs" -a -n "$bootargs" ] && $fw_setenv bootargs $bootargs
+  $fw_setenv updated_% $at91bs $u_boot $kernel $rootfs "$rum" $nsap
   sync
+  echo -e "\nDone."
+  led0 200 800
 }
 
+ask() { eval ${@##* }=; read "$@"; usleep 200000; echo -en \\033[1K\\r; }
 
 # set testmode if TM_FILE exists
-[ -f "$TM_FILE" ] && tm=echo\ -e || tm=
-grep -sq verbose "$TM_FILE" && set -x
+test -f "$TM_FILE" && tm=echo\ -e || tm=
+grep -sq ^verbose "$TM_FILE" && set -x
+eval `grep -sq ^nsap= "$TM_FILE" `
 
-# set command utilities
-fw_printenv=fw_printenv
-fw_setenv=$tm\ fw_setenv
-eraseln='echo -en \033[1K\r'
+# set command utilities - no writes in testmode
 flash_erase=$tm\ flash_erase
 nandwrite=$tm\ nandwrite
-nc=$tm\ nc
 copy=$tm\ cat
+nc=$tm\ nc
 wget=wget
 [ "$1" == "bb-wget" ] && { shift; wget='busybox wget'; }
 
 # check fw_printenv
+fw_printenv=fw_printenv
+fw_setenv=$tm\ fw_setenv
 if ! fw_printenv >/dev/null
 then
-  [ -f /etc/fw_env.config ] || echo "fw_env.config missing"
-  exit 1
+  test -f /etc/fw_env.config || echo "  ...missing: /etc/fw_env.config"
+  ${tm:-exit 1}
 fi
 
-# ensure this is the expected embedded architecture
-if ! grep -q ARM926 /proc/cpuinfo \
-&& [ -z "$tm" ]
-then
-  exit_error "script is for embedded Linux platforms only"
-fi
-
-# check description of machine: <string>
+# check description of machine: <string> and determine settings
 md=$( sed -n 's/Hardware.*: \(.*\)/\1/p' /proc/cpuinfo )
 case $md in
-  'Workgroup Bridge 40N'*) ## arch/arm/mach-at91/board-wb40n.c
+  'Workgroup Bridge 40N'*) ### arch/arm/mach-at91/board-wb40n.c
     wb=wb40nbt                                                
     ;;
-  'Workgroup Bridge 45N'*) ## arch/arm/mach-at91/board-dt.c
+  'Workgroup Bridge 45N'*) ### arch/arm/mach-at91/board-dt.c
     wb=wb45nbt
     ;;                                                                       
-  *)
-    exit_error "unsupported: $md"
+  *) ### unknown architecture...
+    grep -e ^Processor -e ^Hardware /proc/cpuinfo
+    echo "  ...unsupported"
+    ${tm:-exit 1}
+    fw_printenv=$tm\ $fw_printenv
+    ;;
+esac
+case $wb in
+  wb40n*) ### settings for imageset a/a, add to get b/b
+    NWBPS=1000000
+    UBM=0x21000000
+    KIS=0x00200000
+    KIA=0x000a0000
+    KIP=3
+    RIP=5
+    RIP_opt=
+    ;;
+  wb45n*) ### settings for imageset a/a, add to get b/b
+    NWBPS=2000000
+    UBM=0x22000000
+    KIS=0x00280000
+    KIA=0x000e0000
+    KIP=4
+    RIP=6
+    RIP_opt=-n
     ;;
 esac
 
-#
+
 # options, only use one
 case $1 in
   --usage) ## detailed usage info and some examples
@@ -224,8 +244,7 @@ case $1 in
     ;;
     
   --tm) ## set testmode [{verbose|off}]
-    [ "$2" == "off" ] && rm -fv $TM_FILE || echo $2 >$TM_FILE
-    exit 0
+    [ "$2" == "off" ] && rm -fv $TM_FILE || echo $2 >$TM_FILE; exec $0 --
     ;;
     
   --n*) ## notify remote via udp <addr:port> <status> [<message>]
@@ -329,32 +348,11 @@ then
           ${u_boot:+\\\n\\\tbootloader} \
           ${kernel:+\\\n\\\tkernel-${kernel}} \
           ${rootfs:+\\\n\\\trootfs-${rootfs}}
-  # ask
-  a=; read -p "Proceed? [y/N]" -t4 -n1 -s a; $eraseln
+  #
+  ask -p"Proceed? [y/N]" -t4 -n1 -s a
   [ "$a" == "y" ] || exit_error "aborted"
   echo "  ...proceeding"
 fi
-
-case $wb in
-  wb40n*) ## settings for imageset a/a, add to get b/b
-    NWBPS=1000000
-    UBM=0x21000000
-    KIS=0x00200000
-    KIA=0x000a0000
-    KIP=3
-    RIP=5
-    RIP_opt=
-    ;;
-  wb45n*) ## settings for imageset a/a, add to get b/b
-    NWBPS=2000000
-    UBM=0x22000000
-    KIS=0x00280000
-    KIA=0x000e0000
-    KIP=4
-    RIP=6
-    RIP_opt=-n
-    ;;
-esac
 
 
 # special functions can process arithimetic expressions
@@ -446,7 +444,7 @@ compare_image_md5() {
   else
     echo -e "OK"
     read -p "  ...new image matches, update the flash anyway? [y/N ...9s]" \
-         -t10 -n1 -s a; $eraseln
+         -t10 -n1 -s a; 'echo -en \033[1K\r'
   fi
   [ -n "$2" -a "$a" != "y" ] && return 1 || return 0
 }
@@ -588,11 +586,17 @@ else
   echo -e $params "n/a"
 fi
 
-sync_updated
-if test -z "${tm/:/}"
+n_sync_updated
+
+if [ -n "$rootfs" ] \
+&& fw_select -- 2>/dev/null
 then
-  a=; read -p "Rebooting in 3s ...[Y/n]? " -t3 -n1 -s a; $eraseln
-  [ "$a" != "n" ] && reboot
+  ask -p"Transfer system settings ...[y/N]? " -t3 -n1 a
+  [ "$a" == "y" ] && $tm fw_select --transfer push
 fi
+
+ask -p"Rebooting in 3s ...[Y/n]? " -t3 -n1 -s a
+[ "$a" != "n" ] && $tm reboot
+
 exit 0
 
