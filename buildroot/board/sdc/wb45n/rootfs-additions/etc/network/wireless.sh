@@ -154,7 +154,7 @@ wifi_start()
     # the 'daemonize' option may have issues, so using dynamic wait instead
     until test -e $wpa_sd || ! let n=$n-1; do msg -en .; $usleep 500000; done
     # check that supplicant is running and store its process id
-    pidof ${SDC_SUPP##*/} >$wpa_sd/${SDC_SUPP##*/}.pid \
+    pidof ${SDC_SUPP##*/} 2>/dev/null >$wpa_sd/${SDC_SUPP##*/}.pid \
     && msg ..okay \
     || { msg ..error; return 1; }
   fi
