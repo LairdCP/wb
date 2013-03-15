@@ -143,7 +143,7 @@ wifi_start()
   || cat /sys/class/net/$WIFI_DEV/address >$WIFI_MACADDR
 
   # launch supplicant if exists and not already running
-  if test -e "$SDC_SUPP" && ! ps |grep -q "[ ]$SDC_SUPP" && let n=33
+  if test -e "$SDC_SUPP" && ! ps |grep -q "[ ]$SDC_SUPP" && let n=17
   then
     [ -f $wpa_sd/*.pid ] \
     && { msg "$wpa_sd/*.pid exists"; return 1; }
@@ -155,8 +155,8 @@ wifi_start()
     until test -e $wpa_sd || ! let n=$n-1; do msg -en .; $usleep 500000; done
     # check that supplicant is running and store its process id
     pidof ${SDC_SUPP##*/} 2>/dev/null >$wpa_sd/${SDC_SUPP##*/}.pid \
-    && msg ..okay \
     || { msg ..error; return 1; }
+    msg ..okay
   fi
   return 0
 }
@@ -189,7 +189,7 @@ wifi_stop()
     ifconfig $WIFI_DEV down && { $usleep 100000; msg ...down; } || msg
   fi
   ## unload driver module
-  if grep -q ${module/.ko/} /proc/modules
+  if grep -qs ${module/.ko/} /proc/modules
   then
     msg -en "unloading ${module/.ko/} driver  "
     modprobe -r ${module/.ko/} || { msg ...error; return 1; }
