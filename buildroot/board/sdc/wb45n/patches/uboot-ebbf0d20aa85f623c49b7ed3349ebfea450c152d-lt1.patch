@@ -1,6 +1,6 @@
 diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c
 --- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c	2012-12-14 15:43:22.000000000 -0600
-+++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c	2013-02-10 11:35:31.737920191 -0600
++++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c	2013-03-19 17:11:22.505695266 -0500
 @@ -167,16 +167,16 @@
  #ifdef CONFIG_MACB
  void at91_macb_hw_init(void)
@@ -30,7 +30,7 @@ diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/cpu/arm926ejs
  	at91_set_b_periph(AT91_PIO_PORTC, 25, 0);	/* ECRS */
 diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/at91sam9x5ek.c uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/at91sam9x5ek.c
 --- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/at91sam9x5ek.c	2012-12-14 15:43:22.000000000 -0600
-+++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/at91sam9x5ek.c	2013-02-10 11:35:31.737920191 -0600
++++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/at91sam9x5ek.c	2013-03-19 17:11:22.505695266 -0500
 @@ -61,11 +61,12 @@
  	/* Enable CS3 */
  	csa = readl(&matrix->ebicsa);
@@ -71,13 +71,13 @@ diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5
  
 diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/config.mk uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/config.mk
 --- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/config.mk	2012-12-14 15:43:22.000000000 -0600
-+++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/config.mk	2013-02-10 11:35:31.737920191 -0600
++++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/config.mk	2013-03-19 17:11:22.505695266 -0500
 @@ -1 +1 @@
 -CONFIG_SYS_TEXT_BASE = 0x26f00000
 +CONFIG_SYS_TEXT_BASE = 0x23f00000
 diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/boards.cfg uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/boards.cfg
 --- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/boards.cfg	2012-12-14 15:43:22.000000000 -0600
-+++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/boards.cfg	2013-02-10 11:35:31.741920264 -0600
++++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/boards.cfg	2013-03-19 17:11:22.509695046 -0500
 @@ -96,6 +96,7 @@
  at91sam9m10g45ek_nandflash   arm         arm926ejs   at91sam9m10g45ek    atmel          at91        at91sam9m10g45ek:AT91SAM9M10G45,SYS_USE_NANDFLASH
  at91sam9rlek_dataflash       arm         arm926ejs   at91sam9rlek        atmel          at91        at91sam9rlek:AT91SAM9RL,SYS_USE_DATAFLASH
@@ -88,7 +88,7 @@ diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/boards.cfg uboot-ebbf0
  at91sam9x5ek_mmc             arm         arm926ejs   at91sam9x5ek        atmel          at91        at91sam9x5ek:AT91SAM9X5,SYS_USE_MMC
 diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/common/env_common.c uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/common/env_common.c
 --- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/common/env_common.c	2012-12-14 15:43:22.000000000 -0600
-+++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/common/env_common.c	2013-02-10 11:35:31.741920264 -0600
++++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/common/env_common.c	2013-03-19 17:11:22.509695046 -0500
 @@ -141,6 +141,7 @@
  		error("Environment import failed: errno = %d\n", errno);
  
@@ -99,7 +99,7 @@ diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/common/env_common.c ub
  
 diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/drivers/mtd/nand/atmel_nand.c uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/drivers/mtd/nand/atmel_nand.c
 --- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/drivers/mtd/nand/atmel_nand.c	2012-12-14 15:43:22.000000000 -0600
-+++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/drivers/mtd/nand/atmel_nand.c	2013-02-10 11:35:31.741920264 -0600
++++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/drivers/mtd/nand/atmel_nand.c	2013-03-19 17:11:22.509695046 -0500
 @@ -720,10 +720,10 @@
   * several NAND_CMD_RNDOUT during read
   */
@@ -116,8 +116,8 @@ diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/drivers/mtd/nand/atmel
  
 diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb45n.h uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb45n.h
 --- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb45n.h	1969-12-31 18:00:00.000000000 -0600
-+++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb45n.h	2013-02-10 11:37:13.353924401 -0600
-@@ -0,0 +1,286 @@
++++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb45n.h	2013-03-20 11:53:02.807616782 -0500
+@@ -0,0 +1,289 @@
 +/*
 + * Copyright (C) 2012 Atmel Corporation
 + *
@@ -288,6 +288,9 @@ diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb45n.
 +#define CONFIG_MACB_SEARCH_PHY
 +#define CONFIG_ETHADDR                  00:17:23:00:00:00
 +
++#define CONFIG_ENV_OVERWRITE     1
++//#define CONFIG_OVERWRITE_ETHADDR_ONCE   1
++
 +
 +
 +
@@ -406,7 +409,7 @@ diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb45n.
 +
 diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env_main.c uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env_main.c
 --- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env_main.c	2012-12-14 15:43:22.000000000 -0600
-+++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env_main.c	2013-02-10 11:35:31.741920264 -0600
++++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env_main.c	2013-03-19 17:11:22.509695046 -0500
 @@ -94,7 +94,7 @@
  	int lockfd = -1;
  	int retval = EXIT_SUCCESS;
