@@ -64,6 +64,14 @@ source-wb45n:
 
 source: source-wb40n source-wb45n
 
+clean-wb40n-sdc-pkg:
+	$(MAKE) -C buildroot O=output/wb40n sdccli-dirclean sdcsdk-dirclean sdcsupp-dirclean dhd-dirclean
+
+clean-wb45n-sdc-pkg:
+	$(MAKE) -C buildroot O=output/wb45n  sdccli-dirclean sdcsdk-dirclean sdcsupp-dirclean
+
+clean-sdc-pkg: clean-wb40n-sdc-pkg clean-wb45n-sdc-pkg
+
 clean-wb40n:
 	$(MAKE) -C buildroot O=output/wb40n clean
 	rm -rf buildroot/output/wb40n/sdcbins
@@ -81,5 +89,6 @@ cleanall:
                 -not -name sdc -not -name sdc-closed-source -not -name '.svn' -exec rm -rf "{}" ";"
 	rm -f unpack.stamp
 
-.PHONY: default all unpack clean cleanall clean-wb40n clean-wb45n wb40n wb45n source source-wb40n source-wb45n
+.PHONY: default all unpack clean cleanall clean-wb40n clean-wb45n wb40n wb45n \
+        source source-wb40n source-wb45n clean-sdc-pkg clean-wb40n-sdc-pkg clean-wb45n-sdc-pkg
 .NOTPARALLEL:
