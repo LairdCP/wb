@@ -1,3 +1,4 @@
+export PLATFORM = wb40n
 export PRODUCT = wb40n
 export DATE := $(shell date "+%Y%m%d")
 

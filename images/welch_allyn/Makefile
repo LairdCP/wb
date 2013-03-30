@@ -1,5 +1,5 @@
 export PLATFORM = wb45n
-export PRODUCT = wb45n
+export PRODUCT = welch_allyn
 export DATE := $(shell date "+%Y%m%d")
 
 all:

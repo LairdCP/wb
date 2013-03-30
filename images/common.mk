@@ -20,7 +20,7 @@ kernel.bin: $(IMAGES)/uImage
 rootfs.bin: $(IMAGES)/rootfs.ubi
 	cp $+ $@
 
-bootstrap.bin: $(IMAGES)/$(PRODUCT).bin
+bootstrap.bin: $(IMAGES)/$(PLATFORM).bin
 	cp $+ $@
 
 u-boot.bin: $(IMAGES)/u-boot.bin
