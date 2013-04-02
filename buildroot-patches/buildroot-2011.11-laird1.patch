@@ -19,22 +19,24 @@ diff -Naur old/package/bluez_utils/bluez_utils.mk new/package/bluez_utils/bluez_
  # BlueZ 3.x compatibility
  ifeq ($(BR2_PACKAGE_BLUEZ_UTILS_COMPAT),y)
 diff -Naur old/package/busybox/busybox-networking_ifplugd_iface_err.patch new/package/busybox/busybox-networking_ifplugd_iface_err.patch
---- old/package/busybox/busybox-networking_ifplugd_iface_err.patch	1969-12-31 18:00:00.000000000 -0600
-+++ new/package/busybox/busybox-networking_ifplugd_iface_err.patch	2013-02-09 23:50:21.460710414 -0600
-@@ -0,0 +1,23 @@
-+--- busybox-1.19.3/networking/ifplugd.c	2013-01-14 22:52:56.001007445 -0600
-++++ busybox-1.19.3/networking/ifplugd.c	2013-01-14 22:51:11.949004402 -0600
-+@@ -685,6 +685,9 @@
+--- old/package/busybox/busybox-networking-ifplugd-iface-err.patch	1969-12-31 18:00:00.000000000 -0000
++++ new/package/busybox/busybox-networking-ifplugd-iface-err.patch	2013-03-25 07:27:21.460710414 -0500
+@@ -0,0 +1,25 @@
++--- busybox-1.19.3/networking/ifplugd.c	2013-03-26 22:35:01.543521939 -0500
+++++ busybox-1.19.3/networking/ifplugd.c	2013-03-26 22:35:21.543521939 -0500
++@@ -685,6 +685,11 @@
 + 						G.iface_exists ? "" : "dis");
 + 				if (G.iface_exists)
 + 					maybe_up_new_iface();
-++				else
+++				else {
+++					/* notify upon status:  error -> down */
 ++					iface_status_old = IFSTATUS_ERR;
-++					/* new state:  error -> down */
+++					delay_time = 0;
+++				}
 + 			}
 + 		}
 + 
-+@@ -693,6 +696,7 @@
++@@ -693,6 +698,7 @@
 + 		if (iface_status == IFSTATUS_ERR) {
 + 			if (!(opts & FLAG_MONITOR))
 + 				goto exiting;
