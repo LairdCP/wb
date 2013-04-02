@@ -45,12 +45,6 @@ tar c --exclude=.svn -C board/sdc/rootfs-additions-common/ . | tar x -C $TARGETD
 chmod a-x "$TARGETDIR/etc/init.d/S59snmpd"
 chmod a-x "$TARGETDIR/etc/init.d/S99lighttpd"
 
-# copy the freshly built sdc binaries
-if [ -d output/$BR2_SDC_PLATFORM/sdcbins ]
-then
-  cp -a output/$BR2_SDC_PLATFORM/sdcbins/* $TARGETDIR/
-fi
-
 # create missing symbolic link
 # TODO: shouldn't have to do this here, temporary workaround
 ( cd $TARGETDIR/usr/lib \

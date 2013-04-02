@@ -8,7 +8,7 @@ SDCSUPP_VERSION = local
 SDCSUPP_SITE = package/sdc-closed-source/externals/wpa_supplicant
 SDCSUPP_SITE_METHOD = local
 SDCSUPP_DEPENDENCIES = libnl openssl sdcsdk
-SDCSUPP_TARGET_DIR = $(O)/sdcbins
+SDCSUPP_TARGET_DIR = $(TARGET_DIR)
 
 SDCSUPP_PLATFORM := $(call qstrip,$(BR2_SDC_PLATFORM))
 ifeq ($(SDCSUPP_PLATFORM),wb45n)
