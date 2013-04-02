@@ -4,11 +4,10 @@
 # Provides auto-reconfiguration via netlink support.
 # ksjonh_20120520
 #
-usage()
-{
+usage() {
   rv=0
   [ "${1:0:5}" == "error" ] \
-  && { echo -e "${2:+# $2\n}${3:+# $3\n}#"; rv=1; sleep 3; }
+  && { echo -e "${2:+  $2\n}${3:+\nUsage:\n# $3\n}#"; rv=1; pause 3; }
   cat <<-	\
 	usage-info-block
 	$( echo -e "\t\t\t\t\t\t\t  (interface-run-config)\r\c"; \
@@ -65,8 +64,7 @@ usage()
   exit $rv
 }
 
-msg()
-{
+msg() {
   if [ "$1" == "@." ] && shift
   then
     # to console w/'@.' prefix in monitor-mode
@@ -79,10 +77,9 @@ msg()
   echo -e "$@" >>$ifrc_Log || :
 }
 
-
 # internals
+ifrc_Version=20130323
 ifrc_Disable=/etc/default/ifrc.disable
-ifrc_Version=20130303
 ifrc_Script=/etc/network/ifrc.sh
 ifrc_Time= #$( date +%s.%N )
 ifrc_Log=/var/log/ifrc
@@ -111,24 +108,21 @@ then
   ln -sf $ifrc_Script $ifrc
 fi
 
-# check ifplugd - testing
+# check ifplugd
 #ifplugd=/usr/bin/ifplugd
-#ifplugd=/root/busybox\ ifplugd
 
-parse_flag()
-{
+parse_flag() {
   case $1 in
-    \?|-h|--help) ## show usage
+    \?|-h|--help|--usage) ## show usage
       usage
       ;;
-    --) ## just report version
+    --|--version) ## just report version
       msg ${ifrc_Script##*/} $ifrc_Version
       exit 0
       ;;
     -r) ## remove all related ifrc log files on startup
       for f in /var/log/ifrc*; do rm -f $f && msg ${f##*/} log removed; done
-      let $#-1  && return 1 || exit 0
-      return 1
+      let $#-1 && return 1 || exit 0
       ;;
     -n) ## do not use a log file
       ifrc_Log=/dev/null
@@ -146,7 +140,7 @@ parse_flag()
       mm=@
       ;;
     -*) ## ignore
-      msg \ \ ...ignoring $1
+      msg \ \ ...ignoring: $1
       return 1
       ;;
   esac
@@ -179,10 +173,27 @@ ifnl_s=${ifnl_s//down/dn}
 
 [ "$vm" == "....." ] && set -x
 
+pause() { 
+  # n[.nnn] sec
+  # zero value means indefinite
+  read -rst${1:-1} <>/dev/zero 2>/dev/null
+  if test $? -eq 2 
+  then
+    s="${1/.*}"
+    us="000000"
+    [ -z "${1/*.*}" ] && us="${1/*.}$us"
+    usleep $s${us:0:6}
+  fi
+  return 0
+}
 
+gipa() {
+# ip addr show $1 2>/dev/null \
+  ifconfig $1 2>/dev/null \
+    |sed -n '/inet/s/.*[: ]\([0-9.]*[0-9]\)[\/ 0-9]*[Bb].*/\1/p' |grep .
+}
 
-sleuth_wl()
-{
+sleuth_wl() {
   # try to find kernel-resident (wireless) interface: wl
   # in this case, it is not certain what the name is ahead of time
   for x in /sys/class/net/*/wireless
@@ -191,8 +202,7 @@ sleuth_wl()
   done
 }
 
-show_interface_config_and_status()
-{
+show_interface_config_and_status() {
   ida=$( ifconfig -a |sed -n '/./{H;$!d;};x;/\ UP/!p' \
                      |sed -n 's/\(^[a-z][a-z0-9]*\).*/\1 /p' \
                      |tr -d '\n' )
@@ -200,11 +210,12 @@ show_interface_config_and_status()
   [ -z "$dev" -a -n "$ida" ] \
   && echo "       Available, but not configured: $ida"
   echo
-  ifconfig |sed -n "/packe/d;/queue/d;/nterr/d;/cope/d;/$dev/,/^$/p" \
-           |sed 's/^\(.......\)\ *\([^ ].*[^ ]\)\ */\1\2/g; s/0-0/0:0/g; $d' \
-           |grep ....... || return 1
+  ifconfig |sed -n "/packe/d;/queue/d;/nterr/d;/cope/d;/${dev:-.}/,/^$/p;" \
+           |sed 's/^\(.......\)\ *\([^ ].*[^ ]\)\ */\1\2/g; s/0-0/0:0/g' \
+           |sed 's/^$/       /; $d' |grep ....... || return 1
 
-  [ -n "$dev" ] || dev=$( sleuth_wl )
+  test -z "$dev" && dev=$( sleuth_wl )
+  #
   # include association info for wireless dev
   if [ -n "$dev" ] \
   && [ -d /sys/class/net/$dev/wireless ]
@@ -214,32 +225,30 @@ show_interface_config_and_status()
     iw dev $dev link 2>/dev/null \
       |sed 's/^Connec/Associa/;s/t connec.*/t associated (on '$dev')/' \
       |sed '/[RT]X:/d;/^$/,$d;s/^\t/              /'
-  
+    #
     # too slow
     #sdc_cli profile list |sed -n 's/\(.*\) ACTIVE/WiFi profile: \1/p'
-  # top -n 1 |grep -E 'COMMAND|supp|wire|dhd' |grep -v grep
   fi
   return 0
 }
 
-ifrc_stop_netlink_daemon()
-{
+ifrc_stop_netlink_daemon() {
   prg="ifplug[d]"
   # find all ifplug* instances for this interface  
   for pid in \
   $( ps |sed -n "/${dev}/s/^[ ]*\([0-9]*\).*[\/ ]\(${prg}\)[ -].*/\1_\2 /p" )
   do
     kill ${pid%%_*} \
-    && msg @. "`printf \"% 7d %s <-sigterm\" ${pid%%_*} ${pid##*_}`"
+    && msg1 @. "`printf \"% 7d %s <-sigterm\" ${pid%%_*} ${pid##*_}`"
   done
 }
 
-signal_dhcp_client()
-{
+signal_dhcp_client() {
   case $1 in
     USR1) action=sigusr1; signal=-10;;
     TERM) action=sigterm; signal=-15;;
     CONT) action=sigcont; signal=-18;;
+    ZERO) action=sigzero; signal=-00;;
   esac
 
   let rv=1
@@ -251,27 +260,24 @@ signal_dhcp_client()
   do
     if kill $signal ${pid%%_*}
     then
-      msg @. "`printf \"% 7d %s <-${action}\" ${pid%%_*} ${pid##*_}`"
+      msg1 @. "`printf \"% 7d %s <-${action}\" ${pid%%_*} ${pid##*_}`"
       let rv=0
     else
       let rv=1
     fi
   done
 
-  # interrupt link-beat check, if in-progress
-  [ -f /tmp/ifrc.$dev.lbto ] \
-  && rm -f /tmp/ifrc.$dev.lbto && usleep 199999
-
+  # interrupt link-beat check, while in-progress
+  rm /tmp/ifrc.$dev.lbto 2>/dev/null && pause 0.2
   return $rv
 }
 
-make_dhcp_renew_request()
-{
+make_dhcp_renew_request() {
   for x in 1 2 3 4 5
   do
     msg1 \\\trenew_req: $x
     { read -r txp_a </sys/class/net/$dev/statistics/tx_packets; } 2>/dev/null
-    signal_dhcp_client USR1 && usleep 666666 || break
+    signal_dhcp_client USR1 && pause 1 || break
     let txp_b=$txp_a
     { read -r txp_a </sys/class/net/$dev/statistics/tx_packets; } 2>/dev/null
     msg2 \\\ttx_packets: $txp_a-$txp_b
@@ -280,7 +286,6 @@ make_dhcp_renew_request()
   msg1 \\\tfailed...
   return 1
 }
-
 
 [ -n "$ifnl_s" ] \
 && msg2 @. ifnl_s/args_: "$ifnl_s" $@
@@ -331,23 +336,18 @@ case $1 in
     ;;  
 
   noauto|auto|flags|status|down|dn|up) ## require iface
-    usage error: "...missing interface" "ifrc <iface> $1" 
-    ## maybe use 'status' w/o dev to show system load...
+    usage error: "...must specify an interface" "ifrc <iface> $1" 
     ;;
 
-  #xx*|--*|\.\.*)
-  #  ;;
-
-  [a-z][a-z]*) ## accept a dev name starting with two letters
+  [a-z][a-z]*) ## accept an <iface> dev name starting with two letters
     dev=$1 && shift
     ;;
 
-  *) usage error: "invalid interface name";;
+  *) usage error: "...invalid interface name";;
 esac
 
-
 #
-# For operations herein, we generally act on the $dev.
+# Generally, operations are on a specific interface.
 # It is possible that the $dev may initially be unknown.
 # So, for /e/n/i file lookups, we assume the use of $devalias.
 #
@@ -357,14 +357,14 @@ then
   # explicitly provided.  Although, method 'dhcp' will be ultimately assumed.
   #
   # Handle some dev name exceptions here first.
-  [ "$dev" == "wl" ] \
-  && devalias=$( sleuth_wl )
+  [ "$dev" == "wl" ] && devalias=$( sleuth_wl )
+  #
 elif [ -n "$dev" ]
 then
   # See if this is an aliased interface to act on...
-  # otherwise we treat the interface (and assume) as an alias by the same name.
+  # Otherwise (assume) treat the interface as an alias by the same name.
   # when given dev is the alias for an interface name, determine actual name
-  # when given dev is the actual interface name of an alias, copy as alias
+  # when given dev is the actual interface name of an alias, use as an alias
   D='[a-z][a-z][a-z0-9]*'
   msg3 "  checking the /e/n/i file to determine if aliased interface"
   devalias=$( sed -n "/$dev/s/^[ \t]*alias \($D\)[ is]* \($D\)/\1 \2/p" $eni )
@@ -402,8 +402,8 @@ then
       msg3 "  ...can't determine, so assuming $dev"
     fi
   fi
-  
-  ##
+  ## devalias now is set, and used to further process settings from /e/n/i
+  #
   # check for ifrc-flags
   flags=$( sed -n "/^iface $devalias/,/^$/\
                 s/^[ \t]\+[^#]ifrc-flags \(.*\)/\1/p" $eni 2>/dev/null )
@@ -412,15 +412,22 @@ then
   && msg3 "applying ifrc-flags via /e/n/i: $flags"
   for af in $flags; do parse_flag $af; done
 
+  # check for ifrc-pre/post-d/cfg-do scripts
+  if [ -z "$ifnl_s" ] \
+  && [ -z "$IFRC_SCRIPT" -a -n "$devalias" ]
+  then
+   msg3 "parsing /e/n/i for pre/post commands, intended for $dev..."
+   IFRC_SCRIPT=$( sed -n "/^iface $devalias/,/^$/\
+       s/^[ \t][ ]*\([^#]p[or][se][t]*\)-\([d]*cfg\)-do \(.*\)/\1_\2_do='\3'/p"\
+     $eni 2>/dev/null )
+    #
+    msg3 $IFRC_SCRIPT
+    eval $IFRC_SCRIPT
+  fi
 fi
+test -n "$dev" || exit 1
 
-
-#
-# Extended operations, intended for a specific interface...
-#
-[ -n "$dev" ] || exit 1
-
-# set logfile name and imit the file size to just 100-blocks
+# set logfile name and limit the file size to just 100-blocks
 if [ "$ifrc_Log" != "/dev/null" ]
 then
   ifrc_Log=${dev:+$ifrc_Log.$dev}
@@ -439,9 +446,6 @@ export IFRC_ACTION
 export IFRC_METHOD
 export IFRC_METHOD_PARAMS
 export IFRC_SCRIPT
-
-if [ -z "$ifnl_s" ]
-then
 
 # determine action to apply
 if [ -z "$1" ]
@@ -465,7 +469,6 @@ then
   ## assume method and params if not specified
   if [ -z "$IFRC_METHOD" ]
   then
-    msg3 "determining method for... $devalias"
     IFRC_METHOD_PARAMS=""
     if [ -f $eni ]
     then
@@ -484,21 +487,6 @@ then
   fi  
 fi  
 
-  # check for ifrc-pre/post-d/cfg-do scripts
-  if [ -z "$IFRC_SCRIPT" -a -n "$devalias" ]
-  then
-   msg3 "parsing /e/n/i for pre/post commands, intended for $dev..."
-   IFRC_SCRIPT=$( sed -n "/^iface $devalias/,/^$/\
-       s/^[ \t][ ]*\([^#]p[or][se][t]*\)-\([d]*cfg\)-do \(.*\)/\1_\2_do='\3'/p"\
-     $eni 2>/dev/null )
-    #
-    msg3 $IFRC_SCRIPT
-    eval $IFRC_SCRIPT
-  fi
-
-fi
-
-
 # determine netlink event rule to apply
 if [ -n "$ifnl_s" ]
 then
@@ -512,7 +500,7 @@ then
     if [ ! -f /sys/class/net/$dev/carrier ]
     then
       msg1 $dev is gone, waiting 2s
-      sleep 2
+      pause 2
       if [ ! -f /sys/class/net/$dev/carrier ]
       then
         msg1 $dev is gone, so allowing deconfiguration
@@ -537,7 +525,8 @@ then
     if [ "$IFRC_METHOD" == "dhcp" ]
     then
       # check if dhcp client is running
-      signal_dhcp_client CONT && IFRC_ACTION=...
+     #signal_dhcp_client CONT && IFRC_ACTION=...
+      signal_dhcp_client ZERO && IFRC_ACTION=...
     fi
   fi
 
@@ -551,20 +540,19 @@ msg @. ifrc_s/d/a/m: "$IFRC_STATUS" $IFRC_DEVICE ${IFRC_ACTION:-.} $IFRC_METHOD
 #
 # Do not really 'down' or 'up' an interface here with: 'ifconfig <dev> down/up'
 # We leave that to the init/driver scripts instead, so they handle stop/start.
-# 
 # This script uses down/up with respect to interface (de)configuration only!!
 #
 case $IFRC_ACTION in
   status) ## check if iface is configured and show its ip-address
     ## confirm configured <iface>: [ip-address]:0/1
-    ip=$( ifconfig $dev 2>/dev/null |sed -n 's/\ *inet addr:\([0-9.]*\) .*/\1/p' )
-    [ -n "$ip" ] && { msg $ip; exit 0; } || exit 1
+    ip=$( gipa $dev )
+    test -n "$ip" && { msg $ip; exit 0; } || exit 1
     ;;
 
   show) ## show info/status for an iface
     if ! grep -q $dev /proc/net/dev
     then
-      echo -e "\t$dev ...not available, not a kernel-resident interface"
+      echo -e "  ...not available, not a kernel-resident interface"
       exit 1
     fi
     # summarize the status of this interface
@@ -649,6 +637,7 @@ case $IFRC_ACTION in
     ;;
 
   dn|down) ## assume down action ->deconfigure
+    ##
     if [ -n "$pre_dcfg_do" ]
     then
       msg "   pre_dcfg_do $pre_dcfg_do"
@@ -661,11 +650,12 @@ case $IFRC_ACTION in
     # terminate any other netlink/dhcp_client daemons and de-configure
     ifrc_stop_netlink_daemon 
     signal_dhcp_client TERM
+    #
+    # de-configure (flush) only on an 'up' interface
     { read -r operstate </sys/class/net/$dev/operstate; } 2>/dev/null
-    [ "$operstate" == "up" ] && ifconfig $dev 0.0.0.0 2>/dev/null
-    ## this de-configure (flush) is only performed on an 'up' interface
+    [ "$operstate" == "up" ] \
+    && { ifconfig $dev 0.0.0.0 2>/dev/null; pause 0.333; }
     ##
-    usleep 333333
     if [ -n "$post_dcfg_do" ]
     then
       msg "   post_dcfg_do $post_dcfg_do"
@@ -681,8 +671,8 @@ case $IFRC_ACTION in
       if [ ! -f /var/log/ifrc.$dev.lock ]
       then
         touch /var/log/ifrc.$dev.lock
-#        IFRC_METHOD=
-#        IFRC_METHOD_PARAMS=
+        IFRC_METHOD=
+        IFRC_METHOD_PARAMS=
         
         IFRC_SCRIPT=
         msg "interface is not kernel-resident, trying to start ..."
@@ -694,7 +684,6 @@ case $IFRC_ACTION in
       fi
     fi
     rm -fv /var/log/ifrc.$dev.lock
-
     if [ "$dev" != "lo" ] \
     && [ "$devalias" != "wl" ] \
     && [ ! -d /sys/class/net/$dev/wireless ]
@@ -713,8 +702,7 @@ case $IFRC_ACTION in
     msg1 "${re}configuring $dev using $IFRC_METHOD method $methvia"
     #
     # terminate any other netlink/dhcp_client daemons and de-configure
-    [ -z "$ifnl_s" ] \
-    && ifrc_stop_netlink_daemon 
+    [ -z "$ifnl_s" ] && ifrc_stop_netlink_daemon 
 
     # this is a new method/request
     signal_dhcp_client TERM
@@ -754,10 +742,9 @@ case $IFRC_ACTION in
     ;;
 
   *) ## usage, does not return
-    usage error: "invalid action specified"
+    usage error: "...invalid action specified"
     ;;
 esac
-
 
 #
 # The rest of this script handles the configuration of an interface.
@@ -783,21 +770,11 @@ else
       ##
       ## If ifrc.sh exits with non-zero status, then ifplugd will not daemonize.
       ## Only exit non-zero for permanent conditions that prevent configuration.
-    ( ${ifplugd:-ifplugd} -i $dev -M $nsl -q -p -a -f -u 1 -d 1 -I -r $0 )&
-      usleep 333333
-      ##
-      ## Directly spawning nl-daemon prevents catching error conditions.
- #    ${ifplugd:-ifplugd} -i $dev -M $nsl -q -p -a -f -d 3 -I -r $0
-      #ps \
-      #  |grep -q "ifplug[d].*${dev}" \
-      #  || {
-      #    echo -e "\t...ifplugd failed to daemonize" >>$ifrc_Log
-      #    exit 0
-      #  }
-      #msg @. "`printf \"% 7d %s started\" $ifplugd_pid ifplugd`"
+    # ${ifplugd:-ifplugd} -i$dev -M $nsl -q -p -a -f -u1 -d1 -I -r$0
+    ( ${ifplugd:-ifplugd} -i$dev -M $nsl -q -p -a -f -u1 -d1 -I -r$0 )&
+      #pause 0.333
     }
 fi
-
 
 #
 # NOTE:
@@ -807,8 +784,8 @@ fi
 # 1. wifi is not associated yet (handled by supplicant)
 # 2. cable/link not present yet
 #
-# The script will exit with a non-zero value whenever a permanent condition will
-# prevent configuration of the interface, such as:
+# The script will exit with a non-zero value whenever a permanent condition
+# will prevent configuration of the interface, such as:
 # 1. invalid method specified
 # 2. no hw-phy detectable
 # 3. timeout was used
@@ -824,10 +801,9 @@ fi
 # $( if ifrc <iface> status; then true; fi )
 # 
 
-show_filtered_method_params()
-{
-  #if [ "${1:0:2}" == ".." ]
-  if [ -n "$1" ] 
+show_filtered_method_params() {
+  #if [ "${vm:0:2}" == ".." ]
+  if [ -n "$vm" ] 
   then
     if [ -n "$ip$nm$gw$bc$ns" ]
     then
@@ -841,8 +817,7 @@ show_filtered_method_params()
   [ -n "$rip" ] && msg request-ip-address: $rip
 }
 
-ifrc_validate_loopback_method_params()
-{
+ifrc_validate_loopback_method_params() {
   # validate extra parameters for loopback method
   for x in $IFRC_METHOD_PARAMS
   do
@@ -856,10 +831,10 @@ ifrc_validate_loopback_method_params()
         msg "ignoring extra parameter: $x"
     esac
   done
+  show_filtered_method_params
 }
 
-ifrc_validate_static_method_params()
-{
+ifrc_validate_static_method_params() {
   # validate extra dotted-address parameters for static method
   for x in $IFRC_METHOD_PARAMS
   do
@@ -889,10 +864,10 @@ ifrc_validate_static_method_params()
         msg "ignoring extra parameter: $x"
     esac
   done
+  show_filtered_method_params
 }
 
-ifrc_validate_dhcp_method_params()
-{
+ifrc_validate_dhcp_method_params() {
   # validate extra parameters for dhcp method
   # these are handled specifically by the employed client
   [ -n "$rcS_" -a -f /tmp/bootfile_ ] && rbf=bootfile
@@ -919,10 +894,10 @@ ifrc_validate_dhcp_method_params()
     esac
   done
   ipa=
+  show_filtered_method_params
 }
 
-check_link()
-{
+check_link() {
   # check if associated when using wireless
   if [ -d /sys/class/net/$dev/wireless ]
   then
@@ -939,7 +914,7 @@ check_link()
   while [ $n -lt $lbto -a -f /tmp/ifrc.$dev.lbto ]
   do
     grep -q 1 /sys/class/net/${dev}/carrier && break
-    usleep 200000 && let n+=200
+    let n+=200 && pause 0.2
   done
   rm -f /tmp/ifrc.$dev.lbto
 
@@ -949,8 +924,7 @@ check_link()
   [ $n -gt 0 ] && msg "  waited ${n}ms on ${dev}/carrier"
 }
 
-run_udhcpc()
-{
+run_udhcpc() {
   # BusyBox v1.19.3 multi-call binary.
   #source /etc/dhcp/udhcpc.conf 2>/dev/null
   
@@ -983,13 +957,14 @@ run_udhcpc()
   # iface, verbose, request-ip, exit-no-lease/quit-option, exit-release, retry..
   # for retry, send 4-discovers, paused at 2sec, and repeat after 5sec
   # the request-bootfile option is conditional, other options are required
-  eval udhcpc -i $dev $vb $rip $nq -R -t 4 -T 2 -A 5 -o $ropt $rbf $rs $nv
+  eval udhcpc -i$dev $vb $rip $nq -R -t4 -T2 -A5 -o $ropt $rbf $rs $nv
+  
+# eval udhcpc -i$dev $vb $rip $nq -R -t4 -T2 -A5 -o $ropt $rbf $rs $nv &
   #
   #return $?
 }
 
-run_dhclient()
-{
+run_dhclient() {
   # Internet Systems Consortium DHCP Client 4.1-ESV-R4
   # Usage: dhclient [-4|-6] [-SNTP1dvrx] [-nw] [-p <port>]
   #                 [-s server-addr]
@@ -1011,40 +986,26 @@ run_dhclient()
   #return $?
 }
 
-run_dhcpcd()
-{
+run_dhcpcd() {
   : dhcpcd is not yet supported
   #
   #return 1 #$?
 }
 
-run_dhcp3c()
-{
+run_dhcp3c() {
   : dhcp3-client is not yet supported
   #
   #return 1 #$?
 }
 
-gipa()
-{
-  ipa=$( ifconfig $dev |sed -n 's/inet\ addr:\([0-9.]*\) .*/IP address: \1/p' )
-  if [ -n "$ipa" ]
-  then
-    echo "okay, got lease for $dev: $ipa" >>$ifrc_Log 
-    return 0
-  fi
-  return 1
-}
-
-await_timeout_for_dhcp()
-{
+await_timeout_for_dhcp() {
   # wait for ip-address and exit non-zero if timeout...  
   # there will not be any automatic restart nor netlink event
   msg3 "using timeout of $to seconds"
   while [ $to -gt 0 ]
   do
     [ "${vm:0:1}" == "." ] && echo -en .
-    sleep 1
+    pause 1
     let to-=1
     gipa && { to=; break; }
   done
@@ -1072,10 +1033,7 @@ case ${IFRC_METHOD%% *} in
   
   dhcp) ## method + optional params
     ifrc_validate_dhcp_method_params
-    show_filtered_method_params $vm
-
     check_link
-
     ## allow using a fixed-port-speed-duplex, intended only for wired ports
     if [ ! -d /sys/class/net/$dev/wireless ] && [ -n "$mii" ]
     then
@@ -1102,7 +1060,7 @@ case ${IFRC_METHOD%% *} in
       *)
         ;;
     esac
-    usleep 666666
+    pause 1
     echo -en \\\r 
 
     test -n "$to" && await_timeout_for_dhcp 
@@ -1116,7 +1074,6 @@ case ${IFRC_METHOD%% *} in
   
   static) ## method + optional params
     ifrc_validate_static_method_params
-    show_filtered_method_params $vm
     # configure interface <ip [+nm]>
     if [ -z "$ip" ]
     then
@@ -1144,7 +1101,6 @@ case ${IFRC_METHOD%% *} in
 
   loopback) ## method + optional params
     ifrc_validate_loopback_method_params
-    show_filtered_method_params $vm
     # use default ip if none specified
     [ -z "$ip" ] && ip=127.0.0.1
     msg "configuring localhost address $ip"
