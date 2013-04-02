@@ -50,6 +50,7 @@ endif
 	cd buildroot/configs && ln -s ../board/sdc/customers/welch_allyn/configs/$(PKG).config welch_allyn_defconfig
 	cd buildroot/configs && ln -s ../board/sdc/wb40n/configs/$(PKG).config wb40n_defconfig
 	cd buildroot/configs && ln -s ../board/sdc/wb45n/configs/$(PKG).config wb45n_defconfig
+	cd buildroot/configs && ln -s ../board/sdc/msd45n/configs/$(PKG).config msd45n_defconfig
 	# mark operation as done
 	touch unpack.stamp
 
