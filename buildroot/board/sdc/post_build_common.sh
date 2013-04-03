@@ -42,7 +42,6 @@ tar c --exclude=.svn -C board/sdc/rootfs-additions-common/ . | tar x -C $TARGETD
   && ln -sf libnl-genl-3.so libnl-genl.so.3 )
 
 # Services to disable by default
-chmod a-x "$TARGETDIR/etc/init.d/S59snmpd"
 chmod a-x "$TARGETDIR/etc/init.d/S99lighttpd"
 
 # create missing symbolic link
