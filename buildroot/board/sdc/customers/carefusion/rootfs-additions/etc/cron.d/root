@@ -1,0 +1,11 @@
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+# the fields are:
+# min hour dom mon dow command-string...
+
+0 *  * * * logrotate -s /var/log/logstatus /etc/logrotate.conf
+
+15 *  * * * logrotate -s /var/log/logstatus /etc/logrotate.conf
+
+30 *  * * * logrotate -s /var/log/logstatus /etc/logrotate.conf
+
+45 *  * * * logrotate -s /var/log/logstatus /etc/logrotate.conf
