@@ -1,0 +1,25 @@
+#!/bin/sh
+# cron init-script
+
+case $1 in
+  stop)
+    echo "Stopping crond "
+    killall crond 2>/dev/null
+    ;;
+    
+  start)
+    echo "Starting crond "
+    /bin/busybox crond -c /etc/cron.d
+    ;;
+    
+  restart)
+    $0 stop
+    $0 start
+    ;;
+    
+  *)
+    echo "Usage: $0 {stop|start|restart}"
+    exit 1
+esac
+exit $?
+                                                                                                                                        
