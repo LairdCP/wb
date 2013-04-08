@@ -1,0 +1,29 @@
+#!/bin/sh
+# ncm init-script
+
+eval $rcS_awaitscript
+
+case "$1" in
+  start)
+    rcS_awaitscript network $0
+    /bin/busybox crond -c /etc/cron.d
+    echo 1 > /proc/sys/vm/dirty_expire_centisecs
+    echo 1 > /proc/sys/vm/dirty_writeback_centisecs
+    echo 3 > /proc/sys/vm/drop_caches
+    echo "Staring NCM..."
+    /usr/bin/ncm & 
+    ;;
+  stop)
+    killall crond && echo -n " crond"
+    /usr/bin/killall ncm
+    ;;
+  restart)
+    $0 stop
+    $0 start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+esac
+
+exit $?
