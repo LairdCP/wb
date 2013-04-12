@@ -16,7 +16,7 @@ VER   := 2011.11
 PKG   := buildroot-$(VER)
 ARCHV := $(PKG).tar.bz2
 
-default all: wb40n wb45n
+default all: msd45n
 
 msd45n welch_allyn wb40n wb45n: unpack.stamp
 	# install the config file
