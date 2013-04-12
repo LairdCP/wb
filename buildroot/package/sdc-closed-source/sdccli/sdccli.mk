@@ -4,9 +4,9 @@
 #
 #############################################################
 
-SDCCLI_VERSION = local
-SDCCLI_SITE = package/sdc-closed-source/externals/sdc_cli
-SDCCLI_SITE_METHOD = local
+SDCCLI_VERSION = 19049
+SDCCLI_SITE = svn://10.1.10.7/tests/sdc_cli/trunk
+SDCCLI_SITE_METHOD = svn
 SDCCLI_DEPENDENCIES = libnl sdcsdk libedit
 SDCCLI_MAKE_ENV = CC="$(TARGET_CC)" \
                   CXX="$(TARGET_CXX)" \
