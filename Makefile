@@ -18,7 +18,7 @@ ARCHV := $(PKG).tar.bz2
 
 default all: wb40n wb45n
 
-welch_allyn wb40n wb45n: unpack.stamp
+msd45n welch_allyn wb40n wb45n: unpack.stamp
 	# install the config file
 	$(MAKE) O=output/$@ -C buildroot $@_defconfig
 	$(MAKE) O=output/$@ -C buildroot
