@@ -34,8 +34,6 @@ endif
 	tar xf $(LAIRD_DL_DIR)/$(ARCHV) --xform "s/^$(PKG)/buildroot/"
 	# patch buildroot to add the sdc properties
 	patch -p0 < buildroot-patches/buildroot-sdc-board-config.patch
-	# backport custom patch config for at91bootstrap on 2011.11
-	test "$(VER)" = 2011.11 && patch -p0 < buildroot-patches/at91bootstrap-custom-patch-dir.patch
 	# add uboot version 2011.09 as an option
 	test "$(VER)" = 2011.11 && patch -p0 < buildroot-patches/uboot-2011-09.patch
 	# backport of at91bootstrap3 package
