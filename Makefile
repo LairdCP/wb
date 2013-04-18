@@ -42,6 +42,8 @@ endif
 	patch -d buildroot -p1 < buildroot-patches/buildroot-2011.11-laird1.patch
 	# fix iproute parallel buiild race
 	cp buildroot-patches/iproute2-fix-parallel-build-yacc.patch buildroot/package/iproute2/
+	# fix m4 gets undeclared problem on Ubuntu 13.04
+	cp buildroot-patches/m4-1.4.15-no-gets.patch buildroot/package/m4/
 	# backport the dtb table support
 	test "$(VER)" = 2011.11 && patch -p0 < buildroot-patches/buildroot-linux-dtb-backport.patch
 	# create link to welch_allyn defconfig
