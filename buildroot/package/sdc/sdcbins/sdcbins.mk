@@ -7,5 +7,4 @@ define SDCBINS_INSTALL_TARGET_CMDS
     cd $(TARGET_DIR) && tar zxf $(TOPDIR)/../archive/$(SDCBINS_SOURCE) --strip-components=1
 endef
 
-$(eval $(call GENTARGETS))
 $(eval $(generic-package))

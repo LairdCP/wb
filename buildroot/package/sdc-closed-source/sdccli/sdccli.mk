@@ -31,5 +31,4 @@ define SDCCLI_UNINSTALL_TARGET_CMDS
 	rm -f $(SDCCLI_TARGET_DIR)/usr/bin/sdc_cli
 endef
 
-$(eval $(call GENTARGETS))
 $(eval $(generic-package))

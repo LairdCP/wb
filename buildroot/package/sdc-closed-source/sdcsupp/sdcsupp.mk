@@ -37,5 +37,4 @@ define SDCSUPP_UNINSTALL_TARGET_CMDS
 	rm -f $(SDCSUPP_TARGET_DIR)/usr/bin/sdcsupp
 endef
 
-$(eval $(call GENTARGETS))
 $(eval $(generic-package))

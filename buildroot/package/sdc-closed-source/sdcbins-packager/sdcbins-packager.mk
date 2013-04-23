@@ -9,5 +9,4 @@ define SDCBINS_PACKAGER_INSTALL_TARGET_CMDS
 	tar -zcf $(O)/images/$(SDCBINS_PACKAGER_TARNAME) -C $(O) sdcbins
 endef
 
-$(eval $(call GENTARGETS))
 $(eval $(generic-package))

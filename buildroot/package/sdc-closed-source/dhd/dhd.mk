@@ -52,5 +52,4 @@ endef
 #define DHD_UNINSTALL_TARGET_CMDS
 #endef
 
-$(eval $(call GENTARGETS))
 $(eval $(generic-package))

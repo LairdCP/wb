@@ -8,7 +8,7 @@
 LIBTCMD_VERSION = local
 LIBTCMD_SITE = package/sdc-closed-source/libtcmd
 LIBTCMD_SITE_METHOD = local
-LIBTCMD_DEPENDENCIES = libnl host-pkg-config
+LIBTCMD_DEPENDENCIES = libnl host-pkgconf
 LIBTCMD_INSTALL_STAGING = YES
 
 define LIBTCMD_BUILD_CMDS
@@ -16,5 +16,4 @@ define LIBTCMD_BUILD_CMDS
             PKGCONFIG=../../host/usr/bin/pkg-config
 endef
 
-$(eval $(call GENTARGETS))
 $(eval $(generic-package))

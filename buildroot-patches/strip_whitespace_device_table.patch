@@ -1,0 +1,34 @@
+commit 402d1476f7159ab8055ec8b811b4fb5cd78b5609
+Author: Ezequiel Garcia <ezequiel.garcia@free-electrons.com>
+Date:   Wed Mar 13 02:28:16 2013 +0000
+
+    fs/common.mk: Strip extra whitespace when device table is empty
+    
+    Since ROOTFS_DEVICE_TABLES is a concatenation of two strings separated by
+    spaces, there will always be a space in it, which means it's never empty.
+    Therefore, when testing for empty, the condition never evaluate to false.
+    
+    The following change fixes this problem; it runs qstrip on the overall
+    combination of the variables, causing the space to be removed if it's the
+    only thing left.
+    
+    Tested-by: Ezequiel Garcia <ezequiel.garcia@free-electrons.com>
+    Signed-off-by: Thomas De Schampheleire <patrickdepinguin+buildroot@gmail.com>
+    Acked-by: Arnout Vandecappelle (Essensium/Mind) <arnout@mind.be>
+    Signed-off-by: Peter Korsgaard <jacmet@sunsite.dk>
+
+diff --git a/fs/common.mk b/fs/common.mk
+index 8b5b2f2..a0b7b39 100644
+--- a/fs/common.mk
++++ b/fs/common.mk
+@@ -33,8 +33,8 @@
+ 
+ FAKEROOT_SCRIPT = $(BUILD_DIR)/_fakeroot.fs
+ FULL_DEVICE_TABLE = $(BUILD_DIR)/_device_table.txt
+-ROOTFS_DEVICE_TABLES = $(call qstrip,$(BR2_ROOTFS_DEVICE_TABLE)) \
+-	$(call qstrip,$(BR2_ROOTFS_STATIC_DEVICE_TABLE))
++ROOTFS_DEVICE_TABLES = $(call qstrip,$(BR2_ROOTFS_DEVICE_TABLE) \
++       $(BR2_ROOTFS_STATIC_DEVICE_TABLE))
+ 
+ define ROOTFS_TARGET_INTERNAL
+ 

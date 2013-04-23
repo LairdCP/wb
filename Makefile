@@ -12,11 +12,13 @@ LAIRD_ARCHIVES := archive/AT91Bootstrap-v3.4.4.tar.xz \
 endif
 
 URL   := http://buildroot.uclibc.org/downloads/
-VER   := 2011.11
+VER   := 2013.02
 PKG   := buildroot-$(VER)
 ARCHV := $(PKG).tar.bz2
 
-default all: wb40n wb45n
+default: wb40n wb45n
+
+all: wb40n wb45n msd45n welch_allyn
 
 msd45n welch_allyn wb40n wb45n: unpack.stamp
 	# install the config file
@@ -32,26 +34,14 @@ ifdef BUILDROOT_DL_DIR
 endif
 	# unpack buildroot, rename the directory to 'buildroot' for easier management versions
 	tar xf $(LAIRD_DL_DIR)/$(ARCHV) --xform "s/^$(PKG)/buildroot/"
-	# patch buildroot to add the sdc properties
-	patch -p0 < buildroot-patches/buildroot-sdc-board-config.patch
-	# add uboot version 2011.09 as an option
-	test "$(VER)" = 2011.11 && patch -p0 < buildroot-patches/uboot-2011-09.patch
-	# backport of at91bootstrap3 package
-	patch -d buildroot -p1 < buildroot-patches/at91bootstrap3.patch
 	# sync to dev_linux/buildroot/2011.11
-	patch -d buildroot -p1 < buildroot-patches/buildroot-2011.11-laird1.patch
-	# fix iproute parallel buiild race
-	cp buildroot-patches/iproute2-fix-parallel-build-yacc.patch buildroot/package/iproute2/
-	# fix m4 gets undeclared problem on Ubuntu 13.04
-	cp buildroot-patches/m4-1.4.15-no-gets.patch buildroot/package/m4/
-	# backport the dtb table support
-	test "$(VER)" = 2011.11 && patch -p0 < buildroot-patches/buildroot-linux-dtb-backport.patch
-	# create link to welch_allyn defconfig
-	cd buildroot/configs && ln -s ../board/sdc/customers/welch_allyn/configs/$(PKG).config welch_allyn_defconfig
-	cd buildroot/configs && ln -s ../board/sdc/customers/carefusion/configs/$(PKG).config carefusion_defconfig
-	cd buildroot/configs && ln -s ../board/sdc/wb40n/configs/$(PKG).config wb40n_defconfig
-	cd buildroot/configs && ln -s ../board/sdc/wb45n/configs/$(PKG).config wb45n_defconfig
-	cd buildroot/configs && ln -s ../board/sdc/msd45n/configs/$(PKG).config msd45n_defconfig
+	patch -d buildroot -p1 < buildroot-patches/buildroot-2013.02-laird1.patch
+	patch -d buildroot -p1 < buildroot-patches/strip_whitespace_device_table.patch
+	cd buildroot/configs && ln -s ../board/sdc/customers/welch_allyn/configs/buildroot.config welch_allyn_defconfig
+	cd buildroot/configs && ln -s ../board/sdc/customers/carefusion/configs/buildroot.config carefusion_defconfig
+	cd buildroot/configs && ln -s ../board/sdc/wb40n/configs/buildroot.config wb40n_defconfig
+	cd buildroot/configs && ln -s ../board/sdc/wb45n/configs/buildroot.config wb45n_defconfig
+	cd buildroot/configs && ln -s ../board/sdc/msd45n/configs/buildroot.config msd45n_defconfig
 	# mark operation as done
 	touch unpack.stamp
 

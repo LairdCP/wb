@@ -46,5 +46,4 @@ define SDCSDK_UNINSTALL_TARGET_CMDS
 	rm -f $(SDCSDK_TARGET_DIR)/usr/lib/libsdc_sdk.so.1.0
 endef
 
-$(eval $(call GENTARGETS))
 $(eval $(generic-package))

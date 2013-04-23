@@ -2,7 +2,7 @@ export PLATFORM = msd45n
 export PRODUCT = msd45n
 export DATE := $(shell date "+%Y%m%d")
 
-SYSROOT := ../../buildroot/output/msd45n/host/usr/arm-unknown-linux-gnueabi/sysroot
+SYSROOT := ../../buildroot/output/msd45n/host/usr/arm-buildroot-linux-gnueabi/sysroot
 
 all:
 	mkdir -p $(DATE)

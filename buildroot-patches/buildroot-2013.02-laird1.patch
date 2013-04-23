@@ -1,0 +1,1703 @@
+diff -Naur old/boot/at91bootstrap3/at91bootstrap3.mk new/boot/at91bootstrap3/at91bootstrap3.mk
+--- old/boot/at91bootstrap3/at91bootstrap3.mk	2013-04-22 23:49:35.189440176 +0100
++++ new/boot/at91bootstrap3/at91bootstrap3.mk	2013-04-22 21:36:40.000000000 +0100
+@@ -3,10 +3,10 @@
+ # at91bootstrap3
+ #
+ #############################################################
+-AT91BOOTSTRAP3_VERSION = 3.2
++AT91BOOTSTRAP3_VERSION = 3.4.4
+ AT91BOOTSTRAP3_SITE = \
+ 	ftp://www.at91.com/pub/at91bootstrap/AT91Bootstrap$(AT91BOOTSTRAP3_VERSION)
+-AT91BOOTSTRAP3_SOURCE = at91bootstrap_9n12.tar.gz
++AT91BOOTSTRAP3_SOURCE = AT91Bootstrap-v3.4.4.tar.xz
+ 
+ AT91BOOTSTRAP3_INSTALL_IMAGES = YES
+ AT91BOOTSTRAP3_INSTALL_TARGET = NO
+@@ -42,11 +42,17 @@
+ endef
+ 
+ define AT91BOOTSTRAP3_BUILD_CMDS
+-	$(MAKE) $(AT91BOOTSTRAP3_MAKE_OPT) -C $(@D) boot
++	$(MAKE) $(AT91BOOTSTRAP3_MAKE_OPT) -C $(@D)
+ endef
+ 
++AT91BOOTSTRAP3_BIN_FILE = $(call qstrip,$(BR2_SDC_PLATFORM))-nandflashboot-uboot-3.4.4.bin
++ifeq ($(call qstrip,$(BR2_SDC_PLATFORM)),wb45n)
++AT91BOOTSTRAP3_BIN_FILE = at91sam9x5ek-nandflashboot-uboot-3.4.4.bin
++endif
++
+ define AT91BOOTSTRAP3_INSTALL_IMAGES_CMDS
+-	$(MAKE) $(AT91BOOTSTRAP3_MAKE_OPT) -C $(@D) bootstrap
++	$(INSTALL) -m 644 $(@D)/binaries/$(AT91BOOTSTRAP3_BIN_FILE) \
++	                  $(BINARIES_DIR)/$(call qstrip,$(BR2_SDC_PLATFORM)).bin
+ endef
+ 
+ $(eval $(generic-package))
+diff -Naur old/boot/at91bootstrap3/at91bootstrap3-u-boot-relocation-fix.patch new/boot/at91bootstrap3/at91bootstrap3-u-boot-relocation-fix.patch
+--- old/boot/at91bootstrap3/at91bootstrap3-u-boot-relocation-fix.patch	2013-04-22 23:49:35.189440176 +0100
++++ new/boot/at91bootstrap3/at91bootstrap3-u-boot-relocation-fix.patch	1970-01-01 01:00:00.000000000 +0100
+@@ -1,747 +0,0 @@
+-Every AT91SAM plaforms were broken between 2010.12 and 2011.03 because
+-of the relocation changes.
+-
+-We have to get JUMP_ADDR consistent with what is used by u-boot
+-(CONFIG_SYS_TEXT_BASE).
+-
+-I also chose to "repartition" the dataflash. u-boot is now living at
+-0x4000, letting 16kB for the bootstrap. We also have to increase the
+-IMG_SIZE as u-boot as grown larger than the default value.
+-As requested on the u-boot ML, we assume that it could be up to 512kB
+-big.
+-
+-It means that now, you have to flash your kernel at 0x0008C000 instead
+-of 0x00042000. And so you also have to load it from that address from
+-u-boot.
+-
+-Then, remember that you could decrease IMG_SIZE to boot faster.
+-
+-Signed-off-by: Alexandre Belloni <alexandre.belloni@piout.net>
+-Signed-off-by: Simon Dawson <spdawson@gmail.com>
+-
+-diff -Nurp a/board/afeb9260/afeb9260_defconfig b/board/afeb9260/afeb9260_defconfig
+---- a/board/afeb9260/afeb9260_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/afeb9260/afeb9260_defconfig	2012-07-25 20:52:17.967694276 +0100
+-@@ -97,9 +97,9 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_APP_CHECK=y
+- # CONFIG_LONG_TEST is not set
+- # CONFIG_DEBUG is not set
+-diff -Nurp a/board/at91cap9adk/at91cap9adk_defconfig b/board/at91cap9adk/at91cap9adk_defconfig
+---- a/board/at91cap9adk/at91cap9adk_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91cap9adk/at91cap9adk_defconfig	2012-07-25 20:52:30.603693814 +0100
+-@@ -96,8 +96,8 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+--CONFIG_IMG_SIZE="0x00040000"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+-+CONFIG_IMG_SIZE="0x00080000"
+- CONFIG_JUMP_ADDR="0x73F00000"
+- CONFIG_APP_CHECK=y
+- # CONFIG_LONG_TEST is not set
+-diff -Nurp a/board/at91cap9adk/at91cap9df_defconfig b/board/at91cap9adk/at91cap9df_defconfig
+---- a/board/at91cap9adk/at91cap9df_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91cap9adk/at91cap9df_defconfig	2012-07-25 20:52:23.807694041 +0100
+-@@ -96,8 +96,8 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+--CONFIG_IMG_SIZE="0x00040000"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+-+CONFIG_IMG_SIZE="0x00080000"
+- CONFIG_JUMP_ADDR="0x73F00000"
+- CONFIG_APP_CHECK=y
+- # CONFIG_LONG_TEST is not set
+-diff -Nurp a/board/at91cap9adk/at91cap9f_defconfig b/board/at91cap9adk/at91cap9f_defconfig
+---- a/board/at91cap9adk/at91cap9f_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91cap9adk/at91cap9f_defconfig	2012-07-25 21:25:20.839605245 +0100
+-@@ -72,7 +72,7 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+- CONFIG_IMG_ADDRESS="0x00008000"
+--CONFIG_IMG_SIZE="0x00040000"
+-+CONFIG_IMG_SIZE="0x00080000"
+- CONFIG_JUMP_ADDR="0x73F00000"
+- CONFIG_APP_CHECK=y
+- # CONFIG_LONG_TEST is not set
+-diff -Nurp a/board/at91cap9stk/at91cap9stk_defconfig b/board/at91cap9stk/at91cap9stk_defconfig
+---- a/board/at91cap9stk/at91cap9stk_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91cap9stk/at91cap9stk_defconfig	2012-07-25 20:52:59.663692456 +0100
+-@@ -96,8 +96,8 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+--CONFIG_IMG_SIZE="0x00040000"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+-+CONFIG_IMG_SIZE="0x00080000"
+- CONFIG_JUMP_ADDR="0x73F00000"
+- CONFIG_APP_CHECK=y
+- # CONFIG_LONG_TEST is not set
+-diff -Nurp a/board/at91cap9stk/at91cap9stkdf_defconfig b/board/at91cap9stk/at91cap9stkdf_defconfig
+---- a/board/at91cap9stk/at91cap9stkdf_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91cap9stk/at91cap9stkdf_defconfig	2012-07-25 20:52:52.255692671 +0100
+-@@ -96,8 +96,8 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+--CONFIG_IMG_SIZE="0x00040000"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+-+CONFIG_IMG_SIZE="0x00080000"
+- CONFIG_JUMP_ADDR="0x73F00000"
+- CONFIG_APP_CHECK=y
+- # CONFIG_LONG_TEST is not set
+-diff -Nurp a/board/at91cap9stk/at91cap9stkf_defconfig b/board/at91cap9stk/at91cap9stkf_defconfig
+---- a/board/at91cap9stk/at91cap9stkf_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91cap9stk/at91cap9stkf_defconfig	2012-07-25 21:25:35.235605140 +0100
+-@@ -72,7 +72,7 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+- CONFIG_IMG_ADDRESS="0x00008000"
+--CONFIG_IMG_SIZE="0x00040000"
+-+CONFIG_IMG_SIZE="0x00080000"
+- CONFIG_JUMP_ADDR="0x73F00000"
+- CONFIG_APP_CHECK=y
+- # CONFIG_LONG_TEST is not set
+-diff -Nurp a/board/at91sam9260ek/at91sam9260dfc_defconfig b/board/at91sam9260ek/at91sam9260dfc_defconfig
+---- a/board/at91sam9260ek/at91sam9260dfc_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9260ek/at91sam9260dfc_defconfig	2012-07-25 20:35:23.259739521 +0100
+-@@ -97,9 +97,9 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_APP_CHECK=y
+- # CONFIG_LONG_TEST is not set
+- # CONFIG_DEBUG is not set
+-diff -Nurp a/board/at91sam9260ek/at91sam9260df_defconfig b/board/at91sam9260ek/at91sam9260df_defconfig
+---- a/board/at91sam9260ek/at91sam9260df_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9260ek/at91sam9260df_defconfig	2012-07-25 20:34:19.231742964 +0100
+-@@ -102,11 +102,11 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_GLBDRV_ADDR="0x20058000"
+- # CONFIG_LONG_TEST is not set
+- # CONFIG_DEBUG is not set
+-diff -Nurp a/board/at91sam9260ek/at91sam9260ek_defconfig b/board/at91sam9260ek/at91sam9260ek_defconfig
+---- a/board/at91sam9260ek/at91sam9260ek_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9260ek/at91sam9260ek_defconfig	2012-07-25 20:32:17.711747794 +0100
+-@@ -102,11 +102,11 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_GLBDRV_ADDR="0x20058000"
+- # CONFIG_LONG_TEST is not set
+- # CONFIG_DEBUG is not set
+-diff -Nurp a/board/at91sam9260ek/at91sam9260nf_defconfig b/board/at91sam9260ek/at91sam9260nf_defconfig
+---- a/board/at91sam9260ek/at91sam9260nf_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9260ek/at91sam9260nf_defconfig	2012-07-25 21:25:57.079604719 +0100
+-@@ -87,8 +87,8 @@ CONFIG_LOAD_UBOOT=y
+- CONFIG_IMG_ADDRESS="0x00020000"
+- CONFIG_SETTING_ADDRESS="0x01FE0000"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_GLBDRV_ADDR="0x20058000"
+- # CONFIG_LONG_TEST is not set
+- # CONFIG_DEBUG is not set
+-diff -Nurp a/board/at91sam9261ek/at91sam9261dfc_defconfig b/board/at91sam9261ek/at91sam9261dfc_defconfig
+---- a/board/at91sam9261ek/at91sam9261dfc_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9261ek/at91sam9261dfc_defconfig	2012-07-25 20:37:07.515735228 +0100
+-@@ -97,9 +97,9 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_APP_CHECK=y
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+-diff -Nurp a/board/at91sam9261ek/at91sam9261df_defconfig b/board/at91sam9261ek/at91sam9261df_defconfig
+---- a/board/at91sam9261ek/at91sam9261df_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9261ek/at91sam9261df_defconfig	2012-07-25 20:36:44.351735615 +0100
+-@@ -102,11 +102,11 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_GLBDRV_ADDR="0x20058000"
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+-diff -Nurp a/board/at91sam9261ek/at91sam9261ek_defconfig b/board/at91sam9261ek/at91sam9261ek_defconfig
+---- a/board/at91sam9261ek/at91sam9261ek_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9261ek/at91sam9261ek_defconfig	2012-07-25 20:36:09.111737459 +0100
+-@@ -102,11 +102,11 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_GLBDRV_ADDR="0x20058000"
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+-diff -Nurp a/board/at91sam9261ek/at91sam9261nf_defconfig b/board/at91sam9261ek/at91sam9261nf_defconfig
+---- a/board/at91sam9261ek/at91sam9261nf_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9261ek/at91sam9261nf_defconfig	2012-07-25 21:24:45.843607437 +0100
+-@@ -86,8 +86,8 @@ CONFIG_LOAD_UBOOT=y
+- CONFIG_IMG_ADDRESS="0x00020000"
+- CONFIG_SETTING_ADDRESS="0x01FE0000"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_GLBDRV_ADDR="0x20058000"
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+-diff -Nurp a/board/at91sam9263ek/at91sam9263dfc_defconfig b/board/at91sam9263ek/at91sam9263dfc_defconfig
+---- a/board/at91sam9263ek/at91sam9263dfc_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9263ek/at91sam9263dfc_defconfig	2012-07-25 20:38:55.555730059 +0100
+-@@ -100,9 +100,9 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_APP_CHECK=y
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+-diff -Nurp a/board/at91sam9263ek/at91sam9263df_defconfig b/board/at91sam9263ek/at91sam9263df_defconfig
+---- a/board/at91sam9263ek/at91sam9263df_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9263ek/at91sam9263df_defconfig	2012-07-25 20:38:37.395730195 +0100
+-@@ -105,11 +105,11 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_GLBDRV_ADDR="0x2006b000"
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+-diff -Nurp a/board/at91sam9263ek/at91sam9263ek_defconfig b/board/at91sam9263ek/at91sam9263ek_defconfig
+---- a/board/at91sam9263ek/at91sam9263ek_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9263ek/at91sam9263ek_defconfig	2012-07-25 20:38:08.379732395 +0100
+-@@ -105,11 +105,11 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_GLBDRV_ADDR="0x2006b000"
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+-diff -Nurp a/board/at91sam9263ek/at91sam9263nf_defconfig b/board/at91sam9263ek/at91sam9263nf_defconfig
+---- a/board/at91sam9263ek/at91sam9263nf_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9263ek/at91sam9263nf_defconfig	2012-07-25 21:25:39.195605069 +0100
+-@@ -89,8 +89,8 @@ CONFIG_LOAD_UBOOT=y
+- CONFIG_IMG_ADDRESS="0x00020000"
+- CONFIG_SETTING_ADDRESS="0x01FE0000"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_GLBDRV_ADDR="0x2006b000"
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+-diff -Nurp a/board/at91sam9g10ek/at91sam9g10df_defconfig b/board/at91sam9g10ek/at91sam9g10df_defconfig
+---- a/board/at91sam9g10ek/at91sam9g10df_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9g10ek/at91sam9g10df_defconfig	2012-07-25 20:40:18.087726292 +0100
+-@@ -102,11 +102,11 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_GLBDRV_ADDR="0x20068000"
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+-diff -Nurp a/board/at91sam9g10ek/at91sam9g10ek_defconfig b/board/at91sam9g10ek/at91sam9g10ek_defconfig
+---- a/board/at91sam9g10ek/at91sam9g10ek_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9g10ek/at91sam9g10ek_defconfig	2012-07-25 20:39:53.543727636 +0100
+-@@ -102,11 +102,11 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_GLBDRV_ADDR="0x20068000"
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+-diff -Nurp a/board/at91sam9g10ek/at91sam9g10nf_defconfig b/board/at91sam9g10ek/at91sam9g10nf_defconfig
+---- a/board/at91sam9g10ek/at91sam9g10nf_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9g10ek/at91sam9g10nf_defconfig	2012-07-25 21:25:28.975605503 +0100
+-@@ -86,8 +86,8 @@ CONFIG_LOAD_UBOOT=y
+- CONFIG_IMG_ADDRESS="0x00020000"
+- CONFIG_SETTING_ADDRESS="0x01FE0000"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_GLBDRV_ADDR="0x20068000"
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+-diff -Nurp a/board/at91sam9g20ek/at91sam9g20dfc_defconfig b/board/at91sam9g20ek/at91sam9g20dfc_defconfig
+---- a/board/at91sam9g20ek/at91sam9g20dfc_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9g20ek/at91sam9g20dfc_defconfig	2012-07-25 20:41:48.275722343 +0100
+-@@ -97,9 +97,9 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_APP_CHECK=y
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+-diff -Nurp a/board/at91sam9g20ek/at91sam9g20df_defconfig b/board/at91sam9g20ek/at91sam9g20df_defconfig
+---- a/board/at91sam9g20ek/at91sam9g20df_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9g20ek/at91sam9g20df_defconfig	2012-07-25 20:42:07.091721310 +0100
+-@@ -102,11 +102,11 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_GLBDRV_ADDR="0x20058000"
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+-diff -Nurp a/board/at91sam9g20ek/at91sam9g20ek_defconfig b/board/at91sam9g20ek/at91sam9g20ek_defconfig
+---- a/board/at91sam9g20ek/at91sam9g20ek_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9g20ek/at91sam9g20ek_defconfig	2012-07-25 20:41:23.179723541 +0100
+-@@ -102,11 +102,11 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_GLBDRV_ADDR="0x20058000"
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+-diff -Nurp a/board/at91sam9g20ek/at91sam9g20nf_defconfig b/board/at91sam9g20ek/at91sam9g20nf_defconfig
+---- a/board/at91sam9g20ek/at91sam9g20nf_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9g20ek/at91sam9g20nf_defconfig	2012-07-25 21:25:49.291603975 +0100
+-@@ -87,8 +87,8 @@ CONFIG_LOAD_UBOOT=y
+- CONFIG_IMG_ADDRESS="0x00020000"
+- CONFIG_SETTING_ADDRESS="0x01FE0000"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_GLBDRV_ADDR="0x20058000"
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+-diff -Nurp a/board/at91sam9g45ek/at91sam9g45df_defconfig b/board/at91sam9g45ek/at91sam9g45df_defconfig
+---- a/board/at91sam9g45ek/at91sam9g45df_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9g45ek/at91sam9g45df_defconfig	2012-07-25 20:47:46.055707221 +0100
+-@@ -102,10 +102,10 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+-+CONFIG_IMG_SIZE="0x00080000"
+- CONFIG_JUMP_ADDR="0x73F00000"
+- CONFIG_GLBDRV_ADDR="0x7006b000"
+- # CONFIG_LONG_TEST is not set
+-diff -Nurp a/board/at91sam9g45ek/at91sam9g45ek_defconfig b/board/at91sam9g45ek/at91sam9g45ek_defconfig
+---- a/board/at91sam9g45ek/at91sam9g45ek_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9g45ek/at91sam9g45ek_defconfig	2012-07-25 20:47:02.303708341 +0100
+-@@ -102,10 +102,10 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+-+CONFIG_IMG_SIZE="0x00080000"
+- CONFIG_JUMP_ADDR="0x73F00000"
+- CONFIG_GLBDRV_ADDR="0x7006b000"
+- # CONFIG_LONG_TEST is not set
+-diff -Nurp a/board/at91sam9g45ek/at91sam9g45nf_defconfig b/board/at91sam9g45ek/at91sam9g45nf_defconfig
+---- a/board/at91sam9g45ek/at91sam9g45nf_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9g45ek/at91sam9g45nf_defconfig	2012-07-25 21:25:24.547605601 +0100
+-@@ -86,7 +86,7 @@ CONFIG_LOAD_UBOOT=y
+- CONFIG_IMG_ADDRESS="0x00020000"
+- CONFIG_SETTING_ADDRESS="0x01FE0000"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+-+CONFIG_IMG_SIZE="0x00080000"
+- CONFIG_JUMP_ADDR="0x73F00000"
+- CONFIG_GLBDRV_ADDR="0x7006b000"
+- # CONFIG_LONG_TEST is not set
+-diff -Nurp a/board/at91sam9g45ekes/at91sam9g45dfes_defconfig b/board/at91sam9g45ekes/at91sam9g45dfes_defconfig
+---- a/board/at91sam9g45ekes/at91sam9g45dfes_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9g45ekes/at91sam9g45dfes_defconfig	2012-07-25 20:47:33.895706968 +0100
+-@@ -102,10 +102,10 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+-+CONFIG_IMG_SIZE="0x00080000"
+- CONFIG_JUMP_ADDR="0x73F00000"
+- CONFIG_GLBDRV_ADDR="0x7006b000"
+- # CONFIG_LONG_TEST is not set
+-diff -Nurp a/board/at91sam9g45ekes/at91sam9g45ekes_defconfig b/board/at91sam9g45ekes/at91sam9g45ekes_defconfig
+---- a/board/at91sam9g45ekes/at91sam9g45ekes_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9g45ekes/at91sam9g45ekes_defconfig	2012-07-25 20:46:49.043708951 +0100
+-@@ -102,10 +102,10 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+-+CONFIG_IMG_SIZE="0x00080000"
+- CONFIG_JUMP_ADDR="0x73F00000"
+- CONFIG_GLBDRV_ADDR="0x7006b000"
+- # CONFIG_LONG_TEST is not set
+-diff -Nurp a/board/at91sam9g45ekes/at91sam9g45nfes_defconfig b/board/at91sam9g45ekes/at91sam9g45nfes_defconfig
+---- a/board/at91sam9g45ekes/at91sam9g45nfes_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9g45ekes/at91sam9g45nfes_defconfig	2012-07-25 21:25:44.823604805 +0100
+-@@ -86,7 +86,7 @@ CONFIG_LOAD_UBOOT=y
+- CONFIG_IMG_ADDRESS="0x00020000"
+- CONFIG_SETTING_ADDRESS="0x01FE0000"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+-+CONFIG_IMG_SIZE="0x00080000"
+- CONFIG_JUMP_ADDR="0x73F00000"
+- CONFIG_GLBDRV_ADDR="0x7006b000"
+- # CONFIG_LONG_TEST is not set
+-diff -Nurp a/board/at91sam9m10ek/at91sam9m10df_defconfig b/board/at91sam9m10ek/at91sam9m10df_defconfig
+---- a/board/at91sam9m10ek/at91sam9m10df_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9m10ek/at91sam9m10df_defconfig	2012-07-25 20:44:34.975714928 +0100
+-@@ -102,10 +102,10 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+-+CONFIG_IMG_SIZE="0x00080000"
+- CONFIG_JUMP_ADDR="0x73F00000"
+- CONFIG_GLBDRV_ADDR="0x7006b000"
+- # CONFIG_LONG_TEST is not set
+-diff -Nurp a/board/at91sam9m10ek/at91sam9m10ek_defconfig b/board/at91sam9m10ek/at91sam9m10ek_defconfig
+---- a/board/at91sam9m10ek/at91sam9m10ek_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9m10ek/at91sam9m10ek_defconfig	2012-07-25 20:43:34.543717453 +0100
+-@@ -102,10 +102,10 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+-+CONFIG_IMG_SIZE="0x00080000"
+- CONFIG_JUMP_ADDR="0x73F00000"
+- CONFIG_GLBDRV_ADDR="0x7006b000"
+- # CONFIG_LONG_TEST is not set
+-diff -Nurp a/board/at91sam9m10ek/at91sam9m10nf_defconfig b/board/at91sam9m10ek/at91sam9m10nf_defconfig
+---- a/board/at91sam9m10ek/at91sam9m10nf_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9m10ek/at91sam9m10nf_defconfig	2012-07-25 21:21:40.419615800 +0100
+-@@ -86,7 +86,7 @@ CONFIG_LOAD_UBOOT=y
+- CONFIG_IMG_ADDRESS="0x00020000"
+- CONFIG_SETTING_ADDRESS="0x01FE0000"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+-+CONFIG_IMG_SIZE="0x00080000"
+- CONFIG_JUMP_ADDR="0x73F00000"
+- CONFIG_GLBDRV_ADDR="0x7006b000"
+- # CONFIG_LONG_TEST is not set
+-diff -Nurp a/board/at91sam9m10ekes/at91sam9m10dfes_defconfig b/board/at91sam9m10ekes/at91sam9m10dfes_defconfig
+---- a/board/at91sam9m10ekes/at91sam9m10dfes_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9m10ekes/at91sam9m10dfes_defconfig	2012-07-25 20:44:18.687715650 +0100
+-@@ -102,10 +102,10 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+-+CONFIG_IMG_SIZE="0x00080000"
+- CONFIG_JUMP_ADDR="0x73F00000"
+- CONFIG_GLBDRV_ADDR="0x7006b000"
+- # CONFIG_LONG_TEST is not set
+-diff -Nurp a/board/at91sam9m10ekes/at91sam9m10ekes_defconfig b/board/at91sam9m10ekes/at91sam9m10ekes_defconfig
+---- a/board/at91sam9m10ekes/at91sam9m10ekes_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9m10ekes/at91sam9m10ekes_defconfig	2012-07-25 20:43:57.255716814 +0100
+-@@ -102,10 +102,10 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+-+CONFIG_IMG_SIZE="0x00080000"
+- CONFIG_JUMP_ADDR="0x73F00000"
+- CONFIG_GLBDRV_ADDR="0x7006b000"
+- # CONFIG_LONG_TEST is not set
+-diff -Nurp a/board/at91sam9m10ekes/at91sam9m10nfes_defconfig b/board/at91sam9m10ekes/at91sam9m10nfes_defconfig
+---- a/board/at91sam9m10ekes/at91sam9m10nfes_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9m10ekes/at91sam9m10nfes_defconfig	2012-07-25 21:26:10.179603831 +0100
+-@@ -86,7 +86,7 @@ CONFIG_LOAD_UBOOT=y
+- CONFIG_IMG_ADDRESS="0x00020000"
+- CONFIG_SETTING_ADDRESS="0x01FE0000"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+-+CONFIG_IMG_SIZE="0x00080000"
+- CONFIG_JUMP_ADDR="0x73F00000"
+- CONFIG_GLBDRV_ADDR="0x7006b000"
+- # CONFIG_LONG_TEST is not set
+-diff -Nurp a/board/at91sam9n12ek/at91sam9n12df_defconfig b/board/at91sam9n12ek/at91sam9n12df_defconfig
+---- a/board/at91sam9n12ek/at91sam9n12df_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9n12ek/at91sam9n12df_defconfig	2012-07-25 20:52:40.675693207 +0100
+-@@ -107,7 +107,7 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+- CONFIG_IMG_SIZE="0x00050000"
+-diff -Nurp a/board/at91sam9rlek/at91sam9rldf_defconfig b/board/at91sam9rlek/at91sam9rldf_defconfig
+---- a/board/at91sam9rlek/at91sam9rldf_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9rlek/at91sam9rldf_defconfig	2012-07-25 20:48:53.183703493 +0100
+-@@ -102,11 +102,11 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_GLBDRV_ADDR="0x2006b000"
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+-diff -Nurp a/board/at91sam9rlek/at91sam9rlek_defconfig b/board/at91sam9rlek/at91sam9rlek_defconfig
+---- a/board/at91sam9rlek/at91sam9rlek_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9rlek/at91sam9rlek_defconfig	2012-07-25 20:48:29.659704460 +0100
+-@@ -102,11 +102,11 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_GLBDRV_ADDR="0x2006b000"
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+-diff -Nurp a/board/at91sam9rlek/at91sam9rlnf_defconfig b/board/at91sam9rlek/at91sam9rlnf_defconfig
+---- a/board/at91sam9rlek/at91sam9rlnf_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9rlek/at91sam9rlnf_defconfig	2012-07-25 21:24:49.335607485 +0100
+-@@ -85,8 +85,8 @@ CONFIG_LOAD_UBOOT=y
+- CONFIG_IMG_ADDRESS="0x00020000"
+- CONFIG_SETTING_ADDRESS="0x01FE0000"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_GLBDRV_ADDR="0x2006b000"
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+-diff -Nurp a/board/at91sam9x5ek/at91sam9x5df_defconfig b/board/at91sam9x5ek/at91sam9x5df_defconfig
+---- a/board/at91sam9x5ek/at91sam9x5df_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9x5ek/at91sam9x5df_defconfig	2012-07-25 20:52:45.375693059 +0100
+-@@ -106,7 +106,7 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+- CONFIG_IMG_SIZE="0x00050000"
+-diff -Nurp a/board/at91sam9xeek/at91sam9xedfc_defconfig b/board/at91sam9xeek/at91sam9xedfc_defconfig
+---- a/board/at91sam9xeek/at91sam9xedfc_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9xeek/at91sam9xedfc_defconfig	2012-07-25 20:50:10.643699991 +0100
+-@@ -96,9 +96,9 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_APP_CHECK=y
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+-diff -Nurp a/board/at91sam9xeek/at91sam9xedf_defconfig b/board/at91sam9xeek/at91sam9xedf_defconfig
+---- a/board/at91sam9xeek/at91sam9xedf_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9xeek/at91sam9xedf_defconfig	2012-07-25 20:50:26.967699568 +0100
+-@@ -103,11 +103,11 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_GLBDRV_ADDR="0x23F00000"
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+-diff -Nurp a/board/at91sam9xeek/at91sam9xeek_defconfig b/board/at91sam9xeek/at91sam9xeek_defconfig
+---- a/board/at91sam9xeek/at91sam9xeek_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9xeek/at91sam9xeek_defconfig	2012-07-25 20:49:46.131699600 +0100
+-@@ -103,11 +103,11 @@ CONFIG_LOAD_UBOOT=y
+- # CONFIG_LOAD_64KB is not set
+- # CONFIG_LOAD_1MB is not set
+- # CONFIG_LOAD_4MB is not set
+--CONFIG_IMG_ADDRESS="0x00008400"
+-+CONFIG_IMG_ADDRESS="0x00004000"
+- CONFIG_SETTING_ADDRESS="0x00408400"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_GLBDRV_ADDR="0x23F00000"
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+-diff -Nurp a/board/at91sam9xeek/at91sam9xenf_defconfig b/board/at91sam9xeek/at91sam9xenf_defconfig
+---- a/board/at91sam9xeek/at91sam9xenf_defconfig	2011-11-18 08:13:09.000000000 +0000
+-+++ b/board/at91sam9xeek/at91sam9xenf_defconfig	2012-07-25 21:26:05.627603826 +0100
+-@@ -88,8 +88,8 @@ CONFIG_LOAD_UBOOT=y
+- CONFIG_IMG_ADDRESS="0x00020000"
+- CONFIG_SETTING_ADDRESS="0x01FE0000"
+- CONFIG_SETTING_SIZE="0x00001000"
+--CONFIG_IMG_SIZE="0x00040000"
+--CONFIG_JUMP_ADDR="0x23F00000"
+-+CONFIG_IMG_SIZE="0x00080000"
+-+CONFIG_JUMP_ADDR="0x21F00000"
+- CONFIG_GLBDRV_ADDR="0x23F00000"
+- # CONFIG_LONG_TEST is not set
+- CONFIG_DEBUG=y
+diff -Naur old/boot/uboot/uboot.mk new/boot/uboot/uboot.mk
+--- old/boot/uboot/uboot.mk	2013-04-22 23:49:35.197440176 +0100
++++ new/boot/uboot/uboot.mk	2013-04-22 21:36:40.000000000 +0100
+@@ -93,6 +93,9 @@
+ 	$(TARGET_CONFIGURE_OPTS) $(UBOOT_CONFIGURE_OPTS) 	\
+ 		$(MAKE) -C $(@D) $(UBOOT_MAKE_OPTS) 		\
+ 		$(UBOOT_MAKE_TARGET)
++	# build env tool from same source
++	$(MAKE) -C $(@D) $(UBOOT_MAKE_OPTS) \
++		HOSTCC=$(TARGET_CROSS)gcc HOSTSTRIP=$(TARGET_CROSS)strip env
+ endef
+ 
+ define UBOOT_BUILD_OMAP_IFT
+@@ -102,6 +105,10 @@
+ 
+ define UBOOT_INSTALL_IMAGES_CMDS
+ 	cp -dpf $(@D)/$(UBOOT_BIN) $(BINARIES_DIR)/
++	# install env tool
++	install -m 0644 -D $(@D)/tools/env/fw_env.config $(TARGET_DIR)/etc
++	install -m 0755 -D $(@D)/tools/env/fw_printenv $(TARGET_DIR)/usr/sbin
++	ln -sf fw_printenv $(TARGET_DIR)/usr/sbin/fw_setenv
+ 	$(if $(BR2_TARGET_UBOOT_SPL),
+ 		cp -dpf $(@D)/$(BR2_TARGET_UBOOT_SPL_NAME) $(BINARIES_DIR)/)
+ endef
+diff -Naur old/Config.in new/Config.in
+--- old/Config.in	2013-04-22 23:49:34.925440166 +0100
++++ new/Config.in	2013-04-22 21:36:40.000000000 +0100
+@@ -454,3 +454,5 @@
+ source "linux/Config.in"
+ 
+ source "Config.in.legacy"
++
++source "board/sdc/Config.in"
+diff -Naur old/linux/linux.mk new/linux/linux.mk
+--- old/linux/linux.mk	2013-04-22 23:49:35.197440176 +0100
++++ new/linux/linux.mk	2013-04-22 21:36:40.000000000 +0100
+@@ -139,7 +139,7 @@
+ 		if echo $$p | grep -q -E "^ftp://|^http://" ; then \
+ 			support/scripts/apply-patches.sh $(@D) $(DL_DIR) `basename $$p` ; \
+ 		elif test -d $$p ; then \
+-			support/scripts/apply-patches.sh $(@D) $$p linux-\*.patch ; \
++			support/scripts/apply-patches.sh $(@D) $$p linux-$(LINUX_VERSION)\*.patch ; \
+ 		else \
+ 			support/scripts/apply-patches.sh $(@D) `dirname $$p` `basename $$p` ; \
+ 		fi \
+diff -Naur old/package/busybox/busybox-networking-ifplugd-iface-err.patch new/package/busybox/busybox-networking-ifplugd-iface-err.patch
+--- old/package/busybox/busybox-networking-ifplugd-iface-err.patch	1970-01-01 01:00:00.000000000 +0100
++++ new/package/busybox/busybox-networking-ifplugd-iface-err.patch	2013-04-22 21:36:40.000000000 +0100
+@@ -0,0 +1,25 @@
++--- busybox-1.19.3/networking/ifplugd.c	2013-03-26 22:35:01.543521939 -0500
+++++ busybox-1.19.3/networking/ifplugd.c	2013-03-26 22:35:21.543521939 -0500
++@@ -685,6 +685,11 @@
++ 						G.iface_exists ? "" : "dis");
++ 				if (G.iface_exists)
++ 					maybe_up_new_iface();
+++				else {
+++					/* notify upon status:  error -> down */
+++					iface_status_old = IFSTATUS_ERR;
+++					delay_time = 0;
+++				}
++ 			}
++ 		}
++ 
++@@ -693,6 +698,7 @@
++ 		if (iface_status == IFSTATUS_ERR) {
++ 			if (!(opts & FLAG_MONITOR))
++ 				goto exiting;
+++
++ 			iface_status = IFSTATUS_DOWN;
++ 		}
++ 		iface_status_str = strstatus(iface_status);
++;
++; Allow script notification of a disappeared iface, so can take action.
++;
+diff -Naur old/package/Config.in new/package/Config.in
+--- old/package/Config.in	2013-04-22 23:49:35.121440173 +0100
++++ new/package/Config.in	2013-04-22 21:36:40.000000000 +0100
+@@ -623,7 +623,9 @@
+ source "package/can-utils/Config.in"
+ source "package/connman/Config.in"
+ source "package/ctorrent/Config.in"
++source "package/cifs-utils/Config.in"
+ source "package/conntrack-tools/Config.in"
++source "package/crda/Config.in"
+ source "package/cups/Config.in"
+ if BR2_PACKAGE_BUSYBOX_SHOW_OTHERS
+ source "package/dhcp/Config.in"
+@@ -691,6 +693,7 @@
+ source "package/proxychains-ng/Config.in"
+ source "package/quagga/Config.in"
+ source "package/radvd/Config.in"
++source "package/regulatory/Config.in"
+ source "package/rp-pppoe/Config.in"
+ source "package/rpcbind/Config.in"
+ source "package/rsh-redone/Config.in"
+diff -Naur old/package/crda/Config.in new/package/crda/Config.in
+--- old/package/crda/Config.in	1970-01-01 01:00:00.000000000 +0100
++++ new/package/crda/Config.in	2013-04-22 21:36:40.000000000 +0100
+@@ -0,0 +1,7 @@
++config BR2_PACKAGE_CRDA
++	bool "crda"
++	help
++	  Central Regulatory Domain Agent.
++
++	  http://linuxwireless.org/en/developers/Regulatory/CRDA
++
+diff -Naur old/package/crda/crda-genl3.patch new/package/crda/crda-genl3.patch
+--- old/package/crda/crda-genl3.patch	1970-01-01 01:00:00.000000000 +0100
++++ new/package/crda/crda-genl3.patch	2013-04-22 21:36:40.000000000 +0100
+@@ -0,0 +1,12 @@
++diff -urN crda-1.1.2/Makefile crda-1.1.2-genl3/Makefile
++--- crda-1.1.2/Makefile	2011-08-09 19:36:19.000000000 -0400
+++++ crda-1.1.2-genl3/Makefile	2012-06-24 09:50:02.043217635 -0400
++@@ -51,7 +51,7 @@
++ 
++ ifeq ($(NL3FOUND),Y)
++ CFLAGS += -DCONFIG_LIBNL30
++-NLLIBS += -lnl-genl
+++NLLIBS += -lnl-genl-3
++ NLLIBNAME = libnl-3.0
++ else
++ 	ifeq ($(NL2FOUND),Y)
+diff -Naur old/package/crda/crda.mk new/package/crda/crda.mk
+--- old/package/crda/crda.mk	1970-01-01 01:00:00.000000000 +0100
++++ new/package/crda/crda.mk	2013-04-22 21:36:40.000000000 +0100
+@@ -0,0 +1,43 @@
++#############################################################
++#
++# crda
++#
++#############################################################
++
++CRDA_VERSION = 1.1.2
++CRDA_SOURCE = crda-$(CRDA_VERSION).tar.bz2
++CRDA_SITE = http://linuxwireless.org/download/crda
++CRDA_DEPENDENCIES = host-pkgconf libnl openssl regulatory
++CRDA_CONFIG = $(CRDA_DIR)/.config
++CRDA_MAKE_ENV = PKG_CONFIG_PATH="$(STAGING_DIR)/usr/lib/pkgconfig" \
++	PKG_CONFIG="$(HOST_DIR)/usr/bin/pkg-config" \
++	GIT_DIR=$(CRDA_DIR) \
++	CFLAGS="$(TARGET_CFLAGS) -I../libnl-3.2.21/include -I../openssl-1.0.1c/include" \
++	LDFLAGS="$(TARGET_LDFLAGS) -L../../host/usr/arm-unknown-linux-gnueabi/sysroot/usr/lib -L../libnl-3.2.21/lib/.libs -L../openssl-1.0.1c" \
++	RUNTIME_PUBKEY_DIR=/usr/lib/crda/pubkeys \
++	USE_OPENSSL=1 \
++	REG_BIN=$(TARGET_DIR)/$(REGULATORY_TARGET_BINARY) \
++	NL3FOUND=Y \
++	CC="$(TARGET_CC)"
++	
++define CRDA_CONFIGURE_CMDS
++	echo "CC = $(TARGET_CC)" >$(CRDA_CONFIG)
++	echo "CFLAGS = $(TARGET_CFLAGS)" >>$(CRDA_CONFIG)
++	echo "LDFLAGS = $(TARGET_LDFLAGS)" >>$(CRDA_CONFIG)
++	cp package/crda/keys-gcrypt.c $(BUILD_DIR)/crda-$(CRDA_VERSION)
++endef
++
++define CRDA_BUILD_CMDS
++	$(CRDA_MAKE_ENV) $(MAKE) all_noverify -C $(@D)
++endef
++
++define CRDA_INSTALL_TARGET_CMDS
++	$(CRDA_MAKE_ENV) $(MAKE) -C $(@D) DESTDIR=$(TARGET_DIR) install NL3FOUND=Y
++endef
++
++define CRDA_UNINSTALL_TARGET_CMDS
++	rm -f $(TARGET_DIR)/sbin/crda
++	rm -f $(TARGET_DIR)/share/man/man8/crda.8*
++endef
++
++$(eval $(generic-package))
+diff -Naur old/package/crda/keys-gcrypt.c new/package/crda/keys-gcrypt.c
+--- old/package/crda/keys-gcrypt.c	1970-01-01 01:00:00.000000000 +0100
++++ new/package/crda/keys-gcrypt.c	2013-04-22 21:36:40.000000000 +0100
+@@ -0,0 +1,53 @@
++static const __u8 e_0[3] = {
++	0x01, 0x00, 0x01, 
++};
++
++static const __u8 n_0[256] = {
++	0xd6, 0x57, 0x99, 0x71, 0x88, 0xd3, 0x5d, 0xce, 
++	0x2a, 0x2e, 0xad, 0x68, 0x37, 0x60, 0x24, 0xf2, 
++	0xf2, 0xcf, 0xf3, 0x93, 0xf9, 0x70, 0x54, 0xeb, 
++	0x0a, 0x9a, 0x9d, 0x48, 0x8e, 0x56, 0xe1, 0x53, 
++	0xb0, 0x75, 0xa2, 0x41, 0xe1, 0x3b, 0x5a, 0xc5, 
++	0x4d, 0x9f, 0x01, 0x37, 0x07, 0xfc, 0x0d, 0x84, 
++	0xb0, 0x4d, 0xe1, 0xd6, 0xb3, 0x9f, 0xcc, 0x8d, 
++	0x3e, 0x7c, 0x15, 0x7d, 0x0d, 0xc3, 0x8e, 0xab, 
++	0x22, 0x03, 0xfb, 0x37, 0x48, 0x2c, 0x13, 0x1b, 
++	0xf3, 0x12, 0xb9, 0x66, 0xff, 0xbb, 0xf0, 0xe9, 
++	0x01, 0x1a, 0x5b, 0x3f, 0x5b, 0x3b, 0xc3, 0x0d, 
++	0x58, 0x5d, 0x9a, 0x7d, 0x53, 0x44, 0x7b, 0xd1, 
++	0xbe, 0x62, 0x72, 0xed, 0xc5, 0xf5, 0x98, 0x24, 
++	0xf9, 0xe9, 0xc9, 0xc7, 0xad, 0x93, 0x3f, 0x64, 
++	0x16, 0x85, 0xc1, 0x57, 0xe2, 0x0f, 0xd4, 0xdc, 
++	0xaa, 0xa8, 0xac, 0xc8, 0x5d, 0x6c, 0xa8, 0x4e, 
++	0x7e, 0x70, 0xc1, 0xd3, 0x59, 0x16, 0xf1, 0x73, 
++	0x5f, 0xab, 0xb6, 0x88, 0xeb, 0xd1, 0xe1, 0x98, 
++	0xac, 0xd7, 0xca, 0xdb, 0x46, 0xb0, 0x94, 0x3e, 
++	0x4a, 0x56, 0x3e, 0x84, 0x8f, 0x3a, 0x2d, 0xaf, 
++	0xd1, 0x03, 0x58, 0x0b, 0x0b, 0xd5, 0xb1, 0xff, 
++	0x90, 0x67, 0xcc, 0x76, 0x7a, 0x6e, 0xb5, 0xcc, 
++	0x8c, 0x6a, 0x92, 0xd0, 0xa5, 0x15, 0x6b, 0xb8, 
++	0xef, 0xe3, 0x11, 0xd8, 0xd2, 0x9a, 0x10, 0x04, 
++	0xfe, 0xc8, 0xf5, 0xb6, 0x61, 0xdc, 0x01, 0x70, 
++	0x53, 0xea, 0x3e, 0x5a, 0x97, 0x83, 0x9a, 0x2e, 
++	0x20, 0x5a, 0x5a, 0x73, 0xfe, 0xfa, 0xbb, 0xa7, 
++	0x7b, 0xba, 0xe3, 0x8a, 0x6c, 0x1f, 0xce, 0x9d, 
++	0x39, 0xe3, 0xdf, 0xeb, 0xba, 0x94, 0x14, 0x33, 
++	0xb9, 0xc0, 0x65, 0x10, 0xcb, 0xcb, 0x35, 0xe3, 
++	0xdc, 0x9f, 0xca, 0x11, 0xc8, 0xba, 0x75, 0x7b, 
++	0x63, 0xa2, 0x70, 0x54, 0x16, 0xa0, 0xd8, 0xe1, 
++};
++
++
++struct key_params {
++	const __u8 *e, *n;
++	__u32 len_e, len_n; 
++};
++
++#define KEYS(_e, _n) {			\
++	.e = _e, .len_e = sizeof(_e),	\
++	.n = _n, .len_n = sizeof(_n),	\
++}
++
++static const struct key_params keys[] = {
++	KEYS(e_0, n_0),
++};
+diff -Naur old/package/dhcp/dhcp.mk new/package/dhcp/dhcp.mk
+--- old/package/dhcp/dhcp.mk	2013-04-22 23:49:35.121440173 +0100
++++ new/package/dhcp/dhcp.mk	2013-04-22 21:36:40.000000000 +0100
+@@ -27,7 +27,7 @@
+ 	(cd $(TARGET_DIR)/var/lib; ln -snf /tmp dhcp)
+ 	$(INSTALL) -m 0755 -D $(@D)/server/dhcpd $(TARGET_DIR)/usr/sbin/dhcpd
+ 	$(INSTALL) -m 0755 -D package/dhcp/S80dhcp-server \
+-		$(TARGET_DIR)/etc/init.d/S80dhcp-server
++		$(TARGET_DIR)/etc/init.d/opt/S80dhcp-server
+ 	$(INSTALL) -m 0644 -D package/dhcp/dhcpd.conf \
+ 		$(TARGET_DIR)/etc/dhcp/dhcpd.conf
+ endef
+@@ -40,7 +40,7 @@
+ 	$(INSTALL) -m 0755 -D $(DHCP_DIR)/relay/dhcrelay \
+ 		$(TARGET_DIR)/usr/sbin/dhcrelay
+ 	$(INSTALL) -m 0755 -D package/dhcp/S80dhcp-relay \
+-		$(TARGET_DIR)/etc/init.d/S80dhcp-relay
++		$(TARGET_DIR)/etc/init.d/opt/S80dhcp-relay
+ endef
+ endif
+ 
+diff -Naur old/package/ebtables/ebtables-add-arpnat-target.patch new/package/ebtables/ebtables-add-arpnat-target.patch
+--- old/package/ebtables/ebtables-add-arpnat-target.patch	1970-01-01 01:00:00.000000000 +0100
++++ new/package/ebtables/ebtables-add-arpnat-target.patch	2013-04-22 21:36:40.000000000 +0100
+@@ -0,0 +1,132 @@
++diff -urN ebtables-v2.0.10-2/Makefile ebtables-v2.0.10-2-arpnat/Makefile
++--- ebtables-v2.0.10-2/Makefile	2011-08-11 14:56:16.000000000 -0400
+++++ ebtables-v2.0.10-2-arpnat/Makefile	2011-09-18 18:49:20.071816739 -0400
++@@ -17,9 +17,9 @@
++ SYSCONFIGDIR:=/etc/sysconfig
++ DESTDIR:=
++ 
++-CFLAGS:=-Wall -Wunused -Werror
+++#CFLAGS:=-Wall -Wunused -Werror
++ CFLAGS_SH_LIB:=-fPIC -O3
++-CC:=gcc
+++#CC:=gcc
++ 
++ ifeq ($(shell uname -m),sparc64)
++ CFLAGS+=-DEBT_MIN_ALIGN=8 -DKERNEL_64_USERSPACE_32
++diff -urN ebtables-v2.0.10-2/extensions/ebt_nat.c ebtables-v2.0.10-2-arpnat/extensions/ebt_nat.c
++--- ebtables-v2.0.10-2/extensions/ebt_nat.c	2011-08-11 14:56:16.000000000 -0400
+++++ ebtables-v2.0.10-2-arpnat/extensions/ebt_nat.c	2011-09-17 12:59:35.497511502 -0400
++@@ -21,6 +21,7 @@
++ #define NAT_S_TARGET '2'
++ #define NAT_D_TARGET '2'
++ #define NAT_S_ARP '3'
+++#define NAT_ARP_TARGET '2'
++ static struct option opts_s[] =
++ {
++ 	{ "to-source"     , required_argument, 0, NAT_S },
++@@ -30,6 +31,12 @@
++ 	{ 0 }
++ };
++ 
+++static struct option opts_arpnat[] =
+++{
+++	{ "arpnat-target" , required_argument, 0, NAT_ARP_TARGET },
+++	{ 0 }
+++};
+++
++ static struct option opts_d[] =
++ {
++ 	{ "to-destination", required_argument, 0, NAT_D },
++@@ -47,6 +54,13 @@
++ 	" --snat-arp             : also change src address in arp msg\n");
++ }
++ 
+++static void print_help_arpnat()
+++{
+++	printf(
+++	"arpnat options:\n"
+++	" --arpnat-target target   : ACCEPT, DROP, RETURN or CONTINUE\n");
+++}
+++
++ static void print_help_d()
++ {
++ 	printf(
++@@ -55,6 +69,54 @@
++ 	" --dnat-target target   : ACCEPT, DROP, RETURN or CONTINUE\n");
++ }
++ 
+++static void init_arpnat(struct ebt_entry_target *target)
+++{
+++   struct ebt_nat_info *natinfo = (struct ebt_nat_info *)target->data;
+++
+++   natinfo->target = EBT_ACCEPT;
+++   return;
+++}
+++#define OPT_ARPNAT_TARGET 0x2
+++static int parse_arpnat(int c, char **argv, int argc,
+++   const struct ebt_u_entry *entry, unsigned int *flags,
+++   struct ebt_entry_target **target)
+++{
+++   struct ebt_nat_info *natinfo = (struct ebt_nat_info *)(*target)->data;
+++
+++   switch (c) {
+++   case NAT_ARP_TARGET:
+++       ebt_check_option2(flags, OPT_ARPNAT_TARGET);
+++       if (FILL_TARGET(optarg, natinfo->target))
+++           ebt_print_error2("Illegal --arpnat-target target");
+++       break;
+++   default:
+++       return 0;
+++   }
+++   return 1;
+++}
+++
+++static void final_check_arpnat(const struct ebt_u_entry *entry,
+++   const struct ebt_entry_target *target, const char *name,
+++   unsigned int hookmask, unsigned int time)
+++{
+++   struct ebt_nat_info *natinfo = (struct ebt_nat_info *)target->data;
+++
+++   if (BASE_CHAIN && natinfo->target == EBT_RETURN)
+++       ebt_print_error("--arpnat-target RETURN not allowed on base chain");
+++   CLEAR_BASE_CHAIN_BIT;
+++   if (((hookmask & ~((1 << NF_BR_PRE_ROUTING) | (1 << NF_BR_POST_ROUTING)))
+++      || strcmp(name, "nat")))
+++       ebt_print_error("Wrong chain for arpnat");
+++}
+++
+++static void print_arpnat(const struct ebt_u_entry *entry,
+++   const struct ebt_entry_target *target)
+++{
+++   struct ebt_nat_info *natinfo = (struct ebt_nat_info *)target->data;
+++
+++   printf(" --arpnat-target %s", TARGET_NAME(natinfo->target));
+++}
+++
++ static void init_s(struct ebt_entry_target *target)
++ {
++ 	struct ebt_nat_info *natinfo = (struct ebt_nat_info *)target->data;
++@@ -231,8 +293,23 @@
++ 	.extra_ops	= opts_d,
++ };
++ 
+++#define EBT_ARPNAT_TARGET "arpnat"
+++static struct ebt_u_target arpnat_target =
+++{
+++   .name       = EBT_ARPNAT_TARGET,
+++   .size       = sizeof(struct ebt_nat_info),
+++   .help       = print_help_arpnat,
+++   .init       = init_arpnat,
+++   .parse      = parse_arpnat,
+++   .final_check    = final_check_arpnat,
+++   .print      = print_arpnat,
+++   .compare    = compare,
+++   .extra_ops  = opts_arpnat,
+++};
+++
++ void _init(void)
++ {
++ 	ebt_register_target(&snat_target);
++ 	ebt_register_target(&dnat_target);
+++	ebt_register_target(&arpnat_target);
++ }
+diff -Naur old/package/input-event-daemon/input-event-daemon.mk new/package/input-event-daemon/input-event-daemon.mk
+--- old/package/input-event-daemon/input-event-daemon.mk	2013-04-22 23:49:34.961440167 +0100
++++ new/package/input-event-daemon/input-event-daemon.mk	2013-04-22 21:36:40.000000000 +0100
+@@ -21,9 +21,9 @@
+ 	[ -f $(TARGET_DIR)/etc/input-event-daemon.conf ] || \
+ 		$(INSTALL) -m 644 -D $(@D)/docs/sample.conf \
+ 			$(TARGET_DIR)/etc/input-event-daemon.conf
+-	[ -f $(TARGET_DIR)/etc/init.d/S99input-event-daemon ] || \
++	[ -f $(TARGET_DIR)/etc/init.d/opt/S99input-event-daemon ] || \
+ 		$(INSTALL) -m 0755 -D package/input-event-daemon/S99input-event-daemon \
+-			$(TARGET_DIR)/etc/init.d/S99input-event-daemon
++			$(TARGET_DIR)/etc/init.d/opt/S99input-event-daemon
+ endef
+ 
+ define INPUT_EVENT_DAEMON_CLEAN_CMDS
+diff -Naur old/package/libnl/libnl.mk new/package/libnl/libnl.mk
+--- old/package/libnl/libnl.mk	2013-04-22 23:49:35.189440176 +0100
++++ new/package/libnl/libnl.mk	2013-04-22 21:36:40.000000000 +0100
+@@ -4,7 +4,7 @@
+ #
+ #############################################################
+ 
+-LIBNL_VERSION = 3.2.18
++LIBNL_VERSION = 3.2.21
+ LIBNL_SITE = http://www.infradead.org/~tgr/libnl/files
+ LIBNL_LICENSE = LGPLv2.1+
+ LIBNL_LICENSE_FILES = COPYING
+diff -Naur old/package/openssh/openssh.mk new/package/openssh/openssh.mk
+--- old/package/openssh/openssh.mk	2013-04-22 23:49:34.941440166 +0100
++++ new/package/openssh/openssh.mk	2013-04-22 21:36:40.000000000 +0100
+@@ -8,12 +8,13 @@
+ OPENSSH_SITE = http://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable
+ OPENSSH_CONF_ENV = LD="$(TARGET_CC)" LDFLAGS="$(TARGET_CFLAGS)"
+ OPENSSH_CONF_OPT = --libexecdir=/usr/lib --disable-lastlog --disable-utmp \
+-		--disable-utmpx --disable-wtmp --disable-wtmpx --disable-strip
++		--disable-utmpx --disable-wtmp --disable-wtmpx --disable-strip \
++		--sysconfdir=/etc/ssh
+ 
+ OPENSSH_DEPENDENCIES = zlib openssl
+ 
+ define OPENSSH_INSTALL_INITSCRIPT
+-	$(INSTALL) -D -m 755 package/openssh/S50sshd $(TARGET_DIR)/etc/init.d/S50sshd
++	$(INSTALL) -D -m 755 package/openssh/S50sshd $(TARGET_DIR)/etc/init.d/opt/S50sshd
+ endef
+ 
+ OPENSSH_POST_INSTALL_TARGET_HOOKS += OPENSSH_INSTALL_INITSCRIPT
+diff -Naur old/package/openssh/S50sshd new/package/openssh/S50sshd
+--- old/package/openssh/S50sshd	2013-04-22 23:49:34.941440166 +0100
++++ new/package/openssh/S50sshd	2013-04-22 21:36:40.000000000 +0100
+@@ -2,70 +2,88 @@
+ #
+ # sshd        Starts sshd.
+ #
+-
+-# Make sure the ssh-keygen progam exists
+-[ -f /usr/bin/ssh-keygen ] || exit 0
+-
+-# Check for the SSH1 RSA key
+-if [ ! -f /etc/ssh_host_key ] ; then
+-	echo Generating RSA Key...
+-	/usr/bin/ssh-keygen -t rsa1 -f /etc/ssh_host_key -C '' -N ''
+-fi
+-
+-# Check for the SSH2 RSA key
+-if [ ! -f /etc/ssh_host_rsa_key ] ; then
+-	echo Generating RSA Key...
+-	/usr/bin/ssh-keygen -t rsa -f /etc/ssh_host_rsa_key -C '' -N ''
+-fi
+-
+-# Check for the SSH2 DSA key
+-if [ ! -f /etc/ssh_host_dsa_key ] ; then
+-	echo Generating DSA Key...
+-	echo THIS CAN TAKE A MINUTE OR TWO DEPENDING ON YOUR PROCESSOR!
+-	echo
+-        /usr/bin/ssh-keygen -t dsa -f /etc/ssh_host_dsa_key -C '' -N ''
+-fi
+-
+-# Check for the SSH2 ECDSA key
+-if [ ! -f /etc/ssh_host_ecdsa_key ]; then
+-	echo Generating ECDSA Key...
+-	echo THIS CAN TAKE A MINUTE OR TWO DEPENDING ON YOUR PROCESSOR!
+-	echo
+-	/usr/bin/ssh-keygen -t ecdsa -f /etc/ssh_host_ecdsa_key -C '' -N ''
+-fi
+-                
+ umask 077
+ 
++check() {
++  echo "Checking sshd configuration..."
++  
++  # Make sure the ssh-keygen progam exists
++  [ -f /usr/bin/ssh-keygen ] || exit 0
++
++  # Check that the sshd_config file exists
++  [ -f /etc/ssh/sshd_config ] || exit 0
++
++  # See if need to generate the SSH1 RSA key
++  if [ ! -f /etc/ssh/ssh_host_key ] \
++  && grep -q "^HostKey.*host_key" /etc/ssh/sshd_config
++  then
++    echo Generating RSA Key...
++    /usr/bin/ssh-keygen -t rsa1 -f /etc/ssh/ssh_host_key -C '' -N ''
++  fi
++
++  # See if need to generate the SSH2 RSA key
++  if [ ! -f /etc/ssh/ssh_host_rsa_key ] \
++  && grep -q "^HostKey.*host_rsa_key" /etc/ssh/sshd_config
++  then
++    echo Generating RSA Key...
++    /usr/bin/ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -C '' -N ''
++  fi
++
++  # See if need to generate the SSH2 DSA key
++  if [ ! -f /etc/ssh/ssh_host_dsa_key ] \
++  && grep -q "^HostKey.*host_dsa_key" /etc/ssh/sshd_config
++  then
++    echo Generating DSA Key... \(may take awhile\)
++    /usr/bin/ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key -C '' -N ''
++  fi
++
++  # See if need to generate the SSH2 ECDSA key
++  if [ ! -f /etc/ssh/ssh_host_ecdsa_key ] \
++  && grep -q "^HostKey.*host_ecdsa_key" /etc/ssh/sshd_config
++  then
++    echo Generating ECDSA Key... \(may take awhile\)
++    /usr/bin/ssh-keygen -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -C '' -N ''
++  fi
++}                
++
+ start() {
+- 	echo -n "Starting sshd: "
+-	/usr/sbin/sshd
+-	touch /var/lock/sshd
+-	echo "OK"
+-}	
++ echo -n "Starting sshd: "
++  /usr/sbin/sshd
++  #/usr/sbin/sshd -f /etc/ssh/sshd_config
++# touch /var/lock/sshd.lock
++  echo "OK"
++}  
+ stop() {
+-	echo -n "Stopping sshd: "
+-        killall	sshd 
+-	rm -f /var/lock/sshd
+-	echo "OK" 
++  echo -n "Stopping sshd: "
++  killall sshd 2>/dev/null
++# rm -f /var/lock/sshd.lock
++  echo "OK" 
+ }
+ restart() {
+-	stop
+-	start
+-}	
++  stop
++  check
++  start
++}  
+ 
+ case "$1" in
++  check)
++    # support inetd, just check configration during init
++    check
++    ;;
+   start)
+-  	start
+-	;;
++    # always check config if running manually
++    [ -z $rcS ] && check
++    start
++    ;;
+   stop)
+-  	stop
+-	;;
++    stop
++    ;;
+   restart|reload)
+-  	restart
+-	;;
++    restart
++    ;;
+   *)
+-	echo "Usage: $0 {start|stop|restart}"
+-	exit 1
++    echo $"Usage: $0 {start|stop|restart}"
++    exit 1
+ esac
+ 
+ exit $?
+diff -Naur old/package/openssl/c_rehash new/package/openssl/c_rehash
+--- old/package/openssl/c_rehash	1970-01-01 01:00:00.000000000 +0100
++++ new/package/openssl/c_rehash	2013-04-22 21:36:40.000000000 +0100
+@@ -0,0 +1,34 @@
++#!/bin/sh
++
++if [ ! $1 ]
++then
++	echo "Usage: $0 <pathname>"
++	exit
++fi
++
++if [ ! -d $1 ]
++then
++	echo "Error: Cannot find directory '$1'"
++	exit
++fi
++
++cd $1
++
++# Remove old hash files
++rm -f [0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z].[0-9]*
++
++# Create hashes of each file, avoiding collisions with an incremental suffix
++ls -1 *.pem | while read cert_file
++do
++	hash=`openssl x509 -subject_hash_old -noout -in $cert_file 2> /dev/null`
++	if [ $? == 0 ]
++	then
++		suffix=0
++		while [ -e $hash.$suffix ]
++		do
++			suffix=`expr $suffix + 1`
++		done
++		ln -s $cert_file $hash.$suffix
++	fi
++done
++
+diff -Naur old/package/openssl/openssl.mk new/package/openssl/openssl.mk
+--- old/package/openssl/openssl.mk	2013-04-22 23:49:35.129440172 +0100
++++ new/package/openssl/openssl.mk	2013-04-22 21:36:40.000000000 +0100
+@@ -96,7 +96,6 @@
+ endif
+ 
+ define OPENSSL_INSTALL_FIXUPS
+-	rm -f $(TARGET_DIR)/usr/bin/c_rehash
+ endef
+ 
+ OPENSSL_POST_INSTALL_TARGET_HOOKS += OPENSSL_INSTALL_FIXUPS
+diff -Naur old/package/pppd/pppd-2.4.5-maxconfreq-30000.patch new/package/pppd/pppd-2.4.5-maxconfreq-30000.patch
+--- old/package/pppd/pppd-2.4.5-maxconfreq-30000.patch	1970-01-01 01:00:00.000000000 +0100
++++ new/package/pppd/pppd-2.4.5-maxconfreq-30000.patch	2013-04-22 21:36:40.000000000 +0100
+@@ -0,0 +1,12 @@
++diff -urN ppp-2.4.5/pppd/fsm.h ppp-2.4.5-lt1/pppd/fsm.h
++--- ppp-2.4.5/pppd/fsm.h	2009-11-16 17:26:07.000000000 -0500
+++++ ppp-2.4.5-lt1/pppd/fsm.h	2012-09-04 22:39:37.405603914 -0400
++@@ -145,7 +145,7 @@
++  */
++ #define DEFTIMEOUT	3	/* Timeout time in seconds */
++ #define DEFMAXTERMREQS	2	/* Maximum Terminate-Request transmissions */
++-#define DEFMAXCONFREQS	10	/* Maximum Configure-Request transmissions */
+++#define DEFMAXCONFREQS	30000	/* Maximum Configure-Request transmissions */
++ #define DEFMAXNAKLOOPS	5	/* Maximum number of nak loops */
++ 
++ 
+diff -Naur old/package/proftpd/proftpd.conf new/package/proftpd/proftpd.conf
+--- old/package/proftpd/proftpd.conf	1970-01-01 01:00:00.000000000 +0100
++++ new/package/proftpd/proftpd.conf	2013-04-22 21:36:40.000000000 +0100
+@@ -0,0 +1,68 @@
++# This is a basic ProFTPD configuration file (rename it to 
++# 'proftpd.conf' for actual use.  It establishes a single server
++# and a single anonymous login.  It assumes that you have a user/group
++# "nobody" and "ftp" for normal operation and anon.
++
++ServerName			"ProFTPD Default Installation"
++ServerType			standalone
++DefaultServer			on
++UseReverseDNS			off
++IdentLookups			off
++ServerIdent on			"FTP Server Ready."
++
++# Port 21 is the standard FTP port.
++Port				21
++
++# Don't use IPv6 support by default.
++UseIPv6				off
++
++# Umask 022 is a good standard umask to prevent new dirs and files
++# from being group and world writable.
++Umask				022
++
++# To prevent DoS attacks, set the maximum number of child processes
++# to 30.  If you need to allow more than 30 concurrent connections
++# at once, simply increase this value.  Note that this ONLY works
++# in standalone mode, in inetd mode you should use an inetd server
++# that allows you to limit maximum number of processes per service
++# (such as xinetd).
++MaxInstances			30
++
++# Set the user and group under which the server will run.
++User				nobody
++Group				nogroup
++
++# To cause every FTP user to be "jailed" (chrooted) into their home
++# directory, uncomment this line.
++#DefaultRoot ~
++
++# Normally, we want files to be overwriteable.
++AllowOverwrite		on
++
++# Bar use of SITE CHMOD by default
++<Limit SITE_CHMOD>
++  DenyAll
++</Limit>
++
++# A basic anonymous configuration, no upload directories.  If you do not
++# want anonymous users, simply delete this entire <Anonymous> section.
++<Anonymous ~ftp>
++  User				ftp
++  Group				ftp
++
++  # We want clients to be able to login with "anonymous" as well as "ftp"
++  UserAlias			anonymous ftp
++
++  # Limit the maximum number of anonymous logins
++  MaxClients			10
++
++  # We want 'welcome.msg' displayed at login, and '.message' displayed
++  # in each newly chdired directory.
++  DisplayLogin			welcome.msg
++  DisplayChdir			.message
++
++  # Limit WRITE everywhere in the anonymous chroot
++  <Limit WRITE>
++    DenyAll
++  </Limit>
++</Anonymous>
+diff -Naur old/package/proftpd/proftpd.mk new/package/proftpd/proftpd.mk
+--- old/package/proftpd/proftpd.mk	2013-04-22 23:49:35.121440173 +0100
++++ new/package/proftpd/proftpd.mk	2013-04-22 21:36:40.000000000 +0100
+@@ -34,12 +34,12 @@
+ 		$(INSTALL) -m 0644 -D $(@D)/sample-configurations/basic.conf $(TARGET_DIR)/etc/proftpd.conf; \
+ 		$(if $(BR2_INET_IPV6),,$(SED) 's/^UseIPv6/# UseIPv6/' $(TARGET_DIR)/etc/proftpd.conf;) \
+ 	fi
+-	$(INSTALL) -m 0755 package/proftpd/S50proftpd $(TARGET_DIR)/etc/init.d
++	$(INSTALL) -m 0755 package/proftpd/S50proftpd $(TARGET_DIR)/etc/init.d/opt
+ endef
+ 
+ define PROFTPD_UNINSTALL_TARGET_CMDS
+ 	rm -f $(TARGET_DIR)/$(PROFTPD_TARGET_BINARY)
+-	rm -f $(TARGET_DIR)/etc/init.d/S50proftpd
++	rm -f $(TARGET_DIR)/etc/init.d/opt/S50proftpd
+ 	rm -f $(TARGET_DIR)/etc/proftpd.conf
+ endef
+ 
+diff -Naur old/package/regulatory/Config.in new/package/regulatory/Config.in
+--- old/package/regulatory/Config.in	1970-01-01 01:00:00.000000000 +0100
++++ new/package/regulatory/Config.in	2013-04-22 21:36:40.000000000 +0100
+@@ -0,0 +1,7 @@
++config BR2_PACKAGE_REGULATORY
++	bool "regulatory"
++	help
++	  Wireless regulatory database.
++
++	  http://linuxwireless.org/en/developers/Regulatory
++
+diff -Naur old/package/regulatory/regulatory.mk new/package/regulatory/regulatory.mk
+--- old/package/regulatory/regulatory.mk	1970-01-01 01:00:00.000000000 +0100
++++ new/package/regulatory/regulatory.mk	2013-04-22 21:36:40.000000000 +0100
+@@ -0,0 +1,19 @@
++#############################################################
++#
++# regulatory
++#
++#############################################################
++REGULATORY_VERSION:=2011.04.28
++REGULATORY_SOURCE:=wireless-regdb-$(REGULATORY_VERSION).tar.bz2
++REGULATORY_SITE:=http://linuxwireless.org/download/wireless-regdb
++
++define REGULATORY_INSTALL_TARGET_CMDS
++	mkdir -p $(TARGET_DIR)/usr/lib/crda
++	DESTDIR=$(TARGET_DIR) $(MAKE1) -C $(@D) install
++endef
++
++$(eval $(generic-package))
++
++# ifeq ($(strip $(BR2_PACKAGE_CRDA)),y)
++TARGETS+=regulatory
++# endif
+
+diff -Naur old/package/udev/S10udev new/package/udev/S10udev
+--- old/package/udev/S10udev	2013-04-22 23:49:35.129440172 +0100
++++ new/package/udev/S10udev	2013-04-22 21:36:40.000000000 +0100
+@@ -1,48 +1,56 @@
+ #!/bin/sh
+ #
+-# udev	This is a minimal non-LSB version of a UDEV startup script.  It
+-#	was derived by stripping down the udev-058 LSB version for use
+-#	with buildroot on embedded hardware using Linux 2.6.34+ kernels.
++#   This is a minimal non-LSB version of a UDEV startup script.  It
++#   was derived by stripping down the udev-058 LSB version for use
++#   with buildroot on embedded hardware using Linux 2.6.34+ kernels.
+ #
+-#	You may need to customize this for your system's resource limits
+-#	(including startup time!) and administration.  For example, if
+-#	your early userspace has a custom initramfs or initrd you might
+-#	need /dev much earlier; or without hotpluggable busses (like USB,
+-#	PCMCIA, MMC/SD, and so on) your /dev might be static after boot.
++#   You may need to customize this for your system's resource limits
++#   (including startup time!) and administration.  For example, if
++#   your early userspace has a custom initramfs or initrd you might
++#   need /dev much earlier; or without hotpluggable busses (like USB,
++#   PCMCIA, MMC/SD, and so on) your /dev might be static after boot.
+ #
+-#	This script assumes your system boots right into the eventual root
+-#	filesystem, and that init runs this udev script before any programs
+-#	needing more device nodes than the bare-bones set -- /dev/console,
+-#	/dev/zero, /dev/null -- that's needed to boot and run this script.
++#   This script assumes your system boots right into the eventual root
++#   filesystem, and that init runs this udev script before any programs
++#   needing more device nodes than the bare-bones set -- /dev/console,
++#   /dev/zero, /dev/null -- that's needed to boot and run this script.
+ #
+ 
+-# Check for missing binaries
++# check for missing binaries
+ UDEV_BIN=/lib/udev/udevd
+ test -x $UDEV_BIN || exit 5
+ 
+-# Check for config file and read it
+-UDEV_CONFIG=/etc/udev/udev.conf
+-test -r $UDEV_CONFIG || exit 6
+-. $UDEV_CONFIG
+-
+-case "$1" in
+-    start)
+-        echo -n "Populating ${udev_root:-/dev} using udev: "
+-        echo -e '\000\000\000\000' > /proc/sys/kernel/hotplug
+-        $UDEV_BIN -d || (echo "FAIL" && exit 1)
+-        udevadm trigger
+-        echo "done"
+-        ;;
+-    stop)
+-        # Stop execution of events
+-        udevadm control --stop-exec-queue
+-        killall udevd
+-        ;;
+-    *)
+-        echo "Usage: $0 {start|stop}"
+-        exit 1
+-        ;;
+-esac
++# check for config file and read it
++UDEV_CONF=/etc/udev/udev.conf
++test -r $UDEV_CONF || exit 6
++source $UDEV_CONF
++
++case $1 in
++
++  stop)
++    echo -n "Stopping execution of events, via udev... "
++    udevadm control --stop-exec-queue
++    killall udevd 2>/dev/null
++    echo
++    ;;
+ 
++  start)
++    echo -n "Starting udev daemon, populating ${udev_root:-/dev} "
++    echo -e '\000\000\000\000' >/proc/sys/kernel/hotplug
++    $UDEV_BIN -d || { echo "ERROR"; exit 1; }
++    udevadm trigger
++    echo
++    ;;
++
++  *)
++    echo "Usage: $0 {stop|start}"
++    exit 1
++    ;;
++esac
+ 
+ exit 0
++##
++## report stuff relative to a device node
++##  udevadm info -a -n </dev/device>
++##
++
+diff -Naur old/package/udev/udev.mk new/package/udev/udev.mk
+--- old/package/udev/udev.mk	2013-04-22 23:49:35.129440172 +0100
++++ new/package/udev/udev.mk	2013-04-22 21:36:40.000000000 +0100
+@@ -43,6 +43,18 @@
+ 	$(INSTALL) -m 0755 package/udev/S10udev $(TARGET_DIR)/etc/init.d/S10udev
+ endef
+ 
++define UDEV_NO_AUTO_LOAD_HANDLING
++	@echo UDEV_NO_AUTO_LOAD_HANDLING 
++	# Avoid auto-loading all device drivers, with udev_182. (HACK)
++	# Some devices require firmware and are highly dependent on various conditions
++	# and thus handled by specific scripts.
++	( cd $(TARGET_DIR)/lib/udev; \
++	  [ -f rules.d/??-drivers.rules ] \
++	  && { mkdir -p rules.disabled; mv rules.d/??-drivers.rules rules.disabled; } || : \
++	)
++endef
++
+ UDEV_POST_INSTALL_TARGET_HOOKS += UDEV_INSTALL_INITSCRIPT
++UDEV_POST_INSTALL_TARGET_HOOKS += UDEV_NO_AUTO_LOAD_HANDLING
+ 
+ $(eval $(autotools-package))
+diff -Naur old/package/usbmount/usbmount.mk new/package/usbmount/usbmount.mk
+--- old/package/usbmount/usbmount.mk	2013-04-22 23:49:35.125440173 +0100
++++ new/package/usbmount/usbmount.mk	2013-04-22 21:36:40.000000000 +0100
+@@ -16,7 +16,7 @@
+ 	$(INSTALL) -m 0755 -D $(@D)/00_remove_model_symlink 	\
+ 		$(TARGET_DIR)/etc/usbmount/usbmount.d/00_remove_model_symlink
+ 
+-	$(INSTALL) -m 0644 -D $(@D)/usbmount.rules $(TARGET_DIR)/lib/udev/rules.d/usbmount.rules
++	$(INSTALL) -m 0644 -D $(@D)/usbmount.rules $(TARGET_DIR)/etc/udev/rules.d/usbmount.rules
+ 	@if [ ! -f $(TARGET_DIR)/etc/usbmount/usbmount.conf ]; then \
+ 	        $(INSTALL) -m 0644 -D $(@D)/usbmount.conf $(TARGET_DIR)/etc/usbmount/usbmount.conf; \
+ 	fi
+@@ -27,7 +27,7 @@
+ define USBMOUNT_UNINSTALL_TARGET_CMDS
+ 	rm -rf $(TARGET_DIR)/etc/usbmount			\
+ 		$(TARGET_DIR)/usr/share/usbmount/usbmount	\
+-		$(TARGET_DIR)/lib/udev/rules.d/usbmount.rules	\
++		$(TARGET_DIR)/etc/udev/rules.d/usbmount.rules	\
+ 		$(TARGET_DIR)/media/usb?
+ endef
+ 
+diff -Naur old/system/device_table_dev.txt new/system/device_table_dev.txt
+--- old/system/device_table_dev.txt	2013-04-22 23:49:34.925440166 +0100
++++ new/system/device_table_dev.txt	2013-04-22 21:36:40.000000000 +0100
+@@ -46,8 +46,8 @@
+ 
+ 
+ # MTD stuff
+-/dev/mtd	c	640	0	0	90	0	0	2	4
+-/dev/mtdblock	b	640	0	0	31	0	0	1	4
++/dev/mtd	c	640	0	0	90	0	0	2	8
++/dev/mtdblock	b	640	0	0	31	0	0	1	8
+ 
+ #Tun/tap driver
+ /dev/net	d	755	0	0	-	-	-	-	-

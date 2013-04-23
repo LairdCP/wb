@@ -26,5 +26,4 @@ define ATHTCMD_UNINSTALL_TARGET_CMDS
     rm -f $(TARGET_DIR)/lib/firmware/ath6k/AR6003/hw2.1.1/athtcmd_ram.bin
 endef
 
-$(eval $(call GENTARGETS))
 $(eval $(generic-package))
