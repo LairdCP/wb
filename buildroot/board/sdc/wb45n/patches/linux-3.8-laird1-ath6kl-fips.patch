@@ -1,0 +1,2725 @@
+diff -urN a/drivers/net/wireless/ath/ath6kl/cfg80211.c b/drivers/net/wireless/ath/ath6kl/cfg80211.c
+--- a/drivers/net/wireless/ath/ath6kl/cfg80211.c	2013-04-18 21:46:36.691077669 -0500
++++ b/drivers/net/wireless/ath/ath6kl/cfg80211.c	2013-02-28 16:07:21.484375000 -0600
+@@ -784,6 +784,10 @@
+ 		cfg80211_roamed_bss(vif->ndev, bss, assoc_req_ie, assoc_req_len,
+ 				    assoc_resp_ie, assoc_resp_len, GFP_KERNEL);
+ 	}
++
++#ifdef LAIRD_FIPS
++	if (fips_mode) laird_setbssid(bssid);
++#endif
+ }
+ 
+ static int ath6kl_cfg80211_disconnect(struct wiphy *wiphy,
+@@ -822,6 +826,10 @@
+ 
+ 	vif->sme_state = SME_DISCONNECTED;
+ 
++#ifdef LAIRD_FIPS
++	if (fips_mode) laird_setbssid(NULL);
++#endif
++
+ 	return 0;
+ }
+ 
+@@ -1141,6 +1149,13 @@
+ 	memcpy(key->seq, params->seq, key->seq_len);
+ 	key->cipher = params->cipher;
+ 
++#ifdef LAIRD_FIPS 
++	if (fips_mode) {
++		laird_addkey(ndev, key_index, pairwise, mac_addr, 
++					 key->key, key->key_len, key->seq, key->seq_len); 
++	}
++#endif 
++
+ 	switch (key->cipher) {
+ 	case WLAN_CIPHER_SUITE_WEP40:
+ 	case WLAN_CIPHER_SUITE_WEP104:
+@@ -1240,6 +1255,12 @@
+ 
+ 	vif->keys[key_index].key_len = 0;
+ 
++#ifdef LAIRD_FIPS
++	if (fips_mode) {
++		laird_delkey(ndev, key_index);
++	}
++#endif
++
+ 	return ath6kl_wmi_deletekey_cmd(ar->wmi, vif->fw_vif_idx, key_index);
+ }
+ 
+diff -urN a/drivers/net/wireless/ath/ath6kl/common.h b/drivers/net/wireless/ath/ath6kl/common.h
+--- a/drivers/net/wireless/ath/ath6kl/common.h	2013-04-18 21:46:36.691077669 -0500
++++ b/drivers/net/wireless/ath/ath6kl/common.h	2013-02-28 16:07:21.484375000 -0600
+@@ -83,4 +83,7 @@
+ struct ath6kl_htc_credit_info;
+ 
+ struct sk_buff *ath6kl_buf_alloc(int size);
++
++#include "laird.h"
++
+ #endif /* COMMON_H */
+diff -urN a/drivers/net/wireless/ath/ath6kl/core.c b/drivers/net/wireless/ath/ath6kl/core.c
+--- a/drivers/net/wireless/ath/ath6kl/core.c	2013-04-18 21:46:36.711078650 -0500
++++ b/drivers/net/wireless/ath/ath6kl/core.c	2013-04-02 14:57:18.750000000 -0500
+@@ -188,6 +188,13 @@
+ 		wiphy_unregister(ar->wiphy);
+ 		goto err_rxbuf_cleanup;
+ 	}
++#ifdef LAIRD_REASSEMBLY
++	ret = lairdReassemblyInit();
++	if (ret) {
++		printk(KERN_ALERT "lairdReassemblyInit returned an error (%d)\r\n", ret);
++		goto err_rxbuf_cleanup;
++	}
++#endif /* LAIRD_REASSEMBLY */
+ 
+ 	for (i = 0; i < ar->vif_max; i++)
+ 		ar->avail_idx_map |= BIT(i);
+diff -urN a/drivers/net/wireless/ath/ath6kl/core.h b/drivers/net/wireless/ath/ath6kl/core.h
+--- a/drivers/net/wireless/ath/ath6kl/core.h	2013-04-18 21:46:36.687077528 -0500
++++ b/drivers/net/wireless/ath/ath6kl/core.h	2013-03-14 21:04:36.890625000 -0500
+@@ -28,6 +28,7 @@
+ #include "wmi.h"
+ #include "bmi.h"
+ #include "target.h"
++#include "reassm.h"
+ 
+ #define MAX_ATH6KL                        1
+ #define ATH6KL_MAX_RX_BUFFERS             16
+diff -urN a/drivers/net/wireless/ath/ath6kl/init.c b/drivers/net/wireless/ath/ath6kl/init.c
+--- a/drivers/net/wireless/ath/ath6kl/init.c	2013-04-18 21:46:36.691077669 -0500
++++ b/drivers/net/wireless/ath/ath6kl/init.c	2013-03-14 21:04:36.890625000 -0500
+@@ -32,6 +32,9 @@
+ #include "hif-ops.h"
+ #include "htc-ops.h"
+ 
++#include "laird.h"
++#include "reassm.h"
++
+ static const struct ath6kl_hw hw_list[] = {
+ 	{
+ 		.id				= AR6003_HW_2_0_VERSION,
+@@ -1759,6 +1762,16 @@
+ 		return;
+ 	}
+ 
++#ifdef LAIRD_FIPS
++	if (fips_mode) {
++		// wait for all fips in progress txrx to complete
++		laird_stop_txrx();
++#ifdef LAIRD_REASSEMBLY
++		lairdReassemblyPurgeAll();
++#endif /* LAIRD_REASSEMBLY */
++	}
++#endif
++
+ 	for (i = 0; i < AP_MAX_NUM_STA; i++)
+ 		aggr_reset_state(ar->sta_list[i].aggr_conn);
+ 
+diff -urN a/drivers/net/wireless/ath/ath6kl/laird.c b/drivers/net/wireless/ath/ath6kl/laird.c
+--- a/drivers/net/wireless/ath/ath6kl/laird.c	1969-12-31 18:00:00.000000000 -0600
++++ b/drivers/net/wireless/ath/ath6kl/laird.c	2013-04-18 22:20:03.055136224 -0500
+@@ -0,0 +1,1152 @@
++/*
++ * Copyright (c) 2012 Laird Technologies, Inc.
++ */
++
++#ifdef LAIRD_FIPS
++#include <linux/moduleparam.h>
++#include <linux/stat.h>
++#include "laird.h"
++#include "reassm.h"
++
++// TBD: 0x600 from linux kernel ath/ath6kl/wmi.h -- why not > 0x5DC ?
++#define is_ethertype(type_or_len)	((type_or_len) >= 0x0600)
++
++#define ETHTYPE_EAPOL  0x888E
++#define ETHTYPE_IP     0x0800
++
++struct laird_wlanhdr_qos {
++    u8 fc[2];
++    __le16 dur;
++    u8 addr1[6];
++    u8 addr2[6];
++    u8 addr3[6];
++    u8 seq[2];
++    u8 qos[2];
++#define QOS0_TID (0xF)
++#define QOS0_AMSDU (1<<7)
++} __packed;
++#define WLANHDR_QOS_PAD 2
++
++struct _llc_snap_hdr {
++    u8 dsap;
++    u8 ssap;
++    u8 cntl;
++    u8 org_code[3];
++    __be16 eth_type;
++} __packed;
++
++
++bool fips_mode = 0;
++module_param(fips_mode, bool, S_IRUGO);
++#ifdef LAIRD_REASSEMBLY
++extern struct sk_buff* lairdReassemblyArray[LAIRD_SIMULT_REASSEMBLE_BUFS];
++#endif /* LAIRD_REASSEMBLY */
++// TBD: remove debug option to cause encrypt error
++static uint fips_cause_encrypt_error = 0;
++module_param(fips_cause_encrypt_error, uint, S_IRUGO|S_IWUSR);
++
++static uint fips_cause_replay_error = 0;
++module_param(fips_cause_replay_error, uint, S_IRUGO|S_IWUSR);
++
++// statistics for debugging
++#define FIPS_STAT_INC(name) fips_stat_##name += 1
++#define FIPS_STAT_DEF(name) \
++	static uint fips_stat_##name; \
++	module_param(fips_stat_##name, uint, S_IRUGO)
++
++FIPS_STAT_DEF(rx_no_memory);
++FIPS_STAT_DEF(rx_bad_packet);
++FIPS_STAT_DEF(rx_unencrypted);
++FIPS_STAT_DEF(rx_discard_amsdu);
++FIPS_STAT_DEF(rx_discard_fragment);
++FIPS_STAT_DEF(rx_discard_unencrypted);
++FIPS_STAT_DEF(rx_decrypt_ok);
++FIPS_STAT_DEF(rx_decrypt_fail);
++FIPS_STAT_DEF(rx_decrypt_replay);
++FIPS_STAT_DEF(rx_decrypt_no_key);
++
++FIPS_STAT_DEF(tx_no_memory);
++FIPS_STAT_DEF(tx_bad_packet);
++FIPS_STAT_DEF(tx_unencrypted_ok);
++FIPS_STAT_DEF(tx_unencrypted_fail);
++FIPS_STAT_DEF(tx_encrypt_ok);
++FIPS_STAT_DEF(tx_encrypt_fail);
++FIPS_STAT_DEF(tx_encrypt_no_key);
++
++
++void lairdDummyPrint(const char* fmt, ...) {
++    return;
++}
++
++void laird_printhexs(const char *psz, const char *pf, const void *buf, int len);
++
++#if 0
++#define DEBUG_IDX(p) \
++	printk(KERN_ALERT "%s: index %d, line %d\n", __FUNCTION__, (p)->idx, __LINE__)
++#else
++#define DEBUG_IDX(p)
++#endif
++
++typedef unsigned long long lrd_seq_t;
++
++typedef struct {
++    u8 key[16];
++    lrd_seq_t rsc;
++    lrd_seq_t rscqos[16];
++    lrd_seq_t tsc;
++} lrd_key_t;
++
++typedef struct {
++    u8 addr[6];
++} lrd_bssid_t;
++
++// keyset -- a new keyset is created each time a key is changed
++typedef struct {
++    lrd_key_t *pk[4];
++    lrd_key_t *pkold[4]; // previous keys
++    u8 tx_index;
++    lrd_bssid_t *pbssid;
++} lrd_keyset_t;
++
++static lrd_keyset_t _keyset_init; // initial empty keyset
++
++static struct {
++    lrd_keyset_t *pkeyset; // current keyset used by tx/rx
++} lrd_keydata = {
++    .pkeyset = &_keyset_init,
++};
++
++static int lrd_skb_2_dot11(struct sk_buff *skb, int wmm, lrd_keyset_t *pkeyset);
++
++/*======================================================================*/
++#include "../mod2urw.h"  /* FIX ME */
++
++typedef struct cryp_s {
++    sdclkm_cb_t cbd;
++    struct cryp_s *next;
++    int done;
++    int res;
++    struct sk_buff *skb;
++    struct net_device *dev; // only for transmit
++    lrd_keyset_t *pkeyset;
++    lrd_key_t *pk; // key selected in rx_part1
++    // storage for data passed to crypto module
++    unsigned char k[16]; // key
++    unsigned char n[13]; // nonce
++    unsigned char _gap[3];
++    unsigned char a[32]; //associated data
++    fips_ccm_key_t ccm_key; // key
++
++    // data saved in function part1 for use in function part2
++    int keyidx;
++    lrd_seq_t pn;
++    int hdrlen;
++
++    // debug
++    int idx;
++} td_cryp;
++
++typedef struct {
++    td_cryp *first;
++    td_cryp *last;
++} crypq_t;
++
++static struct {
++    crypq_t txq;
++    crypq_t rxq;
++    int tx_stop_tasklet;
++    int stopping_txrx; // rmmod
++} __glob;
++
++static DEFINE_MUTEX(mutex_stopping_txrx);
++
++static int cryp_counter;
++
++/*======================================================================*/
++static inline td_cryp *__cryp_alloc(struct sk_buff *skb, struct net_device *dev, sdclkm_callback_fn_ptr_t pfn)
++{
++    td_cryp *cryp;
++    cryp = kmalloc(sizeof(*cryp), GFP_ATOMIC);
++    if (cryp) {
++        cryp->cbd.pfn = pfn;
++        cryp->cbd.pdata = cryp;
++        cryp->next = NULL;
++        cryp->done = 0;
++        cryp->res = -1;
++        cryp->skb = skb;
++        cryp->dev = dev;
++        cryp->pkeyset = lrd_keydata.pkeyset;
++
++        // debug
++        cryp->idx = cryp_counter++;
++    }
++    return cryp;
++}
++
++static inline void __cryp_free(td_cryp *cryp)
++{
++    DEBUG_IDX(cryp);
++    kfree(cryp);
++}
++
++// spinlock for protecting the queue
++static DEFINE_SPINLOCK(crypq_lock);
++
++// add an item to the tx/rx queue
++static inline void __cryp_enqueue(td_cryp *cryp, crypq_t *q)
++{
++    DEBUG_IDX(cryp);
++    spin_lock_bh(&crypq_lock);
++    if (q->last) {
++        q->last->next = cryp;
++        q->last = cryp;
++    } else {
++        q->first = q->last = cryp;
++    }
++    spin_unlock_bh(&crypq_lock);
++}
++
++// dequeue a done cryp entry, or return null
++static inline td_cryp *__cryp_dequeue_done(crypq_t *q)
++{
++    td_cryp *cryp = NULL;
++    spin_lock_bh(&crypq_lock);
++    if (q->first && q->first->done) {
++        // first entry is done, remove from queue and return it
++        cryp = q->first;
++        q->first = cryp->next;
++        if (cryp->next == NULL) {
++            q->last = NULL;
++        }
++    }
++    spin_unlock_bh(&crypq_lock);
++    return cryp;
++}
++
++// return true if both rx/txq are empty
++static inline int __crypqs_empty(void)
++{
++    int res = 1;
++    spin_lock_bh(&crypq_lock);
++    if (res && __glob.rxq.first) res = 0;
++    if (res && __glob.txq.first) res = 0;
++    spin_unlock_bh(&crypq_lock);
++    return res;
++}
++
++// called when exitting the driver (rmmod)
++// note -- process level, not softirq/bh
++static int __cryp_wait_txrx_completed(void)
++{
++    DEBUG_TRACE;
++    mutex_lock(&mutex_stopping_txrx);
++    __glob.stopping_txrx = 1;
++    if (!__crypqs_empty()) {
++        // wait for unlock when queues go empty
++        if (mutex_lock_interruptible(&mutex_stopping_txrx)) {
++            //printk(KERN_ALERT "%s: interrupted!!!\n", __FUNCTION__);
++            return -1;
++        }
++    }
++    __glob.stopping_txrx = 0;
++    // check if mutex is locked, and unlock it if it is locked
++    if (mutex_is_locked(&mutex_stopping_txrx)) {
++        mutex_unlock(&mutex_stopping_txrx);
++    }
++    return 0;
++}
++
++// if we are stopping txrx and queues are empty signal
++static void inline  __cryp_signal_if_txrx_completed(void)
++{
++    if (!__glob.stopping_txrx) return;
++    if (!__crypqs_empty()) return;
++    if (mutex_is_locked(&mutex_stopping_txrx)) {
++        // unlock the mutex to allow wait to finish
++        mutex_unlock(&mutex_stopping_txrx);
++    }
++}
++
++/*======================================================================*/
++#include "linux/interrupt.h"
++// multiprocessor system can execute multiple tasklets simultaneously
++// so only use one tasklet for both rx/tx processing
++// tasklet for post-crypto operation processing
++static void __tasklet_exec(unsigned long);
++DECLARE_TASKLET(__tasklet, __tasklet_exec, 0);
++
++// callback when sdclkm_xxx crypto operation completes
++// or directly in _part1() if operation fails/doesn't need crypto
++static void __callback_rx(void *din, int res);
++// processing routines
++static int __laird_rx_part1(td_cryp *p);
++static int __laird_rx_part2(td_cryp *p);
++
++// socket buffer encryption
++// return: -1 failure, 0 processed, 1 driver to process
++int laird_skb_rx_prep(struct sk_buff *skb)
++{
++    td_cryp *cryp;
++    int res;
++
++    cryp = __cryp_alloc(skb, NULL, __callback_rx);
++    if (!cryp) return -ENOMEM;
++    DEBUG_IDX(cryp);
++    res = __laird_rx_part1(cryp);
++    if (res < 0) {
++        __cryp_free(cryp);
++        return res;
++    }
++    __cryp_enqueue(cryp, &__glob.rxq);
++    if (res != 0) {
++        // execute callback now for unencrypted packet
++        __callback_rx(cryp, 0);
++    }
++    return 0;
++}
++
++// callback called at process level when crypto operation completes
++// callback called at bh/softirq level for unencrypted packets
++static void __callback_rx(void *din, int res)
++{
++    td_cryp *cryp = din;
++    //
++    DEBUG_IDX(cryp);
++    cryp->res = res;
++    cryp->done = 1;
++    tasklet_schedule(&__tasklet);
++    // processing continues below in __tasklet_exec()
++}
++
++/*======================================================================*/
++// callback when sdclkm_xxx crypto operation completes
++// or directly in _part1() if operation fails/doesn't need crypto
++static void __callback_tx(void *din, int res);
++// processing routines
++static int __laird_tx_part1(td_cryp *p);
++static int __laird_tx_part2(td_cryp *p);
++
++// socket buffer encryption
++int laird_skb_encrypt_prep(struct sk_buff *skbin, struct net_device *dev, int wmm)
++{
++    struct sk_buff *skb = skbin;
++    td_cryp *cryp;
++    int res;
++
++    if (skb_cloned(skb) || skb_tailroom(skb) < 8) {
++        // tailroom is too small -- try making a copy with more tailroom
++        skb = skb_copy_expand(skb, skb_headroom(skb), 8, GFP_ATOMIC);
++        if (!skb) {
++            skb = skbin;
++            res = -ENOMEM;
++            goto fail;
++        }
++    }
++
++    cryp = __cryp_alloc(skb, dev, __callback_tx);
++    if (!cryp) {
++        res = -ENOMEM;
++        goto fail;
++    }
++    DEBUG_IDX(cryp);
++    res = lrd_skb_2_dot11(skb, wmm, cryp->pkeyset);	// convert to 802.11 packet
++    if (!res) res = __laird_tx_part1(cryp);
++    if (res < 0) {
++        __cryp_free(cryp);
++        goto fail;
++    }
++    __cryp_enqueue(cryp, &__glob.txq);
++    if (res != 0) {
++        // execute callback now for unencrypted packet
++        __callback_tx(cryp, 0);
++    }
++    res = 0; // success
++
++fail:
++    if (skb != skbin) {
++        // if we made a copy of the skb...
++        // if failure, free the new skb; if success, free the input skb
++        dev_kfree_skb(res ? skb : skbin);
++    }
++    return res;
++}
++
++// callback called at process level when crypto operation completes
++// callback called at bh/softirq level for unencrypted packets
++static void __callback_tx(void *din, int res)
++{
++    td_cryp *cryp = din;
++    DEBUG_IDX(cryp);
++    cryp->res = res;
++    cryp->done = 1;
++    tasklet_schedule(&__tasklet);
++    // processing continues below in __tasklet_exec()
++}
++
++/*======================================================================*/
++// a single tasklet processes both receive and transmit
++// don't want two tasklets executing simultaneously on multi-processor
++// tasklet to complete skb processing and pass skb back to driver
++static void __tasklet_exec(unsigned long unused)
++{
++    int res;
++    td_cryp *cryp;
++    while (1) {
++        if (__glob.tx_stop_tasklet) {
++            // printk(KERN_ALERT "%s: stopped\n", __FUNCTION__);
++            // flow control has stopped transmit packet submission
++            break;
++        }
++        cryp = __cryp_dequeue_done(&__glob.txq);
++        if (!cryp) break;
++        DEBUG_IDX(cryp);
++        res = __laird_tx_part2(cryp);
++        laird_data_tx_continue(cryp->skb, cryp->dev, res<0 ? -1 : 1);
++        __cryp_free(cryp);
++    }
++    while (1) {
++        cryp = __cryp_dequeue_done(&__glob.rxq);
++        if (!cryp) break;
++        DEBUG_IDX(cryp);
++        res = __laird_rx_part2(cryp);
++        laird_skb_rx_continue(cryp->skb, res<0 ? -1 : 1);
++        __cryp_free(cryp);
++    }
++    __cryp_signal_if_txrx_completed();
++}
++
++/*======================================================================*/
++// transmit flow control
++// stop the fips tasklet from submitting transmit packets
++void laird_stop_queue(struct net_device *dev)
++{
++    DEBUG_TRACE;
++    __glob.tx_stop_tasklet = 1;
++}
++
++// enable the fips tasklet to submit transmit packets
++void laird_wake_queue(struct net_device *dev)
++{
++#if 0
++    if (__glob.tx_stop_tasklet)
++        DEBUG_TRACE;
++#endif
++    __glob.tx_stop_tasklet = 0;
++    tasklet_schedule(&__tasklet);
++}
++
++/*======================================================================*/
++static void ecr_set_nonce(void *nonce, const struct laird_wlanhdr *hdr,
++                          lrd_seq_t seq)
++{
++    u8 *n = nonce;
++    int priority;
++    if (hdr->fc[0] & FC0_STYPE_QOS) {
++        struct laird_wlanhdr_qos *hdrq = (void*)hdr;
++        priority = hdrq->qos[0] & QOS0_TID;
++    } else {
++        priority = 0;
++    }
++    *n++ = (u8)priority;
++    memcpy(n, hdr->addr2, 6);
++    n += 6;
++    *n++ = (seq >> 40) & 0xFF;
++    *n++ = (seq >> 32) & 0xFF;
++    *n++ = (seq >> 24) & 0xFF;
++    *n++ = (seq >> 16) & 0xFF;
++    *n++ = (seq >>  8) & 0xFF;
++    *n++ = (seq >>  0) & 0xFF;
++}
++
++// build associated data and return length
++static int ecr_set_aad(void *aad, struct laird_wlanhdr *hdr)
++{
++    u8 *a = aad;
++    a[0] = hdr->fc[0] & ~0x70;
++    a[1] = hdr->fc[1] & ~0x38;
++    memcpy(&a[2], &hdr->addr1[0], 18);
++    a[20] = hdr->seq[0] & SEQ0_FRAG;
++    a[21] = 0;
++    if (hdr->fc[0] & FC0_STYPE_QOS) {
++        struct laird_wlanhdr_qos *hdrq = (void*)hdr;
++        a[22] = hdrq->qos[0] & (QOS0_TID|QOS0_AMSDU);
++        a[23] = 0;
++        return 24;
++    }
++    return 22;
++}
++
++int ecr_wlanhdr_len(struct laird_wlanhdr *hdr)
++{
++    return 24 + ((hdr->fc[0] & FC0_STYPE_QOS) ? (2 + WLANHDR_QOS_PAD) : 0);
++}
++
++/*======================================================================*/
++// called in driver receive (softirq) context
++static int __laird_rx_part1(td_cryp *p)
++{
++    struct sk_buff *skb = p->skb;
++    lrd_keyset_t *pkeyset = p->pkeyset;
++    struct laird_wlanhdr *hdr = (void *)skb->data;
++    int do_decrypt;
++    int hdrlen;
++    u8 *pm;
++    int mlen;
++    int res;
++
++    laird_printhexs(__func__, "pak", skb->data, skb->len);
++
++    DEBUG_IDX(p);
++
++    if (skb->len < sizeof(*hdr)) {
++        FIPS_STAT_INC(rx_bad_packet);
++        return -1;
++    }
++    if ((hdr->fc[0] & FC0_FTYPE) != FC0_FTYPE_DATA) {
++        FIPS_STAT_INC(rx_bad_packet);
++        return -1;
++    }
++    if ((hdr->fc[1] & (FC1_TODS|FC1_FROMDS)) != FC1_FROMDS) {
++        FIPS_STAT_INC(rx_bad_packet);
++        return -1;
++    }
++
++    do_decrypt = hdr->fc[1] & 0x40;
++    p->hdrlen = hdrlen = ecr_wlanhdr_len(hdr);
++
++    mlen = skb->len - hdrlen - (do_decrypt ? 16 : 0);
++    pm = (u8*)hdr + hdrlen + (do_decrypt ? 8 : 0);
++    if (mlen <= 0) {
++        // packet is too short
++        FIPS_STAT_INC(rx_bad_packet);
++        return -1;
++    }
++
++    if (hdr->fc[0] & FC0_STYPE_QOS) {
++        // TBD: handling for AMSDU
++        // or always discard AMSDU in FIPS mode
++        struct laird_wlanhdr_qos *hdrq = (void*)hdr;
++        if (hdrq->qos[0] & QOS0_AMSDU) {
++            FIPS_STAT_INC(rx_discard_amsdu);
++            return -1;
++        }
++    }
++    /* Check if the fragmnt number is 0 */
++    if ( (hdr->seq[0] & SEQ0_FRAG) == 0 ) {
++        // unfragmented or first fragmentpacket
++        // unencrypted packets -- only allow eapol through
++        if (!do_decrypt) {
++            __be16 type;
++            struct _llc_snap_hdr *lh;
++            if (mlen < sizeof(*lh)) {
++                FIPS_STAT_INC(rx_bad_packet);
++                return -1; // too short
++            }
++            lh = (struct _llc_snap_hdr *)pm;
++            type = lh->eth_type;
++            if (type != be16_to_cpu(ETHTYPE_EAPOL)) {
++                // discard packet
++                FIPS_STAT_INC(rx_discard_unencrypted);
++                return -1;
++            }
++        }
++        /* If the fragment number is non-0 or if there are more fragments coming, reassemble */
++    }
++
++    if (!do_decrypt) {
++        FIPS_STAT_INC(rx_unencrypted);
++        return 1; // not encrypted, return 1 to do callback now
++    } else {
++        lrd_key_t *pk;
++        int keyidx;
++        lrd_seq_t pn;
++        int alen;
++        lrd_seq_t *prsc;
++        lrd_key_t *pkold;
++
++        // get pn from iv
++        u8 *iv = pm - 8;
++        pn = iv[7];
++        pn <<= 8;
++        pn |= iv[6];
++        pn <<= 8;
++        pn |= iv[5];
++        pn <<= 8;
++        pn |= iv[4];
++        pn <<= 8;
++        pn |= iv[1];
++        pn <<= 8;
++        pn |= iv[0];
++
++        // copy key into ccm_key
++        keyidx = iv[3] >> 6;
++
++        p->pn = pn;
++        p->keyidx = keyidx;
++
++        pk = pkeyset->pk[keyidx];
++        if (!pk) {
++            FIPS_STAT_INC(rx_decrypt_no_key);
++            return -1;
++        }
++
++        // key rotation may require using the old key
++        pkold = pkeyset->pkold[keyidx];
++        if (pkold) {
++            // TBD: could make a copy of the skb and try to decrypt with
++            // both the old and new key ???
++
++            // may need to use old key for delayed receive
++            // replay counter
++            if (hdr->fc[0] & FC0_STYPE_QOS) {
++                struct laird_wlanhdr_qos *hdrq = (void*)hdr;
++                int priority;
++                priority = hdrq->qos[0] & QOS0_TID;
++                prsc = &pkold->rscqos[priority];
++            } else {
++                prsc = &pkold->rsc;
++            }
++
++            if (p->pn > *prsc && *prsc > 100) {
++                // try using old key
++                pk = pkold;
++            } else {
++                // switch to new key
++                pkeyset->pkold[keyidx] = NULL;
++            }
++#if 0
++            printk(KERN_ALERT "%s: keyidx=%d pn=%llx -- use %s key\n",
++                   __func__, keyidx, p->pn, pk == pkold ? "old" : "new");
++#endif
++        }
++
++        p->pk = pk;
++        memcpy(&p->ccm_key, pk->key, sizeof(pk->key));
++        ecr_set_nonce(p->n, hdr, pn);
++        alen = ecr_set_aad(p->a, hdr);
++
++#if 0
++        printk(KERN_ALERT "====================================\n");
++        laird_printhexs(__func__, "key:", &p->ccm_key, 16);
++        laird_printhexs(__func__, "n:", &p->n, 13);
++        laird_printhexs(__func__, "a:", &p->a, alen);
++        laird_printhexs(__func__, "pak:", skb->data, skb->len);
++        //laird_printhexs(__func__, "t:", &p->t, 8);
++#endif
++
++        // decrypt the packet
++        res = sdclkm_fnccmdecrypt_ex(&p->cbd,
++                                     &p->ccm_key,
++                                     &p->n[0], 13,
++                                     &p->a[0], alen,
++                                     pm, mlen,
++                                     pm+mlen, 8);
++        if (res <= 0) return res;
++        //printk(KERN_ALERT "%s: unexpected return value\n", __FUNCTION__);
++        return 0;
++
++    }
++    // processing will continue later in __laird_rx_part2()
++}
++
++// called from tasklet after crypto operations complete
++static int __laird_rx_part2(td_cryp *p)
++{
++    int res = p->res;
++    struct sk_buff *skb = p->skb;
++    struct laird_wlanhdr *hdr = (void*)skb->data;
++    int do_decrypt = hdr->fc[1] & 0x40;
++#ifdef LAIRD_REASSEMBLY
++    int retCode;
++    short seqNum;
++    short fragNum;
++
++    seqNum = LAIRD_EXTRACT_SEQ_NUM(hdr);
++    fragNum = LAIRD_EXTRACT_FRAG_NUM(hdr);
++#endif  /* LAIRD_REASSEMBLY */
++
++    DEBUG_IDX(p);
++
++    if (do_decrypt) {
++        lrd_key_t *pk = p->pk;
++        lrd_seq_t *prsc;
++
++        // replay counter
++        if (hdr->fc[0] & FC0_STYPE_QOS) {
++            struct laird_wlanhdr_qos *hdrq = (void*)hdr;
++            int priority;
++            priority = hdrq->qos[0] & QOS0_TID;
++            prsc = &pk->rscqos[priority];
++        } else {
++            prsc = &pk->rsc;
++        }
++
++        if (res != FIPS_STATUS_SUCCESS) {
++            // decrypt failure
++            //printk(KERN_ALERT "%s: decrypt failure %llx\n", __func__, p->pn);
++            FIPS_STAT_INC(rx_decrypt_fail);
++       } else if (p->pn <= *prsc) {
++            // replay packet
++            // printk(KERN_ALERT "%s: replay %llx %llx\n", __func__, p->pn, *prsc);
++            res = -1;
++            FIPS_STAT_INC(rx_decrypt_replay);
++        } else {
++            // success: copy into packet, update replay counter
++            *prsc = p->pn;
++            FIPS_STAT_INC(rx_decrypt_ok);
++        }
++
++   }
++#ifdef LAIRD_REASSEMBLY
++    /* If this is part of a fragmented buffer, pass to reassembly */
++    if ((fragNum > 0) || (hdr->fc[1] & FC1_MOREFRAGS)) {
++//			printk(KERN_ALERT "Passing fragment for reassembly (%d:%d)\r\n",
++//					seqNum,fragNum);
++        retCode = lairdReassemblyProcess(skb);
++        if (retCode < 0) {
++            /* The skb was consumed by reassembly */
++            return -1;
++        }
++   }
++#endif /* LAIRD_REASSEMBLY */
++
++//    printk(KERN_ALERT "received 802.11 frame with %d bytes\r\n", skb->len);
++    // change header from 802.11 to ethernet, and remove IV/MIC
++    if (!res) {
++        struct ethhdr eh;
++        memcpy(eh.h_dest, hdr->addr1, sizeof(eh.h_dest));
++        memcpy(eh.h_source, hdr->addr3, sizeof(eh.h_source));
++        skb_pull(skb, p->hdrlen+sizeof(struct _llc_snap_hdr)-sizeof(eh));
++        if (do_decrypt) {
++            skb_pull(skb, 8);
++            skb_trim(skb, skb->len - 8);
++        }
++        memcpy(skb->data, &eh, 12);
++    }
++
++    return res;
++}
++
++/*======================================================================*/
++// called in driver transmit (softirq) context
++int __laird_tx_part1(td_cryp *p)
++{
++    struct sk_buff *skb = p->skb;
++    lrd_keyset_t *pkeyset = p->pkeyset;
++    struct laird_wlanhdr *hdr;
++    int hdrlen;
++    int alen;
++    u8 *pm;
++    int mlen;
++    lrd_key_t *pk;
++    lrd_seq_t tsc;
++    void *pkt;
++    int len;
++    int res;
++
++    DEBUG_IDX(p);
++
++    pkt = skb->data;
++    len = skb->len;
++
++    laird_printhexs(__func__, "pak", pkt, len);
++    hdr = pkt;
++    if ( 0 == (hdr->fc[1] & 0x40)) {
++        return 1; // not encrypted, return 1 to force callback now
++    }
++
++    pk = pkeyset->pk[pkeyset->tx_index];
++    if (!pk) {
++        // printk(KERN_ALERT "ERROR: no encryption key, packet discarded\n");
++        FIPS_STAT_INC(tx_encrypt_no_key);
++        return -1; // no encryption key set
++    }
++
++    hdrlen = ecr_wlanhdr_len(hdr);
++    if (len <= hdrlen + 16) {
++        // packet is too short
++        FIPS_STAT_INC(tx_bad_packet);
++        return -1;
++    }
++
++    // copy key into ccm_key
++    memcpy(&p->ccm_key, pk->key, sizeof(pk->key));
++
++    mlen = len - hdrlen - 16;
++    pm = (u8*)pkt + hdrlen + 8;
++    if (fips_cause_replay_error) {
++        tsc = pk->tsc;
++        fips_cause_replay_error--;
++    } else
++        tsc = ++(pk->tsc);
++
++    {   // insert the IV
++        u8 *iv = pm - 8;
++        iv[0] = (tsc >> 0) & 0xFF;
++        iv[1] = (tsc >> 8) & 0xFF;
++        iv[2] = 0;
++        iv[3] = (1<<5) | (pkeyset->tx_index<<6);
++        iv[4] = (tsc >> 16) & 0xFF;
++        iv[5] = (tsc >> 24) & 0xFF;
++        iv[6] = (tsc >> 32) & 0xFF;
++        iv[7] = (tsc >> 40) & 0xFF;
++    }
++
++    ecr_set_nonce(p->n, hdr, tsc);
++    alen = ecr_set_aad(p->a, hdr);
++
++    // encrypt the packet
++    res = sdclkm_fnccmencrypt_ex(&p->cbd,
++                                 &p->ccm_key,
++                                 &p->n[0], 13,
++                                 &p->a[0], alen,
++                                 pm, mlen,
++                                 pm+mlen, 8);
++
++    if (res <= 0) return res;
++    //printk(KERN_ALERT "%s: unexpected return value\n", __FUNCTION__);
++    return 0;
++
++    // processing will continue later in __laird_tx_part2()
++}
++
++// called from tasklet after crypto operations complete
++static int __laird_tx_part2(td_cryp *p)
++{
++    int res = p->res;
++    struct sk_buff *skb = p->skb;
++    struct laird_wlanhdr *hdr = (void*)skb->data;
++
++    DEBUG_IDX(p);
++
++    if (hdr->fc[1] & 0x40) {
++        if (!res) FIPS_STAT_INC(tx_encrypt_ok);
++        else FIPS_STAT_INC(tx_encrypt_fail);
++        // TBD: debug code to remove
++        if (fips_cause_encrypt_error) {
++            u8 *pm = skb->data;
++            fips_cause_encrypt_error--;
++            pm[skb->len - 1] ^= 1;
++        }
++    } else {
++        if (!res) FIPS_STAT_INC(tx_unencrypted_ok);
++        else FIPS_STAT_INC(tx_unencrypted_fail);
++    }
++    return res;
++}
++
++/*======================================================================*/
++static char dnib2hex(int x)
++{
++    if (x < 10) return '0' + x;
++    if (x < 16) return 'a' + (x - 10);
++    return '?';
++}
++
++void laird_printhexs(const char *psz, const char *pfx, const void *buf, int len)
++{
++#if 0
++    const char *src = buf;
++    printk(KERN_ALERT "%s: %s 0x%x[%d]\n", psz, pfx, (unsigned int)buf, len);
++    if (len > 128) len = 128;
++    while (len) {
++        int thislen = len > 16 ? 16 : len;
++        char hexs[16*3];
++        char *dst = &hexs[0];
++        len -= thislen;
++        while (thislen) {
++            *dst++ = dnib2hex(*src >> 4);
++            *dst++ = dnib2hex(*src & 0xf);
++            *dst++ = ' ';
++            src++;
++            thislen--;
++        }
++        *(dst-1) = 0;
++        printk(KERN_ALERT "%s: %s\n", pfx, hexs);
++    }
++#endif /* 0 */
++}
++
++
++/*  Convert DIX to 802.3 encapsulation and eth to 802.11 for transmit packets.
++ *  Assumes the entire DIX header is contigous and that there is
++ *  enough room in the buffer for a 802.11 mac header and LLC+SNAP headers.
++ */
++
++#define LAIRD_ENCRYPTED
++// firmware is always adding IV, so don't add it here...
++
++static int lrd_skb_2_dot11(struct sk_buff *skb, int wmm, lrd_keyset_t *pkeyset)
++{
++    struct _llc_snap_hdr *llc_hdr;
++    struct ethhdr *eth_hdr;
++    __be16 type;
++    u16 size;
++    u32 up;
++    int is_dix;
++    int host_crypto = 0;
++    struct laird_wlanhdr *wlan_hdr;
++
++    if (WARN_ON(skb == NULL))
++        return -EINVAL;
++
++    laird_printhexs(__func__, "pak", skb->data, skb->len);
++
++    if (pkeyset->pbssid == NULL) {
++        // not connected -- discard
++        //printk(KERN_ALERT "%s: discard as not connected\n", __func__);
++        return -1;
++    }
++
++    eth_hdr = (struct ethhdr *) skb->data;
++    type = eth_hdr->h_proto;
++    if (!is_ethertype(be16_to_cpu(type))) {
++        is_dix = 0;
++    } else {
++        is_dix = 1;
++    }
++
++#ifdef LAIRD_ENCRYPTED
++    if (type != be16_to_cpu(ETHTYPE_EAPOL)) {
++        // non-EAPOL packets should always be encrypted, or discarded
++        host_crypto = 1;
++    } else {
++        // EAPOL packet
++        if (pkeyset->pk[pkeyset->tx_index]) {
++            // key is set -- encrypt EAPOL packet
++            host_crypto = 1;
++        }
++    }
++#endif
++
++    // user priority
++    up = 0;
++    if (skb->priority >= 256) {
++        up = skb->priority - 256;
++        if (up > 7) up = 0;
++    }
++    if (type == be16_to_cpu(ETHTYPE_IP)) {
++        u8 *iph = (u8*)(eth_hdr+1);
++        int upip;
++        if (iph[0] >> 4 == 4) {
++            upip = iph[1] >> 5;
++            if (upip > up) up = upip;
++        }
++    }
++    // printk(KERN_ALERT "%s: priority=%d, up=%d\n", __func__, skb->priority, up);
++
++    size = sizeof(struct laird_wlanhdr) - sizeof(struct ethhdr);
++    if (host_crypto) {
++        // allocate room for IV, filled in during encrypt
++        size += 8;
++        // allocate room for ICV, filled in during encrypt
++        if (skb_tailroom(skb) < 8) {
++            //printk(KERN_ALERT "%s: tailroom too small %d\n", __FUNCTION__,
++            //	   skb_tailroom(skb));
++            return -ENOMEM;
++        }
++        skb_put(skb, 8);
++    }
++    if (wmm) {
++        size += 2 + WLANHDR_QOS_PAD;
++    }
++    if (is_dix) {
++        size += sizeof(*llc_hdr);
++    }
++    if (skb_headroom(skb) < size) {
++        //printk(KERN_ALERT "%s: headroom too small\n", __FUNCTION__);
++        return -ENOMEM;
++    }
++    skb_push(skb, size);
++
++    wlan_hdr = (struct laird_wlanhdr *) skb->data;
++    wlan_hdr->fc[0] = FC0_FTYPE_DATA | (wmm ? FC0_STYPE_QOS : 0); // data
++    wlan_hdr->fc[1] = FC1_TODS; // tods
++#ifdef LAIRD_ENCRYPTED
++    if (host_crypto) wlan_hdr->fc[1] |= FC1_PROTECTED; // encrypted
++#endif
++    wlan_hdr->dur = 0;
++    {
++        u8 da[6];
++        memcpy(da, &eth_hdr->h_dest, 6);
++        // note: use memmove as the locations may overlap
++        memmove(wlan_hdr->addr2, &eth_hdr->h_source, 6);
++        memcpy(wlan_hdr->addr3, da, 6);
++        memcpy(wlan_hdr->addr1, pkeyset->pbssid->addr, 6);
++    }
++    wlan_hdr->seq[0] = 0;
++    wlan_hdr->seq[1] = 0;
++    if (wmm) {
++        struct laird_wlanhdr_qos *hdrq = (void*)wlan_hdr;
++        hdrq->qos[0] = up;
++        hdrq->qos[1] = 0;
++    }
++
++    // convert DIX to 802.3
++    if (is_dix) {
++        llc_hdr = ((struct _llc_snap_hdr *)(eth_hdr + 1)) - 1;
++        llc_hdr->dsap = 0xAA;
++        llc_hdr->ssap = 0xAA;
++        llc_hdr->cntl = 0x03;
++        llc_hdr->org_code[0] = 0x0;
++        llc_hdr->org_code[1] = 0x0;
++        llc_hdr->org_code[2] = 0x0;
++        // note, type is already present from ethhdr
++    }
++    laird_printhexs(__func__, "pak", skb->data, skb->len);
++    return 0;
++}
++
++/*======================================================================*/
++// convert little endian sequence counter to native lrd_seq_t
++static lrd_seq_t _laird_seq(const u8 *leseq, int leseqlen)
++{
++    lrd_seq_t seq;
++    seq = 0;
++    if (!leseq || leseqlen != 6) return seq;
++    while (leseqlen) {
++        seq <<= 8;
++        seq += leseq[--leseqlen];
++    }
++    return seq;
++}
++
++// as keys, bssid are changed, the old value is kept for in progress rx/tx
++typedef struct {
++    lrd_key_t elem[2];
++    int idx;
++} lrd_key_chg_t;
++
++typedef struct {
++    lrd_bssid_t elem[2];
++    int idx;
++} lrd_bssid_chg_t;
++
++#define NUM_KEYSET 8
++typedef struct {
++    lrd_keyset_t elem[NUM_KEYSET];
++    int idx;
++} lrd_keyset_chg_t;
++
++// storage of multiple keyset/key/bssid to deal with key rotation
++static struct {
++    lrd_key_chg_t key_chg[4];
++    lrd_bssid_chg_t bssid_chg;
++    lrd_keyset_chg_t keyset_chg;
++} _priv_keydata;
++
++#ifndef ARRAY_SIZE
++#define ARRAY_SIZE(x)  (sizeof(x)/sizeof((x)[0]))
++#endif
++
++// move to the next keyset, copying the previous keyset contents
++// return: pointer to the new keyset
++static lrd_keyset_t *_keyset_next(void)
++{
++    lrd_keyset_chg_t *pchg = &_priv_keydata.keyset_chg;
++    lrd_keyset_t *cur;
++    lrd_keyset_t *new;
++    cur = &pchg->elem[pchg->idx];
++    pchg->idx = (pchg->idx + 1) % ARRAY_SIZE(pchg->elem);
++    new = &pchg->elem[pchg->idx];
++    *new = *cur;
++    return new;
++}
++
++// set the keyset to be used for tx/rx
++static inline void _keyset_activate(lrd_keyset_t *pkeyset)
++{
++    lrd_keydata.pkeyset = pkeyset;
++}
++
++// TBD: add spinlock to protect key access...
++void laird_addkey(struct net_device *ndev,
++                  u8 key_index, bool pairwise,
++                  const u8 *mac_addr,
++                  const u8 *key, int keylen,
++                  const u8 *seq, int seqlen)
++{
++    lrd_keyset_t *pkeyset;
++    lrd_key_t *pk;
++    lrd_key_t *pkold;
++
++#if 0
++    printk(KERN_ALERT "%s: key[%d] %s\n", __func__, key_index,
++           pairwise ? "pairwise" : "");
++    laird_printhexs(__func__, "key", key, keylen);
++    laird_printhexs(__func__, "seq", seq, seqlen);
++#endif
++
++    if (key_index >= 4) return;
++    if (keylen != 16) return;
++
++    {
++        lrd_key_chg_t *pchg = &_priv_keydata.key_chg[key_index];
++        pk = &pchg->elem[pchg->idx];
++        pchg->idx = (pchg->idx + 1) % ARRAY_SIZE(pchg->elem);
++    }
++
++    memset(pk, 0, sizeof(*pk));
++    memcpy(pk->key, key, sizeof(pk->key));
++    pk->rsc = _laird_seq(seq, seqlen);
++    // info: can test tsc overflow by setting big tsc here
++
++    // next keyset with new key information
++    pkeyset = _keyset_next();
++    if (pairwise) pkeyset->tx_index = key_index;
++    pkold = pkeyset->pk[key_index];
++    if (pkold && memcmp(pk->key, pkold->key, sizeof(pk->key))) {
++        // key changed -- save old key for delayed receive packets
++        pkeyset->pkold[key_index] = pkold;
++    }
++    pkeyset->pk[key_index] = pk;
++    _keyset_activate(pkeyset);
++}
++
++void laird_delkey(struct net_device *ndev, u8 key_index)
++{
++    lrd_keyset_t *pkeyset;
++
++#if 0
++    printk(KERN_ALERT "%s: key[%d]\n", __func__, key_index);
++#endif
++    if (key_index >= 4) return;
++
++    // next keyset with new key information
++    pkeyset = _keyset_next();
++    pkeyset->pk[key_index] = NULL;
++    _keyset_activate(pkeyset);
++}
++
++void laird_setbssid(const u8 *bssid)
++{
++    lrd_keyset_t *pkeyset;
++    lrd_bssid_t *pb;
++
++#if 1
++    laird_printhexs(__func__, "bssid", bssid, bssid ? 6 : 0);
++#endif
++
++    if (bssid != NULL) {
++        lrd_bssid_chg_t *pchg = &_priv_keydata.bssid_chg;
++        pb = &pchg->elem[pchg->idx];
++        pchg->idx = (pchg->idx + 1) % ARRAY_SIZE(pchg->elem);
++        memcpy(pb->addr, bssid, 6);
++    } else {
++        pb = NULL;
++    }
++
++    // next keyset with new bssid
++    pkeyset = _keyset_next();
++    pkeyset->pbssid = pb;
++    _keyset_activate(pkeyset);
++}
++
++// stopping the driver (rmmod) to wait for cryp queues (txrx) to complete
++int laird_stop_txrx(void)
++{
++    DEBUG_TRACE;
++    return __cryp_wait_txrx_completed();
++}
++
++#endif // LAIRD_FIPS
+diff -urN a/drivers/net/wireless/ath/ath6kl/laird.h b/drivers/net/wireless/ath/ath6kl/laird.h
+--- a/drivers/net/wireless/ath/ath6kl/laird.h	1969-12-31 18:00:00.000000000 -0600
++++ b/drivers/net/wireless/ath/ath6kl/laird.h	2013-04-08 14:04:38.265625000 -0500
+@@ -0,0 +1,76 @@
++/*
++ * Copyright (c) 2012 Laird Technologies, Inc.
++ */
++#ifndef LAIRD_H
++#define LAIRD_H
++
++
++#ifdef LAIRD_FIPS
++#include <linux/etherdevice.h>
++
++struct laird_wlanhdr {
++    u8 fc[2];
++#define FC0_FTYPE      (3<<2)
++#define FC0_FTYPE_DATA (2<<2)
++#define FC0_STYPE_QOS  (1<<7)
++#define FC1_TODS       (1<<0)
++#define FC1_FROMDS     (1<<1)
++#define FC1_MOREFRAGS  (1<<2)
++#define FC1_PROTECTED  (1<<6)
++    __le16 dur;
++    u8 addr1[6];
++    u8 addr2[6];
++    u8 addr3[6];
++    u8 seq[2];
++#define SEQ0_FRAG (0xF)
++} __packed;
++
++void laird_printhexs(const char *psz, const char *pf, const void *buf, int len);
++int ecr_wlanhdr_len(struct laird_wlanhdr *hdr);
++
++//#define DEBUG_TRACE0
++//#define DEBUG_TRACE1 printk(KERN_ALERT "%s: line %d\n", __FUNCTION__, __LINE__)
++#if 0
++#define DEBUG_TRACE printk(KERN_ALERT "%s: line %d\n", __FUNCTION__, __LINE__)
++#else
++#define DEBUG_TRACE
++#endif
++
++extern bool fips_mode;
++
++// receive: laird_skb_rx will return non-zero to let driver process packet
++extern int  laird_skb_rx_prep(struct sk_buff *skb);
++// res<0 to fail packet, else continue receive
++extern void laird_skb_rx_continue(struct sk_buff *skb, int res);
++
++// transmit: prepare sk_buff -- encryption/encapsulation
++extern int laird_skb_encrypt_prep(struct sk_buff *skb, struct net_device *dev, int wmm);
++
++// transmit: continue transmit after encryption/encapsulation
++// routine in driver
++// isfips=-1 to fail the skb
++// isfips=1 to indicate that skb has been encrypted/encapsulated in 802.11
++extern int laird_data_tx_continue(
++    struct sk_buff *skb, struct net_device *dev, int isfips);
++
++// transmit: flow control
++extern void laird_stop_queue(struct net_device *dev);
++extern void laird_wake_queue(struct net_device *dev);
++
++// key operations
++extern void laird_addkey(struct net_device *ndev, u8 key_index,
++                         bool pairwise,
++                         const u8 *mac_addr,
++                         const u8 *key, int keylen,
++                         const u8 *seq, int seqlen);
++extern void laird_delkey(struct net_device *ndev, u8 key_index);
++
++// bssid
++extern void laird_setbssid(const u8 *bssid);
++
++// stopping the driver (rmmod) support
++extern int laird_stop_txrx(void);
++
++#endif // LAIRD_FIPS
++#endif /* LAIRD_H */
++
+diff -urN a/drivers/net/wireless/ath/ath6kl/main.c b/drivers/net/wireless/ath/ath6kl/main.c
+--- a/drivers/net/wireless/ath/ath6kl/main.c	2013-04-18 21:46:36.711078650 -0500
++++ b/drivers/net/wireless/ath/ath6kl/main.c	2013-02-28 16:07:21.484375000 -0600
+@@ -22,6 +22,7 @@
+ #include "cfg80211.h"
+ #include "target.h"
+ #include "debug.h"
++#include "laird.h"
+ 
+ struct ath6kl_sta *ath6kl_find_sta(struct ath6kl_vif *vif, u8 *node_addr)
+ {
+@@ -1326,11 +1327,23 @@
+ 	dev->destructor = free_netdev;
+ 	dev->watchdog_timeo = ATH6KL_TX_TIMEOUT;
+ 
++#ifdef LAIRD_FIPS
++	if (fips_mode) {
++		// TBD: fix with correct header length
++		dev->needed_headroom = 32 + 8;
++		// need tailroom for adding ICV
++		dev->needed_tailroom = 8;
++	} else
++#endif
+ 	dev->needed_headroom = ETH_HLEN;
+ 	dev->needed_headroom += sizeof(struct ath6kl_llc_snap_hdr) +
+ 				sizeof(struct wmi_data_hdr) + HTC_HDR_LENGTH
+ 				+ WMI_MAX_TX_META_SZ + ATH6KL_HTC_ALIGN_BYTES;
+ 
++#ifdef LAIRD_FIPS
++	if (!fips_mode)
++		// can only support hardware ip checksum in non-fips mode
++#endif
+ 	dev->hw_features |= NETIF_F_IP_CSUM | NETIF_F_RXCSUM;
+ 
+ 	return;
+diff -urN a/drivers/net/wireless/ath/ath6kl/Makefile b/drivers/net/wireless/ath/ath6kl/Makefile
+--- a/drivers/net/wireless/ath/ath6kl/Makefile	2013-04-18 21:46:36.711078650 -0500
++++ b/drivers/net/wireless/ath/ath6kl/Makefile	2013-04-02 14:57:18.750000000 -0500
+@@ -42,3 +42,11 @@
+ 
+ obj-$(CONFIG_ATH6KL_USB) += ath6kl_usb.o
+ ath6kl_usb-y += usb.o
++
++# Laird FIPS mods
++ccflags-y += -DLAIRD_FIPS
++ath6kl_core-y += laird.o
++#ccflags-y += -DLAIRD_REASSEMBLY
++#ath6kl_core-y += reassm.o
++
++ccflags-y += -DCONFIG_ATH6KL_DEBUG
+diff -urN a/drivers/net/wireless/ath/ath6kl/reassm.c b/drivers/net/wireless/ath/ath6kl/reassm.c
+--- a/drivers/net/wireless/ath/ath6kl/reassm.c	1969-12-31 18:00:00.000000000 -0600
++++ b/drivers/net/wireless/ath/ath6kl/reassm.c	2013-04-11 16:48:37.890625000 -0500
+@@ -0,0 +1,292 @@
++#ifdef LAIRD_REASSEMBLY
++/*
++ ============================================================================
++ Name        : generic_reassembly.c
++ Author      : Tim Carney
++ Version     :
++ Copyright   : 2013 Laird Technologies
++ Description : Generic reassembly routines
++ ============================================================================
++ */
++
++#include "laird.h"
++#include "reassm.h"
++
++static int lairdReassemblyArraySearch(int seqNum);
++static void lairdReassemblyTrim (struct sk_buff *skb);
++static int lairdReassemblyAppendBytes(struct sk_buff* from_skb, struct sk_buff* to_skb);
++static void lairdReassemblyReclaimBuf(void);
++static int lairdReassemblyAppendFrag(struct sk_buff* bufPtr, int index);
++
++static int lairdReassemblyLastIndex;
++struct sk_buff* lairdReassemblyArray[LAIRD_SIMULT_REASSEMBLE_BUFS];
++
++
++int lairdReassemblyProcess(struct sk_buff *skb)
++{
++    short seqNum;
++    short fragNum;
++    int curIndex;
++    int errorCode;
++    struct laird_wlanhdr *hdr;
++
++    /* Assume failure */
++    errorCode = -1;
++
++    if (skb == (struct sk_buff*)0) {
++        printk(KERN_ALERT "lairdReassemblyProcess: invalid skb\r\n");
++        errorCode = -1;
++        goto LAIRD_REASSEMBLY_PROCESS_END;
++     }
++
++    hdr  = (void*)skb->data;
++    if (hdr) {
++        seqNum = LAIRD_EXTRACT_SEQ_NUM(hdr);
++        fragNum = LAIRD_EXTRACT_FRAG_NUM(hdr);
++    } else {
++        printk(KERN_ALERT "lairdReassemblyProcess: invalid skb passed in");
++        errorCode = -1;
++        goto LAIRD_REASSEMBLY_PROCESS_END;
++    }
++
++    curIndex = lairdReassemblyArraySearch(seqNum);
++    if (curIndex != -1) {
++        /* A match was found for the sequence number */
++        errorCode = lairdReassemblyAppendFrag(skb, curIndex);
++        if (errorCode == 0) {
++            /* Finished reassembling this packet */
++            errorCode = 0;
++        } else if (errorCode > 0) {
++            /* More fragments left to come */
++            lairdReassemblyLastIndex = curIndex;
++            errorCode = -1;
++            goto LAIRD_REASSEMBLY_PROCESS_END;
++        } else {
++            printk(KERN_ALERT "lairdReassemblyProcess: append failed (%d,%d)\r\n",
++                seqNum, fragNum);
++        }
++    } else {
++        /* We didn't find a match, if this is frag 0 reclaim a buffer */
++        if (fragNum == 0) {
++//            printk(KERN_ALERT "First fragment size = %d (%d)\r\n", skb->len, seqNum);
++            lairdReassemblyReclaimBuf();
++            /* copy the skb and its buffer */
++            lairdReassemblyArray[lairdReassemblyLastIndex] = skb_copy_expand(skb, 0, 2346-skb->len, GFP_ATOMIC);
++//            lairdReassemblyArray[lairdReassemblyLastIndex] = dev_alloc_skb(2346);
++            if (lairdReassemblyArray[lairdReassemblyLastIndex] == (struct sk_buff*)0) {
++                printk(KERN_ALERT "failed to alloc an sk_buff\r\n");
++                errorCode = -1;
++                goto LAIRD_REASSEMBLY_PROCESS_END;
++            }
++            /* Reassembly is not complete: return an error */
++            errorCode = -1;
++        }
++    }
++LAIRD_REASSEMBLY_PROCESS_END:
++    return errorCode; 
++}
++
++static int lairdReassemblyArraySearch(int seqNum)
++{
++    int searchIndex;
++    int candSeqNum;
++    struct sk_buff* skb;
++
++   /* Start with the current index and search backwards */
++    searchIndex = lairdReassemblyLastIndex;
++    if ((searchIndex > LAIRD_SIMULT_REASSEMBLE_BUFS) || (searchIndex < 0)) {
++        printk(KERN_ALERT "lairdReassemblyArraySearch: invalid search index (%d)\r\n", searchIndex);
++    }
++    do {
++        skb = lairdReassemblyArray[searchIndex];
++        if (!skb)
++            return -1; /* the buffer ring is empty */
++        candSeqNum = LAIRD_EXTRACT_SEQ_NUM(((struct laird_wlanhdr*)(void*)skb->data));
++        if (candSeqNum == seqNum) {
++            return searchIndex;
++        }
++        searchIndex = ((searchIndex-1)+LAIRD_SIMULT_REASSEMBLE_BUFS)%LAIRD_SIMULT_REASSEMBLE_BUFS;
++    } while (searchIndex != lairdReassemblyLastIndex);
++    return -1; //FAIL
++}
++
++static int lairdReassemblyBufFree(int index)
++{
++    struct sk_buff* skb;
++    
++    if ((index < 0) || (index > LAIRD_SIMULT_REASSEMBLE_BUFS)) {
++       printk(KERN_ALERT "lairdReassemblyBufFree: attempting to free buffer at index %d\r\n", index);
++       return -1;
++    }
++    skb = lairdReassemblyArray[index];
++    kfree_skb(skb);
++    lairdReassemblyArray[index]=0;
++    return 0;
++}
++
++static void lairdReassemblyAdvanceIndex(void)
++{
++    lairdReassemblyLastIndex = (lairdReassemblyLastIndex + 1)%LAIRD_SIMULT_REASSEMBLE_BUFS;
++}
++
++static void lairdReassemblyReclaimBuf(void)
++{
++    /* Free and return the next buffer since we ran out */
++    lairdReassemblyAdvanceIndex();
++
++    if (lairdReassemblyArray[lairdReassemblyLastIndex]!=(struct sk_buff*)0) {
++        lairdReassemblyBufFree(lairdReassemblyLastIndex);
++    }
++}
++
++static void lairdReassemblyTrim(struct sk_buff* skb)
++{
++    struct laird_wlanhdr *hdr;
++    
++    hdr = (void*)skb->data;
++    if (hdr->fc[1] & FC1_PROTECTED) {
++        /* This packet was encrypted: update the skb to exclude the WLAN header, IV and ICV */
++        skb_pull(skb, 8+ecr_wlanhdr_len(hdr));
++        skb_trim(skb, skb->len - 8);
++    } else {
++       /* We still need to exclude the wlan header */
++       skb_pull(skb, ecr_wlanhdr_len(hdr));
++   }
++}
++
++static int lairdReassemblyAppendBytes(struct sk_buff* from_skb, struct sk_buff* to_skb) 
++{
++    struct laird_wlanhdr *to_hdr;
++    struct laird_wlanhdr *from_hdr;
++    char* destPtr;
++    char* srcPtr;
++    int len;
++    short do_decrypt;
++
++    to_hdr = (void*)to_skb->data;
++    from_hdr = (void*)from_skb->data;
++
++    do_decrypt = from_hdr->fc[1] & FC1_PROTECTED; 
++
++    /* Calculate the destination pointer for the copy */
++    len = to_skb->len; 
++    if  (do_decrypt) {
++        len-=8;
++    }
++    destPtr = (char *)to_hdr + len; 
++
++    /* Calculate the source pointer for the copy */
++    len = ecr_wlanhdr_len(from_hdr);
++    if  (do_decrypt) {
++        len+=8;
++    }
++    srcPtr = (char *)from_hdr + len;
++
++    /* Calculate the number of bytes to copy */
++    len  = from_skb->len - len;
++    if (do_decrypt) {
++        /* The ICV will not be preserved */
++        len -= 8;
++    }
++
++    if (skb_tailroom(to_skb) < len) {
++        return -1;
++    }
++ //   printk(KERN_ALERT "appending %d bytes\r\n", len);
++    skb_put(to_skb, len);
++    memcpy(destPtr, srcPtr, len);
++    to_hdr->seq[0] = from_hdr->seq[0];
++    to_hdr->seq[1] = from_hdr->seq[1];
++    return 0;
++}
++#define FC1_FRAG_MATCH (FC1_TODS|FC1_FROMDS|FC1_PROTECTED)
++static int lairdReassemblyAppendFrag(struct sk_buff* skb, int index)
++{
++    struct laird_wlanhdr *hdr;
++    struct laird_wlanhdr *priv_hdr;
++    struct sk_buff* priv_skb;
++    char* destPtr;
++    int retCode;
++    short do_decrypt;
++    short priv_do_decrypt;
++    short seqNum;
++    short fragNum;
++    short privSeqNum;
++    short privFragNum;
++
++    priv_skb = lairdReassemblyArray[index];
++    if ((skb == (struct sk_buff*)0) || priv_skb == (struct sk_buff*)0) {
++        printk(KERN_ALERT "lairdReassemblyAppendFrag: invalid argument \r\n");
++        retCode = -1;
++        goto LAIRD_REASSM_APPEND_FRAG_END;
++    }
++    hdr = (void*)skb->data;
++    priv_hdr = (void*)priv_skb->data;
++    seqNum = LAIRD_EXTRACT_SEQ_NUM(hdr);
++    fragNum = LAIRD_EXTRACT_FRAG_NUM(hdr);
++    privSeqNum = LAIRD_EXTRACT_SEQ_NUM(priv_hdr);
++    privFragNum = LAIRD_EXTRACT_FRAG_NUM(priv_hdr);
++    do_decrypt = hdr->fc[1] & FC1_PROTECTED;
++    
++//    printk(KERN_ALERT "appending (%d|%d)\r\n", seqNum, fragNum);
++
++    /* Verify that this is the next fragment */
++    if (!(seqNum == privSeqNum)
++            && (fragNum == privFragNum+1)
++            && ((hdr->fc[1] & FC1_FRAG_MATCH) == (priv_hdr->fc[1] & FC1_FRAG_MATCH))) {
++        printk(KERN_ALERT "This isn't the next fragment\r\n");
++        retCode = -1;
++        goto LAIRD_REASSM_APPEND_FRAG_END;
++    }
++   
++    retCode = lairdReassemblyAppendBytes(skb, priv_skb);
++
++    if (retCode != 0) {
++        printk(KERN_ALERT "lairdReassemblyAppendFrag: not enough memory\r\n");
++        goto LAIRD_REASSM_APPEND_FRAG_END;
++    }
++   
++    if ((hdr->fc[1] & FC1_MOREFRAGS)==0) {
++        /* This was the last fragment, so copy everything back into the current skb */
++        destPtr = (char*)0;
++        if (skb_tailroom(skb) > (priv_skb->len - skb->len)) {
++            destPtr = skb_put(skb, (priv_skb->len - skb->len));
++        }
++        if (destPtr) {
++            memcpy (skb->data, priv_skb->data, priv_skb->len);
++            lairdReassemblyBufFree(index);
++//            printk(KERN_ALERT "Finished reassembling %d byte packet (%d)\r\n", skb->len, seqNum);
++            retCode = 0;
++        } else {
++            printk(KERN_ALERT "lairdReassemblyAppendFrag: failed to put data in last skb\r\n");
++            retCode = -1;
++        }
++    } else {
++        retCode = 1;
++    }
++LAIRD_REASSM_APPEND_FRAG_END:
++    return retCode;
++}
++
++int lairdReassemblyInit(void)
++{
++    int index;
++    for (index=0; i<LAIRD_SIMULT_REASSEMBLE_BUFS; index++) {
++        lairdReassemblyArray[i]=(struct sk_buff*)0;
++    }
++    lairdReassemblyLastIndex = 0;
++    return 0;
++}
++
++int lairdReassemblyPurgeAll(void)
++{
++    int index;
++
++    for(index=0; index<LAIRD_SIMULT_REASSEMBLE_BUFS, index++) {
++        lairdReassemblyReclaimBuf();
++    } 
++
++    return 0;
++}
++#endif /* LAIRD_REASSEMBLY */
++
+diff -urN a/drivers/net/wireless/ath/ath6kl/reassm.h b/drivers/net/wireless/ath/ath6kl/reassm.h
+--- a/drivers/net/wireless/ath/ath6kl/reassm.h	1969-12-31 18:00:00.000000000 -0600
++++ b/drivers/net/wireless/ath/ath6kl/reassm.h	2013-04-03 13:07:07.671875000 -0500
+@@ -0,0 +1,17 @@
++#ifdef LAIRD_REASSEMBLY
++#ifndef REASSM_H
++#define REASSM_H
++
++#define LAIRD_SIMULT_REASSEMBLE_BUFS	10
++#define AGGR_INCR_IDX(x, y)         AGGR_WIN_IDX(((x) + 1), (y))
++
++#define LAIRD_EXTRACT_SEQ_NUM(hdr) (0x0ff0 & (hdr->seq[1]<<4)) \
++					 + ((0x00f0 & hdr->seq[0])>>4);
++#define LAIRD_EXTRACT_FRAG_NUM(hdr) (0x0f & hdr->seq[0]);
++
++int lairdReassemblyInit(void);
++int lairdReassemblyProcess(struct sk_buff* bufPtr);
++int lairdReassemblyPurgeAll(void);
++
++#endif /* REASSM_H */
++#endif /* LAIRD_REASSEMBLY */
+diff -urN a/drivers/net/wireless/ath/ath6kl/txrx.c b/drivers/net/wireless/ath/ath6kl/txrx.c
+--- a/drivers/net/wireless/ath/ath6kl/txrx.c	2013-04-18 21:46:36.691077669 -0500
++++ b/drivers/net/wireless/ath/ath6kl/txrx.c	2013-03-05 07:52:59.109375000 -0600
+@@ -21,6 +21,9 @@
+ #include "debug.h"
+ #include "htc-ops.h"
+ 
++/* additional changes copyright (2012) Laird Technologies, Inc. */
++#include "laird.h"
++
+ /*
+  * tid - tid_mux0..tid_mux3
+  * aid - tid_mux4..tid_mux7
+@@ -348,7 +351,13 @@
+ 	return status;
+ }
+ 
++#ifdef LAIRD_FIPS
++int laird_data_tx_continue(struct sk_buff *skb, 
++						   struct net_device *dev,
++						   int isfips)
++#else
+ int ath6kl_data_tx(struct sk_buff *skb, struct net_device *dev)
++#endif
+ {
+ 	struct ath6kl *ar = ath6kl_priv(dev);
+ 	struct ath6kl_cookie *cookie = NULL;
+@@ -365,6 +374,11 @@
+ 	u8 meta_ver = 0;
+ 	u32 flags = 0;
+ 
++#ifdef LAIRD_FIPS
++	if (isfips < 0) // check if fips encryption failed
++		goto fail_tx;
++#endif
++
+ 	ath6kl_dbg(ATH6KL_DBG_WLAN_TX,
+ 		   "%s: skb=0x%p, data=0x%p, len=0x%x\n", __func__,
+ 		   skb, skb->data, skb->len);
+@@ -386,6 +400,12 @@
+ 	}
+ 
+ 	if (test_bit(WMI_ENABLED, &ar->flag)) {
++#ifdef LAIRD_FIPS
++		if (isfips)
++			goto fips_skip1;
++
++		// only do the following for non-fips mode
++#endif
+ 		if ((dev->features & NETIF_F_IP_CSUM) &&
+ 		    (csum == CHECKSUM_PARTIAL)) {
+ 			csum_start = skb->csum_start -
+@@ -410,6 +430,10 @@
+ 			goto fail_tx;
+ 		}
+ 
++#ifdef LAIRD_FIPS
++	fips_skip1: // contunue fips processing here
++#endif /* LAIRD_FIPS */
++	 
+ 		if ((dev->features & NETIF_F_IP_CSUM) &&
+ 		    (csum == CHECKSUM_PARTIAL)) {
+ 			meta_v2.csum_start = csum_start;
+@@ -424,8 +448,14 @@
+ 			meta = NULL;
+ 		}
+ 
++#ifdef LAIRD_FIPS
++#define LAIRD_HDR_TYPE (isfips ? WMI_DATA_HDR_DATA_TYPE_802_11 : 0)
++#else
++#define LAIRD_HDR_TYPE 0
++#endif /* LAIRD_FIPS */
++
+ 		ret = ath6kl_wmi_data_hdr_add(ar->wmi, skb,
+-				DATA_MSGTYPE, flags, 0,
++				DATA_MSGTYPE, flags, LAIRD_HDR_TYPE,
+ 				meta_ver,
+ 				meta, vif->fw_vif_idx);
+ 
+@@ -520,6 +550,27 @@
+ 	return 0;
+ }
+ 
++#ifdef LAIRD_FIPS
++int ath6kl_data_tx(struct sk_buff *skb, struct net_device *dev)
++{
++	struct ath6kl *ar = ath6kl_priv(dev);
++
++	// if not in fips_mode use the normal routine
++	if (!fips_mode) return laird_data_tx_continue(skb, dev, 0);
++
++	// in fips_mode, convert the socket buffer and then continue
++	// TBD: modify call to enable WMM
++	if (laird_skb_encrypt_prep(skb, dev, ar->wmi->is_wmm_enabled)) {
++		// failure -- pass to original routine to handle failure
++		return laird_data_tx_continue(skb, dev, -1);
++	}
++
++	// laird_data_tx_continue() will be called in laird_skb_tx_tasklet()
++
++	return 0;
++}
++#endif
++
+ /* indicate tx activity or inactivity on a WMI stream */
+ void ath6kl_indicate_tx_activity(void *devt, u8 traffic_class, bool active)
+ {
+@@ -628,6 +679,12 @@
+ 			spin_unlock_bh(&ar->list_lock);
+ 
+ 			set_bit(NETQ_STOPPED, &vif->flags);
++#ifdef LAIRD_FIPS
++			if (fips_mode) {
++				// also, stop completed fips packets from being submitted
++		        laird_stop_queue(vif->ndev);
++			}
++#endif
+ 			netif_stop_queue(vif->ndev);
+ 
+ 			return action;
+@@ -800,6 +857,12 @@
+ 		if (test_bit(CONNECTED, &vif->flags) &&
+ 		    !flushing[vif->fw_vif_idx]) {
+ 			spin_unlock_bh(&ar->list_lock);
++#ifdef LAIRD_FIPS
++			if (fips_mode) {
++				// also, enable completed fips packets to be submitted
++				laird_wake_queue(vif->ndev);
++			}
++#endif
+ 			netif_wake_queue(vif->ndev);
+ 			spin_lock_bh(&ar->list_lock);
+ 		}
+@@ -1542,6 +1605,24 @@
+ 
+ 	skb_pull(skb, pad_before_data_start);
+ 
++#ifdef LAIRD_FIPS
++	if (fips_mode) {
++		int res;
++		res = laird_skb_rx_prep(skb);
++		if (res == 0) {
++			// will continue in laird_skb_rx_continue
++			return;
++		}
++		if (res < 0) {
++			// failed -- delete packet
++			dev_kfree_skb(skb);
++			return;
++		}
++		// TBD: temporary code for testing...
++		// letting driver finish receive processing
++	}
++#endif
++
+ 	if (dot11_hdr)
+ 		status = ath6kl_wmi_dot11_hdr_remove(ar->wmi, skb);
+ 	else if (!is_amsdu)
+@@ -1617,6 +1698,22 @@
+ 	ath6kl_deliver_frames_to_nw_stack(vif->ndev, skb);
+ }
+ 
++#ifdef LAIRD_FIPS
++// continue receive packet processing
++void laird_skb_rx_continue(struct sk_buff *skb, int res)
++{
++	if (res < 0) {
++		// failed decrypt -- free buffer
++		// printk(KERN_ALERT "%s: res=%d\n", __func__, res);
++		dev_kfree_skb(skb);
++	} else {
++		// laird_printhexs(__func__, "pak", skb->data, skb->len);
++		// TBD: above is now using vif->ndev ???
++		ath6kl_deliver_frames_to_nw_stack(skb->dev, skb);
++	}
++}
++#endif
++
+ static void aggr_timeout(unsigned long arg)
+ {
+ 	u8 i, j;
+diff -urN a/drivers/net/wireless/ath/ath6kl/wmi.c b/drivers/net/wireless/ath/ath6kl/wmi.c
+--- a/drivers/net/wireless/ath/ath6kl/wmi.c	2013-04-18 21:46:36.687077528 -0500
++++ b/drivers/net/wireless/ath/ath6kl/wmi.c	2013-03-07 12:11:38.281250000 -0600
+@@ -271,7 +271,24 @@
+ 	if (!wmm_enabled) {
+ 		/* If WMM is disabled all traffic goes as BE traffic */
+ 		usr_pri = 0;
++#ifdef LAIRD_FIPS
++	} else if (fips_mode) {
++		struct ieee80211_qos_hdr *pwh;
++		pwh = (struct ieee80211_qos_hdr *)(datap +
++							 sizeof(struct
++								wmi_data_hdr) +
++							 meta_size);
++		if (le16_to_cpu(pwh->frame_control) & IEEE80211_STYPE_QOS_DATA) {
++			// qos packet, get priority from qos field
++			usr_pri = le16_to_cpu(pwh->qos_ctrl) & IEEE80211_QOS_CTL_TAG1D_MASK;
++		} else {
++			// non-qos, always use 0
++			usr_pri = 0;
++		}
++		// NOTE: wmm_enabled is still true when associated to non-qos AP
++#endif
+ 	} else {
++
+ 		hdr_size = sizeof(struct ethhdr);
+ 
+ 		llc_hdr = (struct ath6kl_llc_snap_hdr *)(datap +
+@@ -3479,11 +3496,36 @@
+ 	struct wmi_rx_frame_format_cmd *cmd;
+ 	int ret;
+ 
++#ifdef LAIRD_FIPS
++	if (fips_mode) {
++		// Disable A-MSDU when in FIPS mode
++		struct wmi_allow_aggr_cmd *fips_cmd;
++		skb = ath6kl_wmi_get_new_buf(sizeof(*fips_cmd));
++		if (!skb)
++			return -ENOMEM;
++		fips_cmd = (struct wmi_allow_aggr_cmd *) skb->data;
++		/* Disable aggregation for Tx and Rx on all TIDs (one bit each) */
++		fips_cmd->tx_allow_aggr = 0x00;
++		fips_cmd->rx_allow_aggr = 0x00;
++       	ret = ath6kl_wmi_cmd_send(wmi, if_idx, skb, WMI_ALLOW_AGGR_CMDID,
++				  NO_SYNC_WMIFLAG);	
++	}
++#endif
++
+ 	skb = ath6kl_wmi_get_new_buf(sizeof(*cmd));
+ 	if (!skb)
+ 		return -ENOMEM;
+-
+ 	cmd = (struct wmi_rx_frame_format_cmd *) skb->data;
++
++#ifdef LAIRD_FIPS
++	if (fips_mode) {
++        // force FIPS mode
++        rx_dot11_hdr = 1;
++        defrag_on_host =1;
++        cmd->reserved[0] = 1;
++        printk(KERN_ALERT "%s: FIPS\n", __FUNCTION__);
++	}
++#endif
+ 	cmd->dot11_hdr = rx_dot11_hdr ? 1 : 0;
+ 	cmd->defrag_on_host = defrag_on_host ? 1 : 0;
+ 	cmd->meta_ver = rx_meta_ver;
+diff -urN a/drivers/net/wireless/ath/ath6kl/wmi.h b/drivers/net/wireless/ath/ath6kl/wmi.h
+--- a/drivers/net/wireless/ath/ath6kl/wmi.h	2013-04-18 21:46:36.687077528 -0500
++++ b/drivers/net/wireless/ath/ath6kl/wmi.h	2013-02-28 16:07:21.484375000 -0600
+@@ -2189,6 +2189,17 @@
+ 	__le16 reason_code;
+ } __packed;
+ 
++#ifdef LAIRD_FIPS
++/* WMI_ALLOW_AGGR_CMDID
++ * Configures tid's to allow ADDBA negotiations
++ * on each tid, in each direction
++ */
++struct wmi_allow_aggr_cmd{
++   u16 tx_allow_aggr; /* 16-bit mask to allow uplink ADDBA negotiation - bit position indicates tid */
++   u16 rx_allow_aggr; /* 16-bit mask to allow downlink ADDBA negotiation - bit position indicates tid */
++} __packed;
++#endif /* LAIRD_FIPS */
++
+ #define PEER_NODE_JOIN_EVENT		0x00
+ #define PEER_NODE_LEAVE_EVENT		0x01
+ #define PEER_FIRST_NODE_JOIN_EVENT	0x10
+diff -urN a/drivers/net/wireless/ath/mod2urw.c b/drivers/net/wireless/ath/mod2urw.c
+--- a/drivers/net/wireless/ath/mod2urw.c	1969-12-31 18:00:00.000000000 -0600
++++ b/drivers/net/wireless/ath/mod2urw.c	2013-04-24 10:58:38.412774182 -0500
+@@ -0,0 +1,618 @@
++#include <linux/module.h>
++#include <linux/moduleparam.h>
++#include <linux/init.h>
++
++#include <linux/kernel.h>
++#include <linux/slab.h>
++#include <linux/fs.h>
++#include <linux/errno.h>	/* error codes */
++#include <linux/types.h>	/* size_t */
++#include <linux/proc_fs.h>
++#include <linux/fcntl.h>	/* O_ACCMODE */
++#include <linux/seq_file.h>
++#include <linux/cdev.h>
++//#include <linux/debugfs.h>
++//#include <linux/mm.h>  /* mmap related stuff */
++#include <linux/sched.h>
++#include <linux/spinlock.h>
++
++//#include <linux/mutex.h>
++#include <asm/system.h>		/* cli(), *_flags */
++#include <asm/uaccess.h>	/* copy_*_user */
++
++#include "moddebug.h"
++
++static int cmd_to_host(char __user *buf, size_t count);
++static int cmd_from_host(const char __user *buf, size_t count);
++static void cmd_set_state(int enabled);
++
++/*======================================================================*/
++static int my_close(struct inode *inode, struct file *filp)
++{
++	cmd_set_state(0);
++	return 0;
++}
++
++static int my_open(struct inode *inode, struct file *filp)
++{
++	// TBD: prevent multiple instances
++	cmd_set_state(1);
++	return 0;
++}
++
++static DECLARE_WAIT_QUEUE_HEAD(wq_read);
++static unsigned short my_read_ready;
++
++static void __my_read_wake(void)
++{
++	DEBUG_TRACE;
++	my_read_ready = 1;
++	wake_up_interruptible(&wq_read); // update poll status
++}
++
++static ssize_t my_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
++{
++	int res;
++	// TBD: device mutex ?
++	DEBUG_TRACE;
++	// printk(KERN_ALERT "%s: buf=%x[%d]\n", __FUNCTION__, (u32)buf, count);
++	while (1) {
++		my_read_ready = 0;
++		res = cmd_to_host(buf, count);
++		if (res != 0) break;
++		if (filp->f_flags & O_NONBLOCK)
++			return -EAGAIN;
++		if (wait_event_interruptible(wq_read, my_read_ready))
++			return -ERESTARTSYS;
++	}
++	return res;
++}
++
++static ssize_t my_write(struct file *filp, const char __user *buf, size_t count, loff_t *f_pos)
++{
++	DEBUG_TRACE;
++	//printk(KERN_ALERT "%s: buf=%x[%d]\n", __FUNCTION__, (u32)buf, count);
++	cmd_from_host(buf, count);
++	return count;
++}
++
++static const struct file_operations my_fops = {
++	.open = my_open,
++	.release = my_close,
++	.write = my_write,
++	.read = my_read,
++};
++
++// use device file /dev/sdc2u0
++static int my_major =   0;
++static int my_minor =   0;
++static int my_nr_devs = 1;	/* number of bare devices */
++struct my_dev {
++	struct cdev cdev;	  /* Char device structure		*/
++};
++static struct my_dev *my_devices;	/* allocated in my_init_module */
++#define MYDEVSTR	"sdc2u"
++
++/*
++ * The cleanup function is used to handle initialization failures as well.
++ * Thefore, it must be careful to work correctly even if some of the items
++ * have not been initialized
++ */
++void my_cleanup_module(void)
++{
++	int i;
++	dev_t devno = MKDEV(my_major, my_minor);
++
++	DEBUG_TRACE;
++	/* Get rid of our char dev entries */
++	if (my_devices) {
++		for (i = 0; i < my_nr_devs; i++) {
++			cdev_del(&my_devices[i].cdev);
++		}
++		kfree(my_devices);
++	}
++
++	/* cleanup_module is never called if registering failed */
++	unregister_chrdev_region(devno, my_nr_devs);
++}
++
++/*
++ * Set up the char_dev structure for this device.
++ */
++static void my_setup_cdev(struct my_dev *dev, int index)
++{
++	int err, devno = MKDEV(my_major, my_minor + index);
++    
++	DEBUG_TRACE;
++	cdev_init(&dev->cdev, &my_fops);
++	dev->cdev.owner = THIS_MODULE;
++	dev->cdev.ops = &my_fops;
++	err = cdev_add (&dev->cdev, devno, 1);
++	/* Fail gracefully if need be */
++	if (err)
++		printk(KERN_NOTICE "Error %d adding mydev%d", err, index);
++}
++
++
++static int my_init_module(void)
++{
++	int result, i;
++	dev_t dev = 0;
++	DEBUG_TRACE;
++
++/*
++ * Get a range of minor numbers to work with, asking for a dynamic
++ * major unless directed otherwise at load time.
++ */
++	if (my_major) {
++		dev = MKDEV(my_major, my_minor);
++		result = register_chrdev_region(dev, my_nr_devs, MYDEVSTR);
++	} else {
++		result = alloc_chrdev_region(&dev, my_minor, my_nr_devs,
++				MYDEVSTR);
++		my_major = MAJOR(dev);
++	}
++	if (result < 0) {
++		printk(KERN_WARNING "mydev: can't get major %d\n", my_major);
++		return result;
++	}
++
++        /* 
++	 * allocate the devices -- we can't have them static, as the number
++	 * can be specified at load time
++	 */
++	my_devices = kmalloc(my_nr_devs * sizeof(struct my_dev), GFP_KERNEL);
++	if (!my_devices) {
++		result = -ENOMEM;
++		goto fail;  /* Make this more graceful */
++	}
++	memset(my_devices, 0, my_nr_devs * sizeof(struct my_dev));
++
++        /* Initialize each device. */
++	for (i = 0; i < my_nr_devs; i++) {
++		my_setup_cdev(&my_devices[i], i);
++	}
++
++	return 0; /* succeed */
++
++  fail:
++	my_cleanup_module();
++	return result;
++}
++
++// initialization
++static int __init sdclkm_init(void)
++{
++	DEBUG_TRACE;
++	if (my_init_module() < 0) goto failure;
++	return 0;
++failure:
++	return -1;
++}
++
++// cleanup and exit
++static void __exit sdclkm_exit(void)
++{
++	DEBUG_TRACE;
++	my_cleanup_module();
++}
++
++module_init(sdclkm_init);
++module_exit(sdclkm_exit);
++MODULE_LICENSE("GPL");
++
++/*======================================================================*/
++/*======================================================================*/
++#include "touser.h"
++#include "mod2urw.h"
++
++// defines the cmd -- number of parameters and handling for each
++// this will be constant for a given command
++typedef struct { // command control handling
++	int cmd;
++	int numit;
++	int flags[MAXIT];
++#define ITEM_TO_HOST 1
++#define ITEM_FROM_HOST 2
++} cmd_def_t;
++
++// command control
++typedef struct cmd_ctl_s {
++	cmd_hdr_t hdr;	// command header to pass to user space
++	int hdr_len;	// length of command header adjusted for numitems
++	const cmd_def_t *def;
++	item_ptr_t itp[MAXIT];	// pointers to the kernel data items
++	sdclkm_cb_t cbd; // callback function and callback data
++	struct cmd_ctl_s *next;
++} cmd_ctl_t;
++
++// queue of cmd submitted for processing
++static struct {
++	int enabled; // set when user-space app registers
++	cmd_ctl_t *active;
++	cmd_ctl_t *first;
++	cmd_ctl_t *last;
++} cmd_glob;
++
++/*======================================================================*/
++// spinlock to protect the queue of pending requests
++static DEFINE_SPINLOCK(cmdq_lock);
++
++static inline cmd_ctl_t *cmd_ctl_alloc(void)
++{
++	cmd_ctl_t *ctl; // command control
++	ctl = kmalloc(sizeof(*ctl), GFP_ATOMIC);
++	return ctl;
++}
++
++static inline void cmd_ctl_free(cmd_ctl_t *ctl)
++{
++	kfree(ctl);
++}
++
++// note, this function may be called at process, or bottom half level
++// called at bh level from driver transmit/receive processing
++static int cmd_ctl_submit(cmd_ctl_t *ctl)
++{
++	DEBUG_TRACE;
++	ctl->next = NULL;
++	spin_lock_bh(&cmdq_lock);
++	if (!cmd_glob.enabled) {
++		// no user-space module to process command, fail it
++		spin_unlock_bh(&cmdq_lock);
++		cmd_ctl_free(ctl);
++		return -1;
++	}
++	if (cmd_glob.last) {
++		cmd_glob.last->next = ctl;
++	} else {
++		cmd_glob.first = ctl;
++	}
++	cmd_glob.last = ctl;
++	spin_unlock_bh(&cmdq_lock);
++	__my_read_wake();
++	return 0;
++}
++
++// called only at process level in read
++static cmd_ctl_t *cmd_ctl_get_next(void)
++{
++	cmd_ctl_t *ctl;
++	DEBUG_TRACE;
++	spin_lock_bh(&cmdq_lock);
++	ctl = cmd_glob.first;
++	if (ctl) {
++		cmd_glob.first = ctl->next;
++		if (cmd_glob.first == NULL) {
++			cmd_glob.last = NULL;
++		}
++	}
++	cmd_glob.active = ctl;
++	spin_unlock_bh(&cmdq_lock);
++	return ctl;
++}
++
++// called only at process level in write
++static cmd_ctl_t *cmd_ctl_get_active(void)
++{
++	DEBUG_TRACE;
++	// don't need spinlock here
++	return cmd_glob.active;
++}
++
++static void cmd_ctl_free_active(void)
++{
++	DEBUG_TRACE;
++	if (cmd_glob.active) {
++		cmd_ctl_free(cmd_glob.active);
++		cmd_glob.active = NULL;
++	}
++}
++
++/*======================================================================*/
++// copies available command into host buffer
++// returns total length of data, -Exxx on fail, 0 if no data available
++static int cmd_to_host(char __user *buf, size_t count)
++{
++	cmd_ctl_t *ctl;
++	cmd_hdr_t *hdr;
++	const cmd_def_t *def;
++	int i;
++	int err = 0;
++
++	DEBUG_TRACE;
++	ctl = cmd_ctl_get_next();
++	if (!ctl) {
++		return 0;  // no command to pass to user space
++	}
++
++	def = ctl->def;
++	hdr = &ctl->hdr;
++	if (count < hdr->len) {
++		printk(KERN_ALERT "%s: buffer too small\n", __FUNCTION__);
++		return -EFBIG; // insufficient space
++	}
++
++	// copy header to the buffer
++	err = copy_to_user((void __user *)buf, hdr, ctl->hdr_len);
++	// copy each data item to the buffer
++	for (i=0; i < def->numit && !err; i++) {
++		if ((def->flags[i] & ITEM_TO_HOST) == 0) continue;
++		if (hdr->it[i].len == 0) continue;
++		err = copy_to_user((void __user *)&buf[hdr->it[i].offset], 
++						   ctl->itp[i].p, hdr->it[i].len);
++	}
++	// return length of the data
++	if (err) return -EFAULT;
++	return hdr->len;
++}
++
++static int cmd_from_host(const char __user *buf, size_t count)
++{
++	cmd_ctl_t *ctl;
++	cmd_hdr_t *hdr;
++	const cmd_def_t *def;
++	cmd_hdr_t cin;
++	int i;
++	int res;
++	int err = 0;
++
++	DEBUG_TRACE;
++	ctl = cmd_ctl_get_active();
++	if (!ctl) {
++		printk(KERN_ALERT "%s: ERROR!! unsolicited cmd\n", __FUNCTION__);
++		return 0;
++	}
++
++	def = ctl->def;
++	hdr = &ctl->hdr;
++	if (count != hdr->len) {
++		printk(KERN_ALERT "%s: ERROR!! incorrect response length\n", __FUNCTION__);
++		printk(KERN_ALERT "%s: len %d; but, expected %d\n",
++			   __FUNCTION__, count, hdr->len);
++		res = -1;
++	} else {
++		// copy the result from the header
++		err = copy_from_user(&cin, (void __user *)buf, offsetof(cmd_hdr_t, numit));
++		res = cin.res;
++		// copy each data item from the buffer
++		for (i=0; i < def->numit && !err; i++) {
++			if ((def->flags[i] & ITEM_FROM_HOST) == 0) continue;
++			if (hdr->it[i].len == 0) continue;
++			err = copy_from_user(ctl->itp[i].p, 
++								 (void __user *)&buf[hdr->it[i].offset], 
++								 hdr->it[i].len);
++		}
++	}
++	// if an error occurred, ensure failure result is passed back
++	if (err) res = -1;
++	// call the callback function to indicate command is complete
++	(*(ctl->cbd.pfn))(ctl->cbd.pdata, res);
++	// release the command control structure
++	cmd_ctl_free_active();
++	return 0;
++}
++
++// user-space app has exitted -- fail all commands
++static void cmd_fail_all(void)
++{
++	cmd_ctl_t *ctl;
++	do {
++		ctl = cmd_ctl_get_active();
++		if (!ctl) ctl = cmd_ctl_get_next();
++		if (ctl) {
++			printk(KERN_ALERT "%s: cancel in progress command\n", __FUNCTION__);
++			// call the callback function to indicate command is complete
++			(*(ctl->cbd.pfn))(ctl->cbd.pdata, -1);
++			// release the command control structure
++			cmd_ctl_free_active();
++		}
++	} while (ctl);
++}
++
++// set enabled when user-space processing is available
++static void cmd_set_state(int enabled)
++{
++	spin_lock_bh(&cmdq_lock);
++	cmd_glob.enabled = enabled;
++	spin_unlock_bh(&cmdq_lock);
++	if (!enabled) {
++		cmd_fail_all(); // fail all in progress commands
++	}
++}
++
++/*======================================================================*/
++// default callback where caller can wait for completion
++// create callback data
++typedef struct {
++	struct mutex m;
++	int res;
++} defcb_data;
++
++// callback function when operation completes
++static void callback_wait(void *din, int res)
++{
++	defcb_data *data = (defcb_data *)din;
++	DEBUG_TRACE;
++	// save result
++	data->res = res;
++	// signal the waiting thread
++	mutex_unlock(&data->m);
++}
++
++// does a cmd_submit() and then waits for completion using above callback
++// can only be used if caller may wait -- user level, not softirq/tasklet
++static int cmd_ctl_submit_and_wait(cmd_ctl_t *ctl)
++{
++	defcb_data *data;
++	int res;
++
++	DEBUG_TRACE;
++	data = kmalloc(sizeof(*data), GFP_ATOMIC);
++	if (!data) {
++		printk(KERN_ALERT "%s: alloc failed\n", __FUNCTION__);
++		cmd_ctl_free(ctl); // release the control structure
++		return -ENOMEM;
++	}
++	// initialize the mutex in the locked state
++	mutex_init(&data->m);
++	mutex_lock(&data->m);
++	// set the callback fields in the control structure and submit
++	ctl->cbd.pfn = callback_wait;
++	ctl->cbd.pdata = data;
++	res = cmd_ctl_submit(ctl);
++	if (res) {
++		// failed to submit -- fail it now
++		// do not free ctl, released in cmd_ctl_submit()
++		// printk(KERN_ALERT "%s: submit failed\n", __FUNCTION__);
++		kfree(data);
++		return res;
++	}
++	// wait for callback to complete and unlock mutex
++	if (mutex_lock_interruptible(&data->m)) {
++		// this case will not occur with drivers, only with test utility
++		// so not important to deal with immediately
++		// TBD: deal with this case!!!!
++		printk(KERN_ALERT "%s: interrupted!!!\n", __FUNCTION__);
++		return -1;
++	}
++	// fetch the result
++	res = data->res;
++	// free the callback data
++	kfree(data);
++	// do NOT free ctl as it was already freed after the callback was called
++	return res;
++}
++
++/*======================================================================*/
++// commands to user space are passed in as a command number,
++// and a number of items each consisting of an offset  and length
++// input: def - const command definition
++// input: itp - data items (pointer, length)
++// output: command is enqueued for transfer to user space
++static int sdclkm_command(sdclkm_cb_t *cbd,
++						   const cmd_def_t *def, item_ptr_t *itp)
++{
++	cmd_ctl_t *ctl; // command control
++	cmd_hdr_t *hdr; // command header
++	int i;
++	int offset;
++
++	DEBUG_TRACE;
++
++	ctl = cmd_ctl_alloc();
++	if (!ctl) {
++		printk(KERN_ALERT "%s: allocation failed\n", __FUNCTION__);
++		return -ENOMEM;
++	}
++
++	// save data item pointers
++	memcpy(&ctl->itp, itp, sizeof(*itp) * def->numit);
++	// save the command/item definition
++	ctl->def = def;
++
++	// build the command header to be passed to user space
++	hdr = &ctl->hdr;
++	offset = (u8*)(&hdr->it[def->numit]) - (u8*)hdr;
++	ctl->hdr_len = offset;
++	for (i=0; i<def->numit; i++) {
++		hdr->it[i].offset = offset;
++		hdr->it[i].len = itp[i].len;
++		offset += (hdr->it[i].len + 3) & (~3);
++	}
++	hdr->len = offset;
++	hdr->cmd = def->cmd;
++	hdr->res = -1;
++	hdr->numit = def->numit;
++
++	// if using callback, submit and let callback get result
++	if (cbd) {
++		ctl->cbd = *cbd;
++		return cmd_ctl_submit(ctl);
++	}
++
++	// if no callback -- wait for operation to complete and return result
++	return cmd_ctl_submit_and_wait(ctl);
++}
++
++/*======================================================================*/
++static const cmd_def_t def_ecb = {
++	SDCCMD_ECB_ENCRYPT, 2,
++	{
++	ITEM_TO_HOST, // key
++	ITEM_TO_HOST|ITEM_FROM_HOST, // data
++	0
++	}
++};
++
++int sdclkm_fnecbencrypt(sdclkm_cb_t *cbd,
++						fips_ccm_key_t *pkey, void *text, int len)
++{
++  item_ptr_t it[2];
++  DEBUG_TRACE;
++  it[0].p = pkey; it[0].len = sizeof(*pkey);
++  it[1].p = text; it[1].len = len;
++  return sdclkm_command(cbd, &def_ecb, it);
++}
++
++static const cmd_def_t def_ccmencrypt = {
++	SDCCMD_CCM_ENCRYPT, 5,
++	{
++	ITEM_TO_HOST, // key
++	ITEM_TO_HOST, // n
++	ITEM_TO_HOST, // a
++	ITEM_TO_HOST|ITEM_FROM_HOST, // m
++	ITEM_FROM_HOST, // t
++	0
++	}
++};
++
++int sdclkm_fnccmencrypt_ex(sdclkm_cb_t *cbd,
++						   fips_ccm_key_t *pkey, 
++						   void *n, int ln, 
++						   void *a, int la, 
++						   void *m, int lm, 
++						   void *t, int lt)
++{
++  item_ptr_t it[5];
++  DEBUG_TRACE;
++  it[0].p = pkey; it[0].len = sizeof(*pkey);
++  it[1].p = n; it[1].len = ln;
++  it[2].p = a; it[2].len = la;
++  it[3].p = m; it[3].len = lm;
++  it[4].p = t; it[4].len = lt;
++  return sdclkm_command(cbd, &def_ccmencrypt, it);
++}
++
++static const cmd_def_t def_ccmdecrypt = {
++	SDCCMD_CCM_DECRYPT, 5,
++	{
++	ITEM_TO_HOST, // key
++	ITEM_TO_HOST, // n
++	ITEM_TO_HOST, // a
++	ITEM_TO_HOST|ITEM_FROM_HOST, // m
++	ITEM_TO_HOST, // t
++	0
++	}
++};
++
++int sdclkm_fnccmdecrypt_ex(sdclkm_cb_t *cbd, 
++						   fips_ccm_key_t *pkey, 
++						   void *n, int ln,
++						   void *a, int la,
++						   void *m, int lm,
++						   void *t, int lt)
++{
++  item_ptr_t it[5];
++  DEBUG_TRACE;
++  it[0].p = pkey; it[0].len = sizeof(*pkey);
++  it[1].p = n; it[1].len = ln;
++  it[2].p = a; it[2].len = la;
++  it[3].p = m; it[3].len = lm;
++  it[4].p = t; it[4].len = lt;
++  return sdclkm_command(cbd, &def_ccmdecrypt, it);
++}
++
++EXPORT_SYMBOL(sdclkm_fnecbencrypt);
++EXPORT_SYMBOL(sdclkm_fnccmencrypt_ex);
++EXPORT_SYMBOL(sdclkm_fnccmdecrypt_ex);
+diff -urN a/drivers/net/wireless/ath/mod2urw.h b/drivers/net/wireless/ath/mod2urw.h
+--- a/drivers/net/wireless/ath/mod2urw.h	1969-12-31 18:00:00.000000000 -0600
++++ b/drivers/net/wireless/ath/mod2urw.h	2013-04-18 22:39:41.447170761 -0500
+@@ -0,0 +1,48 @@
++// Copyright Summit Data Communications (c) 2011
++//
++// Summit CCMP FIPS Linux Kernel Module access.
++//
++// The following define the functions exported by the kernel module.
++//
++
++#ifndef _MOD2URW_H_
++#define _MOD2URW_H_
++
++typedef int FIPS_STATUS;
++#define FIPS_STATUS_SUCCESS		0
++#define FIPS_STATUS_FAILURE		-1
++
++typedef struct {
++	unsigned char key[16];	// 128-bit aes key
++} fips_ccm_key_t;
++
++// allocate items to be passed to sdclkm_xxx using sdclkm_alloc/free
++#define sdclkm_alloc(len) kmalloc(len, GFP_ATOMIC)
++#define sdclkm_free(p)    kfree(p)
++
++// callback function to be used if context cannot wait (e.g. softirq/bh)
++typedef void (*sdclkm_callback_fn_ptr_t)(void *callback_data, int result);
++typedef struct {
++	sdclkm_callback_fn_ptr_t pfn;
++	void *pdata;
++} sdclkm_cb_t;
++
++extern int sdclkm_fnecbencrypt(sdclkm_cb_t *cbd,
++				   fips_ccm_key_t *pkey, 
++				   void *m, int lm);
++
++extern int sdclkm_fnccmencrypt_ex(sdclkm_cb_t *cbd,
++                  fips_ccm_key_t *pkey, 
++				  void *n, int ln, 
++				  void *a, int la,
++				  void *m, int lm, 
++				  void *t, int lt);
++
++extern int sdclkm_fnccmdecrypt_ex(sdclkm_cb_t *cbd,
++				  fips_ccm_key_t *pkey, 
++				  void *n, int ln, 
++				  void *a, int la, 
++				  void *m, int lm, 
++				  void *t, int lt);
++
++#endif // _MODLKM_H_
+diff -urN a/drivers/net/wireless/ath/mod2urw_is_a_copy b/drivers/net/wireless/ath/mod2urw_is_a_copy
+--- a/drivers/net/wireless/ath/mod2urw_is_a_copy	1969-12-31 18:00:00.000000000 -0600
++++ b/drivers/net/wireless/ath/mod2urw_is_a_copy	2013-04-18 22:22:16.419139861 -0500
+@@ -0,0 +1,3 @@
++ath6kl/laird.c:122
++- #include "../../ccmp_fips/mod2urw.h"
+++ #include "../mod2urw.h"
+diff -urN a/drivers/net/wireless/ath/moddebug.h b/drivers/net/wireless/ath/moddebug.h
+--- a/drivers/net/wireless/ath/moddebug.h	1969-12-31 18:00:00.000000000 -0600
++++ b/drivers/net/wireless/ath/moddebug.h	2013-04-24 10:58:43.100774063 -0500
+@@ -0,0 +1,48 @@
++#ifndef _MODDEBUG_H_
++#define _MODDEBUG_H_
++
++#if 1
++// debug output disabled
++#define _printkhexs(psz,pfx,buf,len)
++#define DEBUG_TRACE 
++#else
++#if 0
++static char _dnib2hex(int x)
++{
++	if (x < 10) return '0' + x;
++	if (x < 16) return 'a' + (x - 10);
++	return '?';
++}
++
++void _printkhexs(const char *psz, const char *pfx, const void *buf, int len)
++{
++	const char *src = buf;
++	printk(KERN_ALERT "%s: %s 0x%x[%d]\n", psz, pfx, (unsigned int)buf, len);
++	if (len > 128) len = 128;
++	while (len) {
++		int thislen = len > 16 ? 16 : len;
++		char hexs[16*3];
++		char *dst = &hexs[0];
++		len -= thislen;
++		while (thislen) {
++			*dst++ = _dnib2hex(*src >> 4);
++			*dst++ = _dnib2hex(*src & 0xf);
++			*dst++ = ' ';
++			src++;
++			thislen--;
++		}
++		*(dst-1) = 0;
++		printk(KERN_ALERT "%s: %s\n", pfx, hexs);
++	}
++}
++#endif
++
++#if 0
++#define DEBUG_TRACE \
++	printk(KERN_ALERT "%s: line %d\n", __FUNCTION__, __LINE__);
++#else
++#define DEBUG_TRACE 
++#endif
++
++#endif
++#endif
