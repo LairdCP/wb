@@ -1,0 +1,5 @@
+config BR2_PACKAGE_SDC2U
+	bool "CCMP_FIPS SDC2U driver and SDCU app"
+	help
+	  SDC2U driver
+
