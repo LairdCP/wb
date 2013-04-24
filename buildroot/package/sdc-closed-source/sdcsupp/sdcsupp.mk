@@ -23,7 +23,7 @@ define SDCSUPP_BUILD_CMDS
     cp $(@D)/wpa_supplicant/config_openssl $(@D)/wpa_supplicant/.config
     $(MAKE) -C $(@D)/wpa_supplicant clean
     CFLAGS="-I$(STAGING_DIR)/usr/include/libnl3 $(TARGET_CFLAGS) -MMD -Wall -g" \
-        $(MAKE) -C $(@D)/wpa_supplicant V=1 NEED_TLS_LIBDL=1 \
+        $(MAKE) -C $(@D)/wpa_supplicant V=1 NEED_TLS_LIBDL=1 CONFIG_FIPS=y \
             $(SDCSUPP_RADIO_FLAGS) CROSS_COMPILE="$(TARGET_CROSS)" wpa_supplicant
     $(TARGET_CROSS)objcopy -S $(@D)/wpa_supplicant/wpa_supplicant $(@D)/wpa_supplicant/sdcsupp
     #(cd $(@D)/wpa_supplicant && CROSS_COMPILE=arm-sdc-linux-gnueabi ./sdc-build-linux.sh 4 1 2 3 1)
