@@ -39,5 +39,4 @@ endef
 #define SDC2U_UNINSTALL_TARGET_CMDS
 #endef
 
-$(eval $(call GENTARGETS))
 $(eval $(generic-package))
