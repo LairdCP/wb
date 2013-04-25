@@ -121,8 +121,8 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/init.c b/drivers/net/wireless/ath/at
  
 diff -urN a/drivers/net/wireless/ath/ath6kl/laird.c b/drivers/net/wireless/ath/ath6kl/laird.c
 --- a/drivers/net/wireless/ath/ath6kl/laird.c	1969-12-31 18:00:00.000000000 -0600
-+++ b/drivers/net/wireless/ath/ath6kl/laird.c	2013-04-18 22:20:03.055136224 -0500
-@@ -0,0 +1,1152 @@
++++ b/drivers/net/wireless/ath/ath6kl/laird.c	2013-04-25 10:45:29.079218858 -0500
+@@ -0,0 +1,1154 @@
 +/*
 + * Copyright (c) 2012 Laird Technologies, Inc.
 + */
@@ -244,7 +244,7 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/laird.c b/drivers/net/wireless/ath/a
 +static int lrd_skb_2_dot11(struct sk_buff *skb, int wmm, lrd_keyset_t *pkeyset);
 +
 +/*======================================================================*/
-+#include "../mod2urw.h"  /* FIX ME */
++#include "mod2urw.h"
 +
 +typedef struct cryp_s {
 +    sdclkm_cb_t cbd;
@@ -961,12 +961,14 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/laird.c b/drivers/net/wireless/ath/a
 +}
 +
 +/*======================================================================*/
-+static char dnib2hex(int x)
++#if 0
++static char _dnib2hex(int x)
 +{
 +    if (x < 10) return '0' + x;
 +    if (x < 16) return 'a' + (x - 10);
 +    return '?';
 +}
++#endif
 +
 +void laird_printhexs(const char *psz, const char *pfx, const void *buf, int len)
 +{
@@ -980,8 +982,8 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/laird.c b/drivers/net/wireless/ath/a
 +        char *dst = &hexs[0];
 +        len -= thislen;
 +        while (thislen) {
-+            *dst++ = dnib2hex(*src >> 4);
-+            *dst++ = dnib2hex(*src & 0xf);
++            *dst++ = _dnib2hex(*src >> 4);
++            *dst++ = _dnib2hex(*src & 0xf);
 +            *dst++ = ' ';
 +            src++;
 +            thislen--;
@@ -1392,8 +1394,8 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/main.c b/drivers/net/wireless/ath/at
  	return;
 diff -urN a/drivers/net/wireless/ath/ath6kl/Makefile b/drivers/net/wireless/ath/ath6kl/Makefile
 --- a/drivers/net/wireless/ath/ath6kl/Makefile	2013-04-18 21:46:36.711078650 -0500
-+++ b/drivers/net/wireless/ath/ath6kl/Makefile	2013-04-02 14:57:18.750000000 -0500
-@@ -42,3 +42,11 @@
++++ b/drivers/net/wireless/ath/ath6kl/Makefile	2013-04-25 10:41:45.667211040 -0500
+@@ -42,3 +42,12 @@
  
  obj-$(CONFIG_ATH6KL_USB) += ath6kl_usb.o
  ath6kl_usb-y += usb.o
@@ -1401,598 +1403,14 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/Makefile b/drivers/net/wireless/ath/
 +# Laird FIPS mods
 +ccflags-y += -DLAIRD_FIPS
 +ath6kl_core-y += laird.o
++ath6kl_core-y += mod2urw.o
 +#ccflags-y += -DLAIRD_REASSEMBLY
 +#ath6kl_core-y += reassm.o
 +
 +ccflags-y += -DCONFIG_ATH6KL_DEBUG
-diff -urN a/drivers/net/wireless/ath/ath6kl/reassm.c b/drivers/net/wireless/ath/ath6kl/reassm.c
---- a/drivers/net/wireless/ath/ath6kl/reassm.c	1969-12-31 18:00:00.000000000 -0600
-+++ b/drivers/net/wireless/ath/ath6kl/reassm.c	2013-04-11 16:48:37.890625000 -0500
-@@ -0,0 +1,292 @@
-+#ifdef LAIRD_REASSEMBLY
-+/*
-+ ============================================================================
-+ Name        : generic_reassembly.c
-+ Author      : Tim Carney
-+ Version     :
-+ Copyright   : 2013 Laird Technologies
-+ Description : Generic reassembly routines
-+ ============================================================================
-+ */
-+
-+#include "laird.h"
-+#include "reassm.h"
-+
-+static int lairdReassemblyArraySearch(int seqNum);
-+static void lairdReassemblyTrim (struct sk_buff *skb);
-+static int lairdReassemblyAppendBytes(struct sk_buff* from_skb, struct sk_buff* to_skb);
-+static void lairdReassemblyReclaimBuf(void);
-+static int lairdReassemblyAppendFrag(struct sk_buff* bufPtr, int index);
-+
-+static int lairdReassemblyLastIndex;
-+struct sk_buff* lairdReassemblyArray[LAIRD_SIMULT_REASSEMBLE_BUFS];
-+
-+
-+int lairdReassemblyProcess(struct sk_buff *skb)
-+{
-+    short seqNum;
-+    short fragNum;
-+    int curIndex;
-+    int errorCode;
-+    struct laird_wlanhdr *hdr;
-+
-+    /* Assume failure */
-+    errorCode = -1;
-+
-+    if (skb == (struct sk_buff*)0) {
-+        printk(KERN_ALERT "lairdReassemblyProcess: invalid skb\r\n");
-+        errorCode = -1;
-+        goto LAIRD_REASSEMBLY_PROCESS_END;
-+     }
-+
-+    hdr  = (void*)skb->data;
-+    if (hdr) {
-+        seqNum = LAIRD_EXTRACT_SEQ_NUM(hdr);
-+        fragNum = LAIRD_EXTRACT_FRAG_NUM(hdr);
-+    } else {
-+        printk(KERN_ALERT "lairdReassemblyProcess: invalid skb passed in");
-+        errorCode = -1;
-+        goto LAIRD_REASSEMBLY_PROCESS_END;
-+    }
-+
-+    curIndex = lairdReassemblyArraySearch(seqNum);
-+    if (curIndex != -1) {
-+        /* A match was found for the sequence number */
-+        errorCode = lairdReassemblyAppendFrag(skb, curIndex);
-+        if (errorCode == 0) {
-+            /* Finished reassembling this packet */
-+            errorCode = 0;
-+        } else if (errorCode > 0) {
-+            /* More fragments left to come */
-+            lairdReassemblyLastIndex = curIndex;
-+            errorCode = -1;
-+            goto LAIRD_REASSEMBLY_PROCESS_END;
-+        } else {
-+            printk(KERN_ALERT "lairdReassemblyProcess: append failed (%d,%d)\r\n",
-+                seqNum, fragNum);
-+        }
-+    } else {
-+        /* We didn't find a match, if this is frag 0 reclaim a buffer */
-+        if (fragNum == 0) {
-+//            printk(KERN_ALERT "First fragment size = %d (%d)\r\n", skb->len, seqNum);
-+            lairdReassemblyReclaimBuf();
-+            /* copy the skb and its buffer */
-+            lairdReassemblyArray[lairdReassemblyLastIndex] = skb_copy_expand(skb, 0, 2346-skb->len, GFP_ATOMIC);
-+//            lairdReassemblyArray[lairdReassemblyLastIndex] = dev_alloc_skb(2346);
-+            if (lairdReassemblyArray[lairdReassemblyLastIndex] == (struct sk_buff*)0) {
-+                printk(KERN_ALERT "failed to alloc an sk_buff\r\n");
-+                errorCode = -1;
-+                goto LAIRD_REASSEMBLY_PROCESS_END;
-+            }
-+            /* Reassembly is not complete: return an error */
-+            errorCode = -1;
-+        }
-+    }
-+LAIRD_REASSEMBLY_PROCESS_END:
-+    return errorCode; 
-+}
-+
-+static int lairdReassemblyArraySearch(int seqNum)
-+{
-+    int searchIndex;
-+    int candSeqNum;
-+    struct sk_buff* skb;
-+
-+   /* Start with the current index and search backwards */
-+    searchIndex = lairdReassemblyLastIndex;
-+    if ((searchIndex > LAIRD_SIMULT_REASSEMBLE_BUFS) || (searchIndex < 0)) {
-+        printk(KERN_ALERT "lairdReassemblyArraySearch: invalid search index (%d)\r\n", searchIndex);
-+    }
-+    do {
-+        skb = lairdReassemblyArray[searchIndex];
-+        if (!skb)
-+            return -1; /* the buffer ring is empty */
-+        candSeqNum = LAIRD_EXTRACT_SEQ_NUM(((struct laird_wlanhdr*)(void*)skb->data));
-+        if (candSeqNum == seqNum) {
-+            return searchIndex;
-+        }
-+        searchIndex = ((searchIndex-1)+LAIRD_SIMULT_REASSEMBLE_BUFS)%LAIRD_SIMULT_REASSEMBLE_BUFS;
-+    } while (searchIndex != lairdReassemblyLastIndex);
-+    return -1; //FAIL
-+}
-+
-+static int lairdReassemblyBufFree(int index)
-+{
-+    struct sk_buff* skb;
-+    
-+    if ((index < 0) || (index > LAIRD_SIMULT_REASSEMBLE_BUFS)) {
-+       printk(KERN_ALERT "lairdReassemblyBufFree: attempting to free buffer at index %d\r\n", index);
-+       return -1;
-+    }
-+    skb = lairdReassemblyArray[index];
-+    kfree_skb(skb);
-+    lairdReassemblyArray[index]=0;
-+    return 0;
-+}
-+
-+static void lairdReassemblyAdvanceIndex(void)
-+{
-+    lairdReassemblyLastIndex = (lairdReassemblyLastIndex + 1)%LAIRD_SIMULT_REASSEMBLE_BUFS;
-+}
-+
-+static void lairdReassemblyReclaimBuf(void)
-+{
-+    /* Free and return the next buffer since we ran out */
-+    lairdReassemblyAdvanceIndex();
-+
-+    if (lairdReassemblyArray[lairdReassemblyLastIndex]!=(struct sk_buff*)0) {
-+        lairdReassemblyBufFree(lairdReassemblyLastIndex);
-+    }
-+}
-+
-+static void lairdReassemblyTrim(struct sk_buff* skb)
-+{
-+    struct laird_wlanhdr *hdr;
-+    
-+    hdr = (void*)skb->data;
-+    if (hdr->fc[1] & FC1_PROTECTED) {
-+        /* This packet was encrypted: update the skb to exclude the WLAN header, IV and ICV */
-+        skb_pull(skb, 8+ecr_wlanhdr_len(hdr));
-+        skb_trim(skb, skb->len - 8);
-+    } else {
-+       /* We still need to exclude the wlan header */
-+       skb_pull(skb, ecr_wlanhdr_len(hdr));
-+   }
-+}
-+
-+static int lairdReassemblyAppendBytes(struct sk_buff* from_skb, struct sk_buff* to_skb) 
-+{
-+    struct laird_wlanhdr *to_hdr;
-+    struct laird_wlanhdr *from_hdr;
-+    char* destPtr;
-+    char* srcPtr;
-+    int len;
-+    short do_decrypt;
-+
-+    to_hdr = (void*)to_skb->data;
-+    from_hdr = (void*)from_skb->data;
-+
-+    do_decrypt = from_hdr->fc[1] & FC1_PROTECTED; 
-+
-+    /* Calculate the destination pointer for the copy */
-+    len = to_skb->len; 
-+    if  (do_decrypt) {
-+        len-=8;
-+    }
-+    destPtr = (char *)to_hdr + len; 
-+
-+    /* Calculate the source pointer for the copy */
-+    len = ecr_wlanhdr_len(from_hdr);
-+    if  (do_decrypt) {
-+        len+=8;
-+    }
-+    srcPtr = (char *)from_hdr + len;
-+
-+    /* Calculate the number of bytes to copy */
-+    len  = from_skb->len - len;
-+    if (do_decrypt) {
-+        /* The ICV will not be preserved */
-+        len -= 8;
-+    }
-+
-+    if (skb_tailroom(to_skb) < len) {
-+        return -1;
-+    }
-+ //   printk(KERN_ALERT "appending %d bytes\r\n", len);
-+    skb_put(to_skb, len);
-+    memcpy(destPtr, srcPtr, len);
-+    to_hdr->seq[0] = from_hdr->seq[0];
-+    to_hdr->seq[1] = from_hdr->seq[1];
-+    return 0;
-+}
-+#define FC1_FRAG_MATCH (FC1_TODS|FC1_FROMDS|FC1_PROTECTED)
-+static int lairdReassemblyAppendFrag(struct sk_buff* skb, int index)
-+{
-+    struct laird_wlanhdr *hdr;
-+    struct laird_wlanhdr *priv_hdr;
-+    struct sk_buff* priv_skb;
-+    char* destPtr;
-+    int retCode;
-+    short do_decrypt;
-+    short priv_do_decrypt;
-+    short seqNum;
-+    short fragNum;
-+    short privSeqNum;
-+    short privFragNum;
-+
-+    priv_skb = lairdReassemblyArray[index];
-+    if ((skb == (struct sk_buff*)0) || priv_skb == (struct sk_buff*)0) {
-+        printk(KERN_ALERT "lairdReassemblyAppendFrag: invalid argument \r\n");
-+        retCode = -1;
-+        goto LAIRD_REASSM_APPEND_FRAG_END;
-+    }
-+    hdr = (void*)skb->data;
-+    priv_hdr = (void*)priv_skb->data;
-+    seqNum = LAIRD_EXTRACT_SEQ_NUM(hdr);
-+    fragNum = LAIRD_EXTRACT_FRAG_NUM(hdr);
-+    privSeqNum = LAIRD_EXTRACT_SEQ_NUM(priv_hdr);
-+    privFragNum = LAIRD_EXTRACT_FRAG_NUM(priv_hdr);
-+    do_decrypt = hdr->fc[1] & FC1_PROTECTED;
-+    
-+//    printk(KERN_ALERT "appending (%d|%d)\r\n", seqNum, fragNum);
-+
-+    /* Verify that this is the next fragment */
-+    if (!(seqNum == privSeqNum)
-+            && (fragNum == privFragNum+1)
-+            && ((hdr->fc[1] & FC1_FRAG_MATCH) == (priv_hdr->fc[1] & FC1_FRAG_MATCH))) {
-+        printk(KERN_ALERT "This isn't the next fragment\r\n");
-+        retCode = -1;
-+        goto LAIRD_REASSM_APPEND_FRAG_END;
-+    }
-+   
-+    retCode = lairdReassemblyAppendBytes(skb, priv_skb);
-+
-+    if (retCode != 0) {
-+        printk(KERN_ALERT "lairdReassemblyAppendFrag: not enough memory\r\n");
-+        goto LAIRD_REASSM_APPEND_FRAG_END;
-+    }
-+   
-+    if ((hdr->fc[1] & FC1_MOREFRAGS)==0) {
-+        /* This was the last fragment, so copy everything back into the current skb */
-+        destPtr = (char*)0;
-+        if (skb_tailroom(skb) > (priv_skb->len - skb->len)) {
-+            destPtr = skb_put(skb, (priv_skb->len - skb->len));
-+        }
-+        if (destPtr) {
-+            memcpy (skb->data, priv_skb->data, priv_skb->len);
-+            lairdReassemblyBufFree(index);
-+//            printk(KERN_ALERT "Finished reassembling %d byte packet (%d)\r\n", skb->len, seqNum);
-+            retCode = 0;
-+        } else {
-+            printk(KERN_ALERT "lairdReassemblyAppendFrag: failed to put data in last skb\r\n");
-+            retCode = -1;
-+        }
-+    } else {
-+        retCode = 1;
-+    }
-+LAIRD_REASSM_APPEND_FRAG_END:
-+    return retCode;
-+}
-+
-+int lairdReassemblyInit(void)
-+{
-+    int index;
-+    for (index=0; i<LAIRD_SIMULT_REASSEMBLE_BUFS; index++) {
-+        lairdReassemblyArray[i]=(struct sk_buff*)0;
-+    }
-+    lairdReassemblyLastIndex = 0;
-+    return 0;
-+}
-+
-+int lairdReassemblyPurgeAll(void)
-+{
-+    int index;
-+
-+    for(index=0; index<LAIRD_SIMULT_REASSEMBLE_BUFS, index++) {
-+        lairdReassemblyReclaimBuf();
-+    } 
-+
-+    return 0;
-+}
-+#endif /* LAIRD_REASSEMBLY */
-+
-diff -urN a/drivers/net/wireless/ath/ath6kl/reassm.h b/drivers/net/wireless/ath/ath6kl/reassm.h
---- a/drivers/net/wireless/ath/ath6kl/reassm.h	1969-12-31 18:00:00.000000000 -0600
-+++ b/drivers/net/wireless/ath/ath6kl/reassm.h	2013-04-03 13:07:07.671875000 -0500
-@@ -0,0 +1,17 @@
-+#ifdef LAIRD_REASSEMBLY
-+#ifndef REASSM_H
-+#define REASSM_H
-+
-+#define LAIRD_SIMULT_REASSEMBLE_BUFS	10
-+#define AGGR_INCR_IDX(x, y)         AGGR_WIN_IDX(((x) + 1), (y))
-+
-+#define LAIRD_EXTRACT_SEQ_NUM(hdr) (0x0ff0 & (hdr->seq[1]<<4)) \
-+					 + ((0x00f0 & hdr->seq[0])>>4);
-+#define LAIRD_EXTRACT_FRAG_NUM(hdr) (0x0f & hdr->seq[0]);
-+
-+int lairdReassemblyInit(void);
-+int lairdReassemblyProcess(struct sk_buff* bufPtr);
-+int lairdReassemblyPurgeAll(void);
-+
-+#endif /* REASSM_H */
-+#endif /* LAIRD_REASSEMBLY */
-diff -urN a/drivers/net/wireless/ath/ath6kl/txrx.c b/drivers/net/wireless/ath/ath6kl/txrx.c
---- a/drivers/net/wireless/ath/ath6kl/txrx.c	2013-04-18 21:46:36.691077669 -0500
-+++ b/drivers/net/wireless/ath/ath6kl/txrx.c	2013-03-05 07:52:59.109375000 -0600
-@@ -21,6 +21,9 @@
- #include "debug.h"
- #include "htc-ops.h"
- 
-+/* additional changes copyright (2012) Laird Technologies, Inc. */
-+#include "laird.h"
-+
- /*
-  * tid - tid_mux0..tid_mux3
-  * aid - tid_mux4..tid_mux7
-@@ -348,7 +351,13 @@
- 	return status;
- }
- 
-+#ifdef LAIRD_FIPS
-+int laird_data_tx_continue(struct sk_buff *skb, 
-+						   struct net_device *dev,
-+						   int isfips)
-+#else
- int ath6kl_data_tx(struct sk_buff *skb, struct net_device *dev)
-+#endif
- {
- 	struct ath6kl *ar = ath6kl_priv(dev);
- 	struct ath6kl_cookie *cookie = NULL;
-@@ -365,6 +374,11 @@
- 	u8 meta_ver = 0;
- 	u32 flags = 0;
- 
-+#ifdef LAIRD_FIPS
-+	if (isfips < 0) // check if fips encryption failed
-+		goto fail_tx;
-+#endif
-+
- 	ath6kl_dbg(ATH6KL_DBG_WLAN_TX,
- 		   "%s: skb=0x%p, data=0x%p, len=0x%x\n", __func__,
- 		   skb, skb->data, skb->len);
-@@ -386,6 +400,12 @@
- 	}
- 
- 	if (test_bit(WMI_ENABLED, &ar->flag)) {
-+#ifdef LAIRD_FIPS
-+		if (isfips)
-+			goto fips_skip1;
-+
-+		// only do the following for non-fips mode
-+#endif
- 		if ((dev->features & NETIF_F_IP_CSUM) &&
- 		    (csum == CHECKSUM_PARTIAL)) {
- 			csum_start = skb->csum_start -
-@@ -410,6 +430,10 @@
- 			goto fail_tx;
- 		}
- 
-+#ifdef LAIRD_FIPS
-+	fips_skip1: // contunue fips processing here
-+#endif /* LAIRD_FIPS */
-+	 
- 		if ((dev->features & NETIF_F_IP_CSUM) &&
- 		    (csum == CHECKSUM_PARTIAL)) {
- 			meta_v2.csum_start = csum_start;
-@@ -424,8 +448,14 @@
- 			meta = NULL;
- 		}
- 
-+#ifdef LAIRD_FIPS
-+#define LAIRD_HDR_TYPE (isfips ? WMI_DATA_HDR_DATA_TYPE_802_11 : 0)
-+#else
-+#define LAIRD_HDR_TYPE 0
-+#endif /* LAIRD_FIPS */
-+
- 		ret = ath6kl_wmi_data_hdr_add(ar->wmi, skb,
--				DATA_MSGTYPE, flags, 0,
-+				DATA_MSGTYPE, flags, LAIRD_HDR_TYPE,
- 				meta_ver,
- 				meta, vif->fw_vif_idx);
- 
-@@ -520,6 +550,27 @@
- 	return 0;
- }
- 
-+#ifdef LAIRD_FIPS
-+int ath6kl_data_tx(struct sk_buff *skb, struct net_device *dev)
-+{
-+	struct ath6kl *ar = ath6kl_priv(dev);
-+
-+	// if not in fips_mode use the normal routine
-+	if (!fips_mode) return laird_data_tx_continue(skb, dev, 0);
-+
-+	// in fips_mode, convert the socket buffer and then continue
-+	// TBD: modify call to enable WMM
-+	if (laird_skb_encrypt_prep(skb, dev, ar->wmi->is_wmm_enabled)) {
-+		// failure -- pass to original routine to handle failure
-+		return laird_data_tx_continue(skb, dev, -1);
-+	}
-+
-+	// laird_data_tx_continue() will be called in laird_skb_tx_tasklet()
-+
-+	return 0;
-+}
-+#endif
-+
- /* indicate tx activity or inactivity on a WMI stream */
- void ath6kl_indicate_tx_activity(void *devt, u8 traffic_class, bool active)
- {
-@@ -628,6 +679,12 @@
- 			spin_unlock_bh(&ar->list_lock);
- 
- 			set_bit(NETQ_STOPPED, &vif->flags);
-+#ifdef LAIRD_FIPS
-+			if (fips_mode) {
-+				// also, stop completed fips packets from being submitted
-+		        laird_stop_queue(vif->ndev);
-+			}
-+#endif
- 			netif_stop_queue(vif->ndev);
- 
- 			return action;
-@@ -800,6 +857,12 @@
- 		if (test_bit(CONNECTED, &vif->flags) &&
- 		    !flushing[vif->fw_vif_idx]) {
- 			spin_unlock_bh(&ar->list_lock);
-+#ifdef LAIRD_FIPS
-+			if (fips_mode) {
-+				// also, enable completed fips packets to be submitted
-+				laird_wake_queue(vif->ndev);
-+			}
-+#endif
- 			netif_wake_queue(vif->ndev);
- 			spin_lock_bh(&ar->list_lock);
- 		}
-@@ -1542,6 +1605,24 @@
- 
- 	skb_pull(skb, pad_before_data_start);
- 
-+#ifdef LAIRD_FIPS
-+	if (fips_mode) {
-+		int res;
-+		res = laird_skb_rx_prep(skb);
-+		if (res == 0) {
-+			// will continue in laird_skb_rx_continue
-+			return;
-+		}
-+		if (res < 0) {
-+			// failed -- delete packet
-+			dev_kfree_skb(skb);
-+			return;
-+		}
-+		// TBD: temporary code for testing...
-+		// letting driver finish receive processing
-+	}
-+#endif
-+
- 	if (dot11_hdr)
- 		status = ath6kl_wmi_dot11_hdr_remove(ar->wmi, skb);
- 	else if (!is_amsdu)
-@@ -1617,6 +1698,22 @@
- 	ath6kl_deliver_frames_to_nw_stack(vif->ndev, skb);
- }
- 
-+#ifdef LAIRD_FIPS
-+// continue receive packet processing
-+void laird_skb_rx_continue(struct sk_buff *skb, int res)
-+{
-+	if (res < 0) {
-+		// failed decrypt -- free buffer
-+		// printk(KERN_ALERT "%s: res=%d\n", __func__, res);
-+		dev_kfree_skb(skb);
-+	} else {
-+		// laird_printhexs(__func__, "pak", skb->data, skb->len);
-+		// TBD: above is now using vif->ndev ???
-+		ath6kl_deliver_frames_to_nw_stack(skb->dev, skb);
-+	}
-+}
-+#endif
-+
- static void aggr_timeout(unsigned long arg)
- {
- 	u8 i, j;
-diff -urN a/drivers/net/wireless/ath/ath6kl/wmi.c b/drivers/net/wireless/ath/ath6kl/wmi.c
---- a/drivers/net/wireless/ath/ath6kl/wmi.c	2013-04-18 21:46:36.687077528 -0500
-+++ b/drivers/net/wireless/ath/ath6kl/wmi.c	2013-03-07 12:11:38.281250000 -0600
-@@ -271,7 +271,24 @@
- 	if (!wmm_enabled) {
- 		/* If WMM is disabled all traffic goes as BE traffic */
- 		usr_pri = 0;
-+#ifdef LAIRD_FIPS
-+	} else if (fips_mode) {
-+		struct ieee80211_qos_hdr *pwh;
-+		pwh = (struct ieee80211_qos_hdr *)(datap +
-+							 sizeof(struct
-+								wmi_data_hdr) +
-+							 meta_size);
-+		if (le16_to_cpu(pwh->frame_control) & IEEE80211_STYPE_QOS_DATA) {
-+			// qos packet, get priority from qos field
-+			usr_pri = le16_to_cpu(pwh->qos_ctrl) & IEEE80211_QOS_CTL_TAG1D_MASK;
-+		} else {
-+			// non-qos, always use 0
-+			usr_pri = 0;
-+		}
-+		// NOTE: wmm_enabled is still true when associated to non-qos AP
-+#endif
- 	} else {
-+
- 		hdr_size = sizeof(struct ethhdr);
- 
- 		llc_hdr = (struct ath6kl_llc_snap_hdr *)(datap +
-@@ -3479,11 +3496,36 @@
- 	struct wmi_rx_frame_format_cmd *cmd;
- 	int ret;
- 
-+#ifdef LAIRD_FIPS
-+	if (fips_mode) {
-+		// Disable A-MSDU when in FIPS mode
-+		struct wmi_allow_aggr_cmd *fips_cmd;
-+		skb = ath6kl_wmi_get_new_buf(sizeof(*fips_cmd));
-+		if (!skb)
-+			return -ENOMEM;
-+		fips_cmd = (struct wmi_allow_aggr_cmd *) skb->data;
-+		/* Disable aggregation for Tx and Rx on all TIDs (one bit each) */
-+		fips_cmd->tx_allow_aggr = 0x00;
-+		fips_cmd->rx_allow_aggr = 0x00;
-+       	ret = ath6kl_wmi_cmd_send(wmi, if_idx, skb, WMI_ALLOW_AGGR_CMDID,
-+				  NO_SYNC_WMIFLAG);	
-+	}
-+#endif
-+
- 	skb = ath6kl_wmi_get_new_buf(sizeof(*cmd));
- 	if (!skb)
- 		return -ENOMEM;
--
- 	cmd = (struct wmi_rx_frame_format_cmd *) skb->data;
-+
-+#ifdef LAIRD_FIPS
-+	if (fips_mode) {
-+        // force FIPS mode
-+        rx_dot11_hdr = 1;
-+        defrag_on_host =1;
-+        cmd->reserved[0] = 1;
-+        printk(KERN_ALERT "%s: FIPS\n", __FUNCTION__);
-+	}
-+#endif
- 	cmd->dot11_hdr = rx_dot11_hdr ? 1 : 0;
- 	cmd->defrag_on_host = defrag_on_host ? 1 : 0;
- 	cmd->meta_ver = rx_meta_ver;
-diff -urN a/drivers/net/wireless/ath/ath6kl/wmi.h b/drivers/net/wireless/ath/ath6kl/wmi.h
---- a/drivers/net/wireless/ath/ath6kl/wmi.h	2013-04-18 21:46:36.687077528 -0500
-+++ b/drivers/net/wireless/ath/ath6kl/wmi.h	2013-02-28 16:07:21.484375000 -0600
-@@ -2189,6 +2189,17 @@
- 	__le16 reason_code;
- } __packed;
- 
-+#ifdef LAIRD_FIPS
-+/* WMI_ALLOW_AGGR_CMDID
-+ * Configures tid's to allow ADDBA negotiations
-+ * on each tid, in each direction
-+ */
-+struct wmi_allow_aggr_cmd{
-+   u16 tx_allow_aggr; /* 16-bit mask to allow uplink ADDBA negotiation - bit position indicates tid */
-+   u16 rx_allow_aggr; /* 16-bit mask to allow downlink ADDBA negotiation - bit position indicates tid */
-+} __packed;
-+#endif /* LAIRD_FIPS */
-+
- #define PEER_NODE_JOIN_EVENT		0x00
- #define PEER_NODE_LEAVE_EVENT		0x01
- #define PEER_FIRST_NODE_JOIN_EVENT	0x10
-diff -urN a/drivers/net/wireless/ath/mod2urw.c b/drivers/net/wireless/ath/mod2urw.c
---- a/drivers/net/wireless/ath/mod2urw.c	1969-12-31 18:00:00.000000000 -0600
-+++ b/drivers/net/wireless/ath/mod2urw.c	2013-04-24 10:58:38.412774182 -0500
+diff -urN a/drivers/net/wireless/ath/ath6kl/mod2urw.c b/drivers/net/wireless/ath/ath6kl/mod2urw.c
+--- a/drivers/net/wireless/ath/ath6kl/mod2urw.c	1969-12-31 18:00:00.000000000 -0600
++++ b/drivers/net/wireless/ath/ath6kl/mod2urw.c	2013-04-25 10:41:45.667211040 -0500
 @@ -0,0 +1,618 @@
 +#include <linux/module.h>
 +#include <linux/moduleparam.h>
@@ -2612,9 +2030,9 @@ diff -urN a/drivers/net/wireless/ath/mod2urw.c b/drivers/net/wireless/ath/mod2ur
 +EXPORT_SYMBOL(sdclkm_fnecbencrypt);
 +EXPORT_SYMBOL(sdclkm_fnccmencrypt_ex);
 +EXPORT_SYMBOL(sdclkm_fnccmdecrypt_ex);
-diff -urN a/drivers/net/wireless/ath/mod2urw.h b/drivers/net/wireless/ath/mod2urw.h
---- a/drivers/net/wireless/ath/mod2urw.h	1969-12-31 18:00:00.000000000 -0600
-+++ b/drivers/net/wireless/ath/mod2urw.h	2013-04-18 22:39:41.447170761 -0500
+diff -urN a/drivers/net/wireless/ath/ath6kl/mod2urw.h b/drivers/net/wireless/ath/ath6kl/mod2urw.h
+--- a/drivers/net/wireless/ath/ath6kl/mod2urw.h	1969-12-31 18:00:00.000000000 -0600
++++ b/drivers/net/wireless/ath/ath6kl/mod2urw.h	2013-04-25 10:41:45.667211040 -0500
 @@ -0,0 +1,48 @@
 +// Copyright Summit Data Communications (c) 2011
 +//
@@ -2664,16 +2082,16 @@ diff -urN a/drivers/net/wireless/ath/mod2urw.h b/drivers/net/wireless/ath/mod2ur
 +				  void *t, int lt);
 +
 +#endif // _MODLKM_H_
-diff -urN a/drivers/net/wireless/ath/mod2urw_is_a_copy b/drivers/net/wireless/ath/mod2urw_is_a_copy
---- a/drivers/net/wireless/ath/mod2urw_is_a_copy	1969-12-31 18:00:00.000000000 -0600
-+++ b/drivers/net/wireless/ath/mod2urw_is_a_copy	2013-04-18 22:22:16.419139861 -0500
+diff -urN a/drivers/net/wireless/ath/ath6kl/mod2urw_is_a_copy b/drivers/net/wireless/ath/ath6kl/mod2urw_is_a_copy
+--- a/drivers/net/wireless/ath/ath6kl/mod2urw_is_a_copy	1969-12-31 18:00:00.000000000 -0600
++++ b/drivers/net/wireless/ath/ath6kl/mod2urw_is_a_copy	2013-04-25 10:41:45.675211374 -0500
 @@ -0,0 +1,3 @@
 +ath6kl/laird.c:122
 +- #include "../../ccmp_fips/mod2urw.h"
 ++ #include "../mod2urw.h"
-diff -urN a/drivers/net/wireless/ath/moddebug.h b/drivers/net/wireless/ath/moddebug.h
---- a/drivers/net/wireless/ath/moddebug.h	1969-12-31 18:00:00.000000000 -0600
-+++ b/drivers/net/wireless/ath/moddebug.h	2013-04-24 10:58:43.100774063 -0500
+diff -urN a/drivers/net/wireless/ath/ath6kl/moddebug.h b/drivers/net/wireless/ath/ath6kl/moddebug.h
+--- a/drivers/net/wireless/ath/ath6kl/moddebug.h	1969-12-31 18:00:00.000000000 -0600
++++ b/drivers/net/wireless/ath/ath6kl/moddebug.h	2013-04-25 10:41:45.667211040 -0500
 @@ -0,0 +1,48 @@
 +#ifndef _MODDEBUG_H_
 +#define _MODDEBUG_H_
@@ -2723,3 +2141,622 @@ diff -urN a/drivers/net/wireless/ath/moddebug.h b/drivers/net/wireless/ath/modde
 +
 +#endif
 +#endif
+diff -urN a/drivers/net/wireless/ath/ath6kl/reassm.c b/drivers/net/wireless/ath/ath6kl/reassm.c
+--- a/drivers/net/wireless/ath/ath6kl/reassm.c	1969-12-31 18:00:00.000000000 -0600
++++ b/drivers/net/wireless/ath/ath6kl/reassm.c	2013-04-11 16:48:37.890625000 -0500
+@@ -0,0 +1,292 @@
++#ifdef LAIRD_REASSEMBLY
++/*
++ ============================================================================
++ Name        : generic_reassembly.c
++ Author      : Tim Carney
++ Version     :
++ Copyright   : 2013 Laird Technologies
++ Description : Generic reassembly routines
++ ============================================================================
++ */
++
++#include "laird.h"
++#include "reassm.h"
++
++static int lairdReassemblyArraySearch(int seqNum);
++static void lairdReassemblyTrim (struct sk_buff *skb);
++static int lairdReassemblyAppendBytes(struct sk_buff* from_skb, struct sk_buff* to_skb);
++static void lairdReassemblyReclaimBuf(void);
++static int lairdReassemblyAppendFrag(struct sk_buff* bufPtr, int index);
++
++static int lairdReassemblyLastIndex;
++struct sk_buff* lairdReassemblyArray[LAIRD_SIMULT_REASSEMBLE_BUFS];
++
++
++int lairdReassemblyProcess(struct sk_buff *skb)
++{
++    short seqNum;
++    short fragNum;
++    int curIndex;
++    int errorCode;
++    struct laird_wlanhdr *hdr;
++
++    /* Assume failure */
++    errorCode = -1;
++
++    if (skb == (struct sk_buff*)0) {
++        printk(KERN_ALERT "lairdReassemblyProcess: invalid skb\r\n");
++        errorCode = -1;
++        goto LAIRD_REASSEMBLY_PROCESS_END;
++     }
++
++    hdr  = (void*)skb->data;
++    if (hdr) {
++        seqNum = LAIRD_EXTRACT_SEQ_NUM(hdr);
++        fragNum = LAIRD_EXTRACT_FRAG_NUM(hdr);
++    } else {
++        printk(KERN_ALERT "lairdReassemblyProcess: invalid skb passed in");
++        errorCode = -1;
++        goto LAIRD_REASSEMBLY_PROCESS_END;
++    }
++
++    curIndex = lairdReassemblyArraySearch(seqNum);
++    if (curIndex != -1) {
++        /* A match was found for the sequence number */
++        errorCode = lairdReassemblyAppendFrag(skb, curIndex);
++        if (errorCode == 0) {
++            /* Finished reassembling this packet */
++            errorCode = 0;
++        } else if (errorCode > 0) {
++            /* More fragments left to come */
++            lairdReassemblyLastIndex = curIndex;
++            errorCode = -1;
++            goto LAIRD_REASSEMBLY_PROCESS_END;
++        } else {
++            printk(KERN_ALERT "lairdReassemblyProcess: append failed (%d,%d)\r\n",
++                seqNum, fragNum);
++        }
++    } else {
++        /* We didn't find a match, if this is frag 0 reclaim a buffer */
++        if (fragNum == 0) {
++//            printk(KERN_ALERT "First fragment size = %d (%d)\r\n", skb->len, seqNum);
++            lairdReassemblyReclaimBuf();
++            /* copy the skb and its buffer */
++            lairdReassemblyArray[lairdReassemblyLastIndex] = skb_copy_expand(skb, 0, 2346-skb->len, GFP_ATOMIC);
++//            lairdReassemblyArray[lairdReassemblyLastIndex] = dev_alloc_skb(2346);
++            if (lairdReassemblyArray[lairdReassemblyLastIndex] == (struct sk_buff*)0) {
++                printk(KERN_ALERT "failed to alloc an sk_buff\r\n");
++                errorCode = -1;
++                goto LAIRD_REASSEMBLY_PROCESS_END;
++            }
++            /* Reassembly is not complete: return an error */
++            errorCode = -1;
++        }
++    }
++LAIRD_REASSEMBLY_PROCESS_END:
++    return errorCode; 
++}
++
++static int lairdReassemblyArraySearch(int seqNum)
++{
++    int searchIndex;
++    int candSeqNum;
++    struct sk_buff* skb;
++
++   /* Start with the current index and search backwards */
++    searchIndex = lairdReassemblyLastIndex;
++    if ((searchIndex > LAIRD_SIMULT_REASSEMBLE_BUFS) || (searchIndex < 0)) {
++        printk(KERN_ALERT "lairdReassemblyArraySearch: invalid search index (%d)\r\n", searchIndex);
++    }
++    do {
++        skb = lairdReassemblyArray[searchIndex];
++        if (!skb)
++            return -1; /* the buffer ring is empty */
++        candSeqNum = LAIRD_EXTRACT_SEQ_NUM(((struct laird_wlanhdr*)(void*)skb->data));
++        if (candSeqNum == seqNum) {
++            return searchIndex;
++        }
++        searchIndex = ((searchIndex-1)+LAIRD_SIMULT_REASSEMBLE_BUFS)%LAIRD_SIMULT_REASSEMBLE_BUFS;
++    } while (searchIndex != lairdReassemblyLastIndex);
++    return -1; //FAIL
++}
++
++static int lairdReassemblyBufFree(int index)
++{
++    struct sk_buff* skb;
++    
++    if ((index < 0) || (index > LAIRD_SIMULT_REASSEMBLE_BUFS)) {
++       printk(KERN_ALERT "lairdReassemblyBufFree: attempting to free buffer at index %d\r\n", index);
++       return -1;
++    }
++    skb = lairdReassemblyArray[index];
++    kfree_skb(skb);
++    lairdReassemblyArray[index]=0;
++    return 0;
++}
++
++static void lairdReassemblyAdvanceIndex(void)
++{
++    lairdReassemblyLastIndex = (lairdReassemblyLastIndex + 1)%LAIRD_SIMULT_REASSEMBLE_BUFS;
++}
++
++static void lairdReassemblyReclaimBuf(void)
++{
++    /* Free and return the next buffer since we ran out */
++    lairdReassemblyAdvanceIndex();
++
++    if (lairdReassemblyArray[lairdReassemblyLastIndex]!=(struct sk_buff*)0) {
++        lairdReassemblyBufFree(lairdReassemblyLastIndex);
++    }
++}
++
++static void lairdReassemblyTrim(struct sk_buff* skb)
++{
++    struct laird_wlanhdr *hdr;
++    
++    hdr = (void*)skb->data;
++    if (hdr->fc[1] & FC1_PROTECTED) {
++        /* This packet was encrypted: update the skb to exclude the WLAN header, IV and ICV */
++        skb_pull(skb, 8+ecr_wlanhdr_len(hdr));
++        skb_trim(skb, skb->len - 8);
++    } else {
++       /* We still need to exclude the wlan header */
++       skb_pull(skb, ecr_wlanhdr_len(hdr));
++   }
++}
++
++static int lairdReassemblyAppendBytes(struct sk_buff* from_skb, struct sk_buff* to_skb) 
++{
++    struct laird_wlanhdr *to_hdr;
++    struct laird_wlanhdr *from_hdr;
++    char* destPtr;
++    char* srcPtr;
++    int len;
++    short do_decrypt;
++
++    to_hdr = (void*)to_skb->data;
++    from_hdr = (void*)from_skb->data;
++
++    do_decrypt = from_hdr->fc[1] & FC1_PROTECTED; 
++
++    /* Calculate the destination pointer for the copy */
++    len = to_skb->len; 
++    if  (do_decrypt) {
++        len-=8;
++    }
++    destPtr = (char *)to_hdr + len; 
++
++    /* Calculate the source pointer for the copy */
++    len = ecr_wlanhdr_len(from_hdr);
++    if  (do_decrypt) {
++        len+=8;
++    }
++    srcPtr = (char *)from_hdr + len;
++
++    /* Calculate the number of bytes to copy */
++    len  = from_skb->len - len;
++    if (do_decrypt) {
++        /* The ICV will not be preserved */
++        len -= 8;
++    }
++
++    if (skb_tailroom(to_skb) < len) {
++        return -1;
++    }
++ //   printk(KERN_ALERT "appending %d bytes\r\n", len);
++    skb_put(to_skb, len);
++    memcpy(destPtr, srcPtr, len);
++    to_hdr->seq[0] = from_hdr->seq[0];
++    to_hdr->seq[1] = from_hdr->seq[1];
++    return 0;
++}
++#define FC1_FRAG_MATCH (FC1_TODS|FC1_FROMDS|FC1_PROTECTED)
++static int lairdReassemblyAppendFrag(struct sk_buff* skb, int index)
++{
++    struct laird_wlanhdr *hdr;
++    struct laird_wlanhdr *priv_hdr;
++    struct sk_buff* priv_skb;
++    char* destPtr;
++    int retCode;
++    short do_decrypt;
++    short priv_do_decrypt;
++    short seqNum;
++    short fragNum;
++    short privSeqNum;
++    short privFragNum;
++
++    priv_skb = lairdReassemblyArray[index];
++    if ((skb == (struct sk_buff*)0) || priv_skb == (struct sk_buff*)0) {
++        printk(KERN_ALERT "lairdReassemblyAppendFrag: invalid argument \r\n");
++        retCode = -1;
++        goto LAIRD_REASSM_APPEND_FRAG_END;
++    }
++    hdr = (void*)skb->data;
++    priv_hdr = (void*)priv_skb->data;
++    seqNum = LAIRD_EXTRACT_SEQ_NUM(hdr);
++    fragNum = LAIRD_EXTRACT_FRAG_NUM(hdr);
++    privSeqNum = LAIRD_EXTRACT_SEQ_NUM(priv_hdr);
++    privFragNum = LAIRD_EXTRACT_FRAG_NUM(priv_hdr);
++    do_decrypt = hdr->fc[1] & FC1_PROTECTED;
++    
++//    printk(KERN_ALERT "appending (%d|%d)\r\n", seqNum, fragNum);
++
++    /* Verify that this is the next fragment */
++    if (!(seqNum == privSeqNum)
++            && (fragNum == privFragNum+1)
++            && ((hdr->fc[1] & FC1_FRAG_MATCH) == (priv_hdr->fc[1] & FC1_FRAG_MATCH))) {
++        printk(KERN_ALERT "This isn't the next fragment\r\n");
++        retCode = -1;
++        goto LAIRD_REASSM_APPEND_FRAG_END;
++    }
++   
++    retCode = lairdReassemblyAppendBytes(skb, priv_skb);
++
++    if (retCode != 0) {
++        printk(KERN_ALERT "lairdReassemblyAppendFrag: not enough memory\r\n");
++        goto LAIRD_REASSM_APPEND_FRAG_END;
++    }
++   
++    if ((hdr->fc[1] & FC1_MOREFRAGS)==0) {
++        /* This was the last fragment, so copy everything back into the current skb */
++        destPtr = (char*)0;
++        if (skb_tailroom(skb) > (priv_skb->len - skb->len)) {
++            destPtr = skb_put(skb, (priv_skb->len - skb->len));
++        }
++        if (destPtr) {
++            memcpy (skb->data, priv_skb->data, priv_skb->len);
++            lairdReassemblyBufFree(index);
++//            printk(KERN_ALERT "Finished reassembling %d byte packet (%d)\r\n", skb->len, seqNum);
++            retCode = 0;
++        } else {
++            printk(KERN_ALERT "lairdReassemblyAppendFrag: failed to put data in last skb\r\n");
++            retCode = -1;
++        }
++    } else {
++        retCode = 1;
++    }
++LAIRD_REASSM_APPEND_FRAG_END:
++    return retCode;
++}
++
++int lairdReassemblyInit(void)
++{
++    int index;
++    for (index=0; i<LAIRD_SIMULT_REASSEMBLE_BUFS; index++) {
++        lairdReassemblyArray[i]=(struct sk_buff*)0;
++    }
++    lairdReassemblyLastIndex = 0;
++    return 0;
++}
++
++int lairdReassemblyPurgeAll(void)
++{
++    int index;
++
++    for(index=0; index<LAIRD_SIMULT_REASSEMBLE_BUFS, index++) {
++        lairdReassemblyReclaimBuf();
++    } 
++
++    return 0;
++}
++#endif /* LAIRD_REASSEMBLY */
++
+diff -urN a/drivers/net/wireless/ath/ath6kl/reassm.h b/drivers/net/wireless/ath/ath6kl/reassm.h
+--- a/drivers/net/wireless/ath/ath6kl/reassm.h	1969-12-31 18:00:00.000000000 -0600
++++ b/drivers/net/wireless/ath/ath6kl/reassm.h	2013-04-03 13:07:07.671875000 -0500
+@@ -0,0 +1,17 @@
++#ifdef LAIRD_REASSEMBLY
++#ifndef REASSM_H
++#define REASSM_H
++
++#define LAIRD_SIMULT_REASSEMBLE_BUFS	10
++#define AGGR_INCR_IDX(x, y)         AGGR_WIN_IDX(((x) + 1), (y))
++
++#define LAIRD_EXTRACT_SEQ_NUM(hdr) (0x0ff0 & (hdr->seq[1]<<4)) \
++					 + ((0x00f0 & hdr->seq[0])>>4);
++#define LAIRD_EXTRACT_FRAG_NUM(hdr) (0x0f & hdr->seq[0]);
++
++int lairdReassemblyInit(void);
++int lairdReassemblyProcess(struct sk_buff* bufPtr);
++int lairdReassemblyPurgeAll(void);
++
++#endif /* REASSM_H */
++#endif /* LAIRD_REASSEMBLY */
+diff -urN a/drivers/net/wireless/ath/ath6kl/touser.h b/drivers/net/wireless/ath/ath6kl/touser.h
+--- a/drivers/net/wireless/ath/ath6kl/touser.h	1969-12-31 18:00:00.000000000 -0600
++++ b/drivers/net/wireless/ath/ath6kl/touser.h	2013-04-25 10:41:45.667211040 -0500
+@@ -0,0 +1,30 @@
++#ifndef _TOUSER_H_
++#define _TOUSER_H_
++
++// structures used to/from userspace
++
++typedef struct {
++	void *p;	// pointer to item
++	int len;	// length of item
++} item_ptr_t;
++
++typedef struct {
++	int offset;	// offset from beginning of cmd_hdr_t
++	int len;	// length of item
++} item_t;
++
++// command structure
++#define MAXIT 10
++typedef struct {
++	int len;		// total length including this field
++	int cmd;		// command to execute -- set to zero when completed
++#define SDCCMD_CCM_ENCRYPT	3
++#define SDCCMD_CCM_DECRYPT	4
++#define SDCCMD_ECB_ENCRYPT	5
++	int res;		// result of command
++	int numit;		// number of items used
++	item_t it[MAXIT];
++	// items follow at offsets relative to beginning of cmd_hdt_t
++} cmd_hdr_t;
++
++#endif
+diff -urN a/drivers/net/wireless/ath/ath6kl/txrx.c b/drivers/net/wireless/ath/ath6kl/txrx.c
+--- a/drivers/net/wireless/ath/ath6kl/txrx.c	2013-04-18 21:46:36.691077669 -0500
++++ b/drivers/net/wireless/ath/ath6kl/txrx.c	2013-03-05 07:52:59.109375000 -0600
+@@ -21,6 +21,9 @@
+ #include "debug.h"
+ #include "htc-ops.h"
+ 
++/* additional changes copyright (2012) Laird Technologies, Inc. */
++#include "laird.h"
++
+ /*
+  * tid - tid_mux0..tid_mux3
+  * aid - tid_mux4..tid_mux7
+@@ -348,7 +351,13 @@
+ 	return status;
+ }
+ 
++#ifdef LAIRD_FIPS
++int laird_data_tx_continue(struct sk_buff *skb, 
++						   struct net_device *dev,
++						   int isfips)
++#else
+ int ath6kl_data_tx(struct sk_buff *skb, struct net_device *dev)
++#endif
+ {
+ 	struct ath6kl *ar = ath6kl_priv(dev);
+ 	struct ath6kl_cookie *cookie = NULL;
+@@ -365,6 +374,11 @@
+ 	u8 meta_ver = 0;
+ 	u32 flags = 0;
+ 
++#ifdef LAIRD_FIPS
++	if (isfips < 0) // check if fips encryption failed
++		goto fail_tx;
++#endif
++
+ 	ath6kl_dbg(ATH6KL_DBG_WLAN_TX,
+ 		   "%s: skb=0x%p, data=0x%p, len=0x%x\n", __func__,
+ 		   skb, skb->data, skb->len);
+@@ -386,6 +400,12 @@
+ 	}
+ 
+ 	if (test_bit(WMI_ENABLED, &ar->flag)) {
++#ifdef LAIRD_FIPS
++		if (isfips)
++			goto fips_skip1;
++
++		// only do the following for non-fips mode
++#endif
+ 		if ((dev->features & NETIF_F_IP_CSUM) &&
+ 		    (csum == CHECKSUM_PARTIAL)) {
+ 			csum_start = skb->csum_start -
+@@ -410,6 +430,10 @@
+ 			goto fail_tx;
+ 		}
+ 
++#ifdef LAIRD_FIPS
++	fips_skip1: // contunue fips processing here
++#endif /* LAIRD_FIPS */
++	 
+ 		if ((dev->features & NETIF_F_IP_CSUM) &&
+ 		    (csum == CHECKSUM_PARTIAL)) {
+ 			meta_v2.csum_start = csum_start;
+@@ -424,8 +448,14 @@
+ 			meta = NULL;
+ 		}
+ 
++#ifdef LAIRD_FIPS
++#define LAIRD_HDR_TYPE (isfips ? WMI_DATA_HDR_DATA_TYPE_802_11 : 0)
++#else
++#define LAIRD_HDR_TYPE 0
++#endif /* LAIRD_FIPS */
++
+ 		ret = ath6kl_wmi_data_hdr_add(ar->wmi, skb,
+-				DATA_MSGTYPE, flags, 0,
++				DATA_MSGTYPE, flags, LAIRD_HDR_TYPE,
+ 				meta_ver,
+ 				meta, vif->fw_vif_idx);
+ 
+@@ -520,6 +550,27 @@
+ 	return 0;
+ }
+ 
++#ifdef LAIRD_FIPS
++int ath6kl_data_tx(struct sk_buff *skb, struct net_device *dev)
++{
++	struct ath6kl *ar = ath6kl_priv(dev);
++
++	// if not in fips_mode use the normal routine
++	if (!fips_mode) return laird_data_tx_continue(skb, dev, 0);
++
++	// in fips_mode, convert the socket buffer and then continue
++	// TBD: modify call to enable WMM
++	if (laird_skb_encrypt_prep(skb, dev, ar->wmi->is_wmm_enabled)) {
++		// failure -- pass to original routine to handle failure
++		return laird_data_tx_continue(skb, dev, -1);
++	}
++
++	// laird_data_tx_continue() will be called in laird_skb_tx_tasklet()
++
++	return 0;
++}
++#endif
++
+ /* indicate tx activity or inactivity on a WMI stream */
+ void ath6kl_indicate_tx_activity(void *devt, u8 traffic_class, bool active)
+ {
+@@ -628,6 +679,12 @@
+ 			spin_unlock_bh(&ar->list_lock);
+ 
+ 			set_bit(NETQ_STOPPED, &vif->flags);
++#ifdef LAIRD_FIPS
++			if (fips_mode) {
++				// also, stop completed fips packets from being submitted
++		        laird_stop_queue(vif->ndev);
++			}
++#endif
+ 			netif_stop_queue(vif->ndev);
+ 
+ 			return action;
+@@ -800,6 +857,12 @@
+ 		if (test_bit(CONNECTED, &vif->flags) &&
+ 		    !flushing[vif->fw_vif_idx]) {
+ 			spin_unlock_bh(&ar->list_lock);
++#ifdef LAIRD_FIPS
++			if (fips_mode) {
++				// also, enable completed fips packets to be submitted
++				laird_wake_queue(vif->ndev);
++			}
++#endif
+ 			netif_wake_queue(vif->ndev);
+ 			spin_lock_bh(&ar->list_lock);
+ 		}
+@@ -1542,6 +1605,24 @@
+ 
+ 	skb_pull(skb, pad_before_data_start);
+ 
++#ifdef LAIRD_FIPS
++	if (fips_mode) {
++		int res;
++		res = laird_skb_rx_prep(skb);
++		if (res == 0) {
++			// will continue in laird_skb_rx_continue
++			return;
++		}
++		if (res < 0) {
++			// failed -- delete packet
++			dev_kfree_skb(skb);
++			return;
++		}
++		// TBD: temporary code for testing...
++		// letting driver finish receive processing
++	}
++#endif
++
+ 	if (dot11_hdr)
+ 		status = ath6kl_wmi_dot11_hdr_remove(ar->wmi, skb);
+ 	else if (!is_amsdu)
+@@ -1617,6 +1698,22 @@
+ 	ath6kl_deliver_frames_to_nw_stack(vif->ndev, skb);
+ }
+ 
++#ifdef LAIRD_FIPS
++// continue receive packet processing
++void laird_skb_rx_continue(struct sk_buff *skb, int res)
++{
++	if (res < 0) {
++		// failed decrypt -- free buffer
++		// printk(KERN_ALERT "%s: res=%d\n", __func__, res);
++		dev_kfree_skb(skb);
++	} else {
++		// laird_printhexs(__func__, "pak", skb->data, skb->len);
++		// TBD: above is now using vif->ndev ???
++		ath6kl_deliver_frames_to_nw_stack(skb->dev, skb);
++	}
++}
++#endif
++
+ static void aggr_timeout(unsigned long arg)
+ {
+ 	u8 i, j;
+diff -urN a/drivers/net/wireless/ath/ath6kl/wmi.c b/drivers/net/wireless/ath/ath6kl/wmi.c
+--- a/drivers/net/wireless/ath/ath6kl/wmi.c	2013-04-18 21:46:36.687077528 -0500
++++ b/drivers/net/wireless/ath/ath6kl/wmi.c	2013-03-07 12:11:38.281250000 -0600
+@@ -271,7 +271,24 @@
+ 	if (!wmm_enabled) {
+ 		/* If WMM is disabled all traffic goes as BE traffic */
+ 		usr_pri = 0;
++#ifdef LAIRD_FIPS
++	} else if (fips_mode) {
++		struct ieee80211_qos_hdr *pwh;
++		pwh = (struct ieee80211_qos_hdr *)(datap +
++							 sizeof(struct
++								wmi_data_hdr) +
++							 meta_size);
++		if (le16_to_cpu(pwh->frame_control) & IEEE80211_STYPE_QOS_DATA) {
++			// qos packet, get priority from qos field
++			usr_pri = le16_to_cpu(pwh->qos_ctrl) & IEEE80211_QOS_CTL_TAG1D_MASK;
++		} else {
++			// non-qos, always use 0
++			usr_pri = 0;
++		}
++		// NOTE: wmm_enabled is still true when associated to non-qos AP
++#endif
+ 	} else {
++
+ 		hdr_size = sizeof(struct ethhdr);
+ 
+ 		llc_hdr = (struct ath6kl_llc_snap_hdr *)(datap +
+@@ -3479,11 +3496,36 @@
+ 	struct wmi_rx_frame_format_cmd *cmd;
+ 	int ret;
+ 
++#ifdef LAIRD_FIPS
++	if (fips_mode) {
++		// Disable A-MSDU when in FIPS mode
++		struct wmi_allow_aggr_cmd *fips_cmd;
++		skb = ath6kl_wmi_get_new_buf(sizeof(*fips_cmd));
++		if (!skb)
++			return -ENOMEM;
++		fips_cmd = (struct wmi_allow_aggr_cmd *) skb->data;
++		/* Disable aggregation for Tx and Rx on all TIDs (one bit each) */
++		fips_cmd->tx_allow_aggr = 0x00;
++		fips_cmd->rx_allow_aggr = 0x00;
++       	ret = ath6kl_wmi_cmd_send(wmi, if_idx, skb, WMI_ALLOW_AGGR_CMDID,
++				  NO_SYNC_WMIFLAG);	
++	}
++#endif
++
+ 	skb = ath6kl_wmi_get_new_buf(sizeof(*cmd));
+ 	if (!skb)
+ 		return -ENOMEM;
+-
+ 	cmd = (struct wmi_rx_frame_format_cmd *) skb->data;
++
++#ifdef LAIRD_FIPS
++	if (fips_mode) {
++        // force FIPS mode
++        rx_dot11_hdr = 1;
++        defrag_on_host =1;
++        cmd->reserved[0] = 1;
++        printk(KERN_ALERT "%s: FIPS\n", __FUNCTION__);
++	}
++#endif
+ 	cmd->dot11_hdr = rx_dot11_hdr ? 1 : 0;
+ 	cmd->defrag_on_host = defrag_on_host ? 1 : 0;
+ 	cmd->meta_ver = rx_meta_ver;
+diff -urN a/drivers/net/wireless/ath/ath6kl/wmi.h b/drivers/net/wireless/ath/ath6kl/wmi.h
+--- a/drivers/net/wireless/ath/ath6kl/wmi.h	2013-04-18 21:46:36.687077528 -0500
++++ b/drivers/net/wireless/ath/ath6kl/wmi.h	2013-02-28 16:07:21.484375000 -0600
+@@ -2189,6 +2189,17 @@
+ 	__le16 reason_code;
+ } __packed;
+ 
++#ifdef LAIRD_FIPS
++/* WMI_ALLOW_AGGR_CMDID
++ * Configures tid's to allow ADDBA negotiations
++ * on each tid, in each direction
++ */
++struct wmi_allow_aggr_cmd{
++   u16 tx_allow_aggr; /* 16-bit mask to allow uplink ADDBA negotiation - bit position indicates tid */
++   u16 rx_allow_aggr; /* 16-bit mask to allow downlink ADDBA negotiation - bit position indicates tid */
++} __packed;
++#endif /* LAIRD_FIPS */
++
+ #define PEER_NODE_JOIN_EVENT		0x00
+ #define PEER_NODE_LEAVE_EVENT		0x01
+ #define PEER_FIRST_NODE_JOIN_EVENT	0x10
