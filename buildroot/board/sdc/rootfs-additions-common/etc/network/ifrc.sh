@@ -946,7 +946,7 @@ run_udhcpc() {
   rbf=${rbf:+-O $rbf}
 
   # run-script: /usr/share/udhcpc/default.script
-  rs='-s /usr/share/udhcpc/wb.script'
+  rs='-s /etc/dhcp/udhcpc.script'
 
   # The 'wb.script' file handles states and writes to a leases file.
   # options: vb, log_file, leases_file, resolv_conf
