@@ -1,4 +1,14 @@
-# By default, go to host mode and be prepared to handle usb disks.
+#!/bin/sh
+# usbhost - go to host mode, so can handle usb disks
 
-modprobe ohci-hcd
-modprobe usb-storage
+
+case $1 in
+
+  stop)
+    ;;
+
+  start)
+    modprobe ohci-hcd
+    modprobe usb-storage
+    ;;
+esac
