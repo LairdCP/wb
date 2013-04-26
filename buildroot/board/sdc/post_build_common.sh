@@ -20,7 +20,7 @@ set -x -e
 rm -f $TARGETDIR/etc/init.d/S50sshd
 
 # TODO: init-script is not ready for use
-rm -f $TARGETDIR/etc/init.d/openvpn
+chmod a-x $TARGETDIR/etc/init.d/S??openvpn
 
 # remove bash cruft
 rm -fr $TARGETDIR/etc/bash*
@@ -28,6 +28,9 @@ rm -f $TARGETDIR/root/.bash*
 
 # remove debian cruft
 rm -fr $TARGETDIR/etc/network/if-*
+
+# remove buildroot cruft
+rm -f $TARGETDIR/etc/os-release
 
 # remove conflicting rcK
 rm -f $TARGETDIR/etc/init.d/rcK
@@ -42,7 +45,7 @@ tar c --exclude=.svn -C board/sdc/rootfs-additions-common/ . | tar x -C $TARGETD
   && ln -sf libnl-genl-3.so libnl-genl.so.3 )
 
 # Services to disable by default
-chmod a-x "$TARGETDIR/etc/init.d/S99lighttpd"
+chmod a-x $TARGETDIR/etc/init.d/S??lighttpd
 
 # create missing symbolic link
 # TODO: shouldn't have to do this here, temporary workaround
