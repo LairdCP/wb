@@ -1,5 +1,5 @@
 #!/usr/bin/env ash
-# /usr/share/udhcpc/wb.script
+# /etc/dhcp/udhcpc.script
 # Action script for pre/post udhcpc configuration, on wbNNx platforms.
 # jon.hefling@lairdtech.com 20120521 20130113
 #
