@@ -1,6 +1,6 @@
 #!/bin/sh 
 
-tftpd=/usr/bin/tftpd
+tftpd=/usr/sbin/tftpd
 trap "" 1 15
 test -f $tftpd || { echo "$tftpd missing"; exit 1; }
 [ ! -d /var/run/tftpd ] && mkdir -p /var/run/tftpd
