@@ -310,16 +310,16 @@ case $1 in
       echo -e "\nDNS:\r\t/etc/resolv.conf"
       sed '$G' /etc/resolv.conf 2>/dev/null
     fi
-    if [ -n "${vm:0:1}" ]
-    then
-      ps -o pid,args |grep -E 'dhc[pl]|ifplug[d]|wi[rf][ei]|sup[p]|ne[t]|br[i]'
-    fi
+    [ -n "${vm:0:1}" ] \
+    && echo Processes: \
+    && ps -o pid,args \
+      |grep -E 'dhc[pl]|ifplug[d]|wi[rf][ei]|sup[p]|ne[t]|br[i]' || echo \ \ ...
     exit 0
     ;;
 
   help) ## view the readme file
     less -Em~ /etc/network/networking.README
-    # NOTE - the EOF detection is not working in bb_1.3.19
+    # NOTE - the EOF detect/quit is not working in bb_1.19.3 - bb_1.21.0
     exit 0
     ;;
 
@@ -577,18 +577,16 @@ case $IFRC_ACTION in
     if [ "$dev" == "lo" ]
     then
       echo -e "\nRouting: (local)"
-      ip route show table local |grep "dev $dev"
+      ip route show table local dev $dev |sed 's/local/    local/'
     else
-      echo -e "\nRouting:"
-      ip route show table local |grep "dev $dev"
-      ip route show table main |grep "dev $dev"
-      [ -n "`arp -ani $dev |sed '/No match/d; $='`" ] && x=cached || x=empty
+      echo -e "\nRouting: "
+      ip route show dev $dev
+      # get arp-table entries count, then display entries
+      let `arp -ani $dev |sed '/No match/d; $=; d'`+0 && x=cached || x=empty
       echo -e "\nARP:\r\t($x)" && arp -ani $dev |sed '/No match/d;/^$/d'
-      #echo -e "\nDNS:\r\t/etc/resolv.conf"
-      #cat /etc/resolv.conf 2>/dev/null
     fi
     [ -n "${vm:0:1}" ] \
-    && ps -o pid,args |grep -E 'dhc[pl]|ifplug[d]' |grep "$dev"
+    && echo -e "\nProcesses:\n`ps -o pid,args |grep "$dev[ ]" || echo \ \ ...`"
     echo
     exit 0
     ;;
