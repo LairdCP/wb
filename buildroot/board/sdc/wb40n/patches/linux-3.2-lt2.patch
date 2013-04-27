@@ -1020,7 +1020,7 @@ diff -urN linux-3.2/arch/arm/configs/wb40n_defconfig linux-3.2-lt1/arch/arm/conf
 +# CONFIG_VITESSE_PHY is not set
 +# CONFIG_SMSC_PHY is not set
 +# CONFIG_BROADCOM_PHY is not set
-+# CONFIG_ICPLUS_PHY is not set
++CONFIG_ICPLUS_PHY=y
 +# CONFIG_REALTEK_PHY is not set
 +# CONFIG_NATIONAL_PHY is not set
 +# CONFIG_STE10XP is not set
@@ -3433,3 +3433,126 @@ diff -urN linux-3.2/sound/soc/atmel/Kconfig linux-3.2-lt1/sound/soc/atmel/Kconfi
  config SND_AT91_SOC_AFEB9260
  	tristate "SoC Audio support for AFEB9260 board"
  	depends on ARCH_AT91 && MACH_AFEB9260 && SND_ATMEL_SOC
+diff -urN linux-3.2/drivers/net/phy/icplus.c linux-3.2-lt1/drivers/net/phy/icplus.c
+--- linux-3.2/drivers/net/phy/icplus.c	2013-04-26 23:20:57.174981268 -0500
++++ linux-3.2-lt1/drivers/net/phy/icplus.c	2013-04-26 23:41:38.219016678 -0500
+@@ -30,16 +30,19 @@
+ #include <asm/irq.h>
+ #include <asm/uaccess.h>
+ 
+-MODULE_DESCRIPTION("ICPlus IP175C/IP101A/IC1001 PHY drivers");
++MODULE_DESCRIPTION("ICPlus IP175C/IP101A/IP101G/IC1001 PHY drivers");
+ MODULE_AUTHOR("Michael Barkowski");
+ MODULE_LICENSE("GPL");
+ 
+-/* IP101A/IP1001 */
++/* IP101A/G - IP1001 */
+ #define IP10XX_SPEC_CTRL_STATUS		16  /* Spec. Control Register */
+ #define IP1001_SPEC_CTRL_STATUS_2	20  /* IP1001 Spec. Control Reg 2 */
+ #define IP1001_PHASE_SEL_MASK		3 /* IP1001 RX/TXPHASE_SEL */
+ #define IP1001_APS_ON			11  /* IP1001 APS Mode  bit */
+-#define IP101A_APS_ON			2   /* IP101A APS Mode bit */
++#define IP101A_G_APS_ON			2   /* IP101A/G APS Mode bit */
++#define IP101A_G_IRQ_CONF_STATUS	0x11	/* Conf Info IRQ & Status Reg */
++#define IP101A_G_IRQ_PIN_USED		(1<<15) /* INTR pin used */
++#define IP101A_G_IRQ_DEFAULT		IP101A_G_IRQ_PIN_USED
+ 
+ static int ip175c_config_init(struct phy_device *phydev)
+ {
+@@ -98,20 +101,24 @@
+ 
+ static int ip1xx_reset(struct phy_device *phydev)
+ {
+-	int err, bmcr;
++	int bmcr;
+ 
+ 	/* Software Reset PHY */
+ 	bmcr = phy_read(phydev, MII_BMCR);
++	if (bmcr < 0)
++		return bmcr;
+ 	bmcr |= BMCR_RESET;
+-	err = phy_write(phydev, MII_BMCR, bmcr);
+-	if (err < 0)
+-		return err;
++	bmcr = phy_write(phydev, MII_BMCR, bmcr);
++	if (bmcr < 0)
++		return bmcr;
+ 
+ 	do {
+ 		bmcr = phy_read(phydev, MII_BMCR);
++		if (bmcr < 0)
++			return bmcr;
+ 	} while (bmcr & BMCR_RESET);
+ 
+-	return err;
++	return 0;
+ }
+ 
+ static int ip1001_config_init(struct phy_device *phydev)
+@@ -139,7 +146,7 @@
+ 	return c;
+ }
+ 
+-static int ip101a_config_init(struct phy_device *phydev)
++static int ip101a_g_config_init(struct phy_device *phydev)
+ {
+ 	int c;
+ 
+@@ -147,10 +154,15 @@
+ 	if (c < 0)
+ 		return c;
+ 
++	/* INTR pin used: speed/link/duplex will cause an interrupt */
++	c = phy_write(phydev, IP101A_G_IRQ_CONF_STATUS, IP101A_G_IRQ_DEFAULT);
++	if (c < 0)
++		return c;
++
+ 	/* Enable Auto Power Saving mode */
+ 	c = phy_read(phydev, IP10XX_SPEC_CTRL_STATUS);
+-	c |= IP101A_APS_ON;
+-	return c;
++	c |= IP101A_G_APS_ON;
++	return phy_write(phydev, IP10XX_SPEC_CTRL_STATUS, c);
+ }
+ 
+ static int ip175c_read_status(struct phy_device *phydev)
+@@ -172,6 +184,15 @@
+ 	return 0;
+ }
+ 
++static int ip101a_g_ack_interrupt(struct phy_device *phydev)
++{
++	int err = phy_read(phydev, IP101A_G_IRQ_CONF_STATUS);
++	if (err < 0)
++		return err;
++
++	return 0;
++}
++
+ static struct phy_driver ip175c_driver = {
+ 	.phy_id		= 0x02430d80,
+ 	.name		= "ICPlus IP175C",
+@@ -201,11 +222,13 @@
+ 
+ static struct phy_driver ip101a_driver = {
+ 	.phy_id		= 0x02430c54,
+-	.name		= "ICPlus IP101A",
++	.name		= "ICPlus IP101A/G",
+ 	.phy_id_mask	= 0x0ffffff0,
+ 	.features	= PHY_BASIC_FEATURES | SUPPORTED_Pause |
+ 			  SUPPORTED_Asym_Pause,
+-	.config_init	= &ip101a_config_init,
++	.flags		= PHY_HAS_INTERRUPT,
++	.ack_interrupt	= ip101a_g_ack_interrupt,
++	.config_init	= &ip101a_g_config_init,
+ 	.config_aneg	= &genphy_config_aneg,
+ 	.read_status	= &genphy_read_status,
+ 	.suspend	= genphy_suspend,
+@@ -241,6 +264,7 @@
+ static struct mdio_device_id __maybe_unused icplus_tbl[] = {
+ 	{ 0x02430d80, 0x0ffffff0 },
+ 	{ 0x02430d90, 0x0ffffff0 },
++	{ 0x02430c54, 0x0ffffff0 },
+ 	{ }
+ };
+
