@@ -310,10 +310,12 @@ case $1 in
       echo -e "\nDNS:\r\t/etc/resolv.conf"
       sed '$G' /etc/resolv.conf 2>/dev/null
     fi
-    [ -n "${vm:0:1}" ] \
-    && echo Processes: \
-    && ps -o pid,args \
+    if [ -n "${vm:0:1}" ]
+    then
+      echo Processes:
+      ps -o pid,args \
       |grep -E 'dhc[pl]|ifplug[d]|wi[rf][ei]|sup[p]|ne[t]|br[i]' || echo \ \ ...
+    fi
     exit 0
     ;;
 
@@ -539,7 +541,7 @@ fi
 msg @. ifrc_s/d/a/m: "$IFRC_STATUS" $IFRC_DEVICE ${IFRC_ACTION:-.} $IFRC_METHOD
 #
 # Do not really 'down' or 'up' an interface here with: 'ifconfig <dev> down/up'
-# We leave that to the init/driver scripts instead, so they handle stop/start.
+# We leave that to the driver init-scripts instead, so they handle stop/start.
 # This script uses down/up with respect to interface (de)configuration only!!
 #
 case $IFRC_ACTION in
@@ -550,11 +552,9 @@ case $IFRC_ACTION in
     ;;
 
   show) ## show info/status for an iface
-    if ! grep -q $dev /proc/net/dev
-    then
-      echo -e "  ...not available, not a kernel-resident interface"
-      exit 1
-    fi
+    test -f /sys/class/net/$dev/uevent \
+    || { echo \ \ ...not available, not a kernel-resident interface; exit 1; }
+    
     # summarize the status of this interface
     { read -r ccl </sys/class/net/$dev/carrier; } 2>/dev/null
     [ "$ccl" != "1" ] && ccl="no carrier/cable/link" || ccl="linked"
@@ -565,12 +565,12 @@ case $IFRC_ACTION in
     ps |grep -q "ifplug[d].*${dev}" && ccl="managed, $ccl" 
     ifconfig $dev |grep -q UP && ccl="$ccl, up" || ccl="$ccl, dn"
 
-    if [ ! -f /sys/class/net/$dev/uevent ] \
-    || grep -q Generic /sys/class/net/$dev/*/uevent 2>/dev/null
-    then
-      ccl="no interface-phy"
-    fi
     echo -e "Configuration for interface: $devalias $ifacemsg ...$ccl"
+    if grep -qs Generic /sys/class/net/$dev/*/uevent
+    then
+      echo Warning: using 'Generic PHY' driver
+      [ -n "$mii" ] && $mii $dev |sed -n '/You/,$d;/media type/,$p'
+    fi
     show_interface_config_and_status
     #netstat -nre |grep -E "Kernel|Destina|$dev"
     #route -ne |grep -E "Kernel|Destina|$dev"
@@ -682,18 +682,17 @@ case $IFRC_ACTION in
       fi
     fi
     rm -fv /var/log/ifrc.$dev.lock
+    
     if [ "$dev" != "lo" ] \
     && [ "$devalias" != "wl" ] \
     && [ ! -d /sys/class/net/$dev/wireless ]
     then
-      msg1 "checking wired phy-hw"
-      # detection of wired conflicts w/others
-      # the interface should be identified... (probably floating hw otherwise)
-      if [ ! -f /sys/class/net/$dev/uevent ] \
-      || grep -q Generic /sys/class/net/$dev/*/uevent 2>/dev/null
+      # ethernet wired phy-hw is external; so try to determine if really there
+      # the generic phy driver is present when phy-hw is otherwise unsupported
+      if grep -s Generic /sys/class/net/$dev/*/uevent >/dev/stderr
       then
-        msg "  ...interface-phy-hw '$dev' is not available"
-        exit 1
+        msg "warning: unknown '$dev' iface-phy-hw ...using generic phy driver"
+        [ -z "$mii" ] && exit 1 || $mii $dev |grep -B12 fault && exit 2
       fi
     fi
     [ "${IFRC_STATUS%%->*}" == "up" ] && re=re- || re=
@@ -709,7 +708,6 @@ case $IFRC_ACTION in
     || msg "  ...deconfig for up_action resulting in error, ignored"
     ## this de-configure (flush) will also re-'up' the interface...
     ## additional wait time may be required to be ready again
-    ##
     ## operations continue below...
     ;;
 
