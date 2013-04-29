@@ -363,7 +363,6 @@ diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb45n.
 +                                        "38912K(rootfs-b)," \
 +                                        "46208K(user)," \
 +                                        "512K(logs)"
-
 +
 +#ifdef CONFIG_USE_IRQ
 +#error CONFIG_USE_IRQ not supported
