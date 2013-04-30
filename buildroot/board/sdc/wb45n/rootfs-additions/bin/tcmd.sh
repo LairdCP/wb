@@ -6,7 +6,7 @@
 # For normal wifi operation, we use latest firmware, which requires a symlink.
 #
 FW_LINK=/lib/firmware/ath6k/AR6003/hw2.1.1/fw-4.bin
-FIRMWARE=fw-20130201-ca.bin
+FIRMWARE=fw_v3.4.0.62.bin
 
 do_() {
   echo -e "#\n# $@" && $@
