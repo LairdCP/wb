@@ -32,11 +32,11 @@ ifdef BUILDROOT_DL_DIR
 	# copy the Laird archives into the override buildroot directory
 	cp -n $(LAIRD_ARCHIVES) $(BUILDROOT_DL_DIR)/
 endif
-	# unpack buildroot, rename the directory to 'buildroot' for easier management versions
+	# unpack buildroot, rename the directory to 'buildroot' for easier management
 	tar xf $(LAIRD_DL_DIR)/$(ARCHV) --xform "s/^$(PKG)/buildroot/"
-	# sync to dev_linux/buildroot/2011.11
 	patch -d buildroot -p1 < buildroot-patches/buildroot-2013.02-laird1.patch
 	patch -d buildroot -p1 < buildroot-patches/strip_whitespace_device_table.patch
+	# link the board configs as *_defconfig names
 	cd buildroot/configs && ln -s ../board/sdc/customers/welch_allyn/configs/buildroot.config welch_allyn_defconfig
 	cd buildroot/configs && ln -s ../board/sdc/customers/carefusion/configs/buildroot.config carefusion_defconfig
 	cd buildroot/configs && ln -s ../board/sdc/wb40n/configs/buildroot.config wb40n_defconfig
@@ -46,7 +46,7 @@ endif
 	touch unpack.stamp
 
 $(LAIRD_DL_DIR)/$(ARCHV):
-	wget -c $(URL)$(ARCHV) -O $@
+	wget -nc -c $(URL)$(ARCHV) -O $@
 
 source-wb40n:
 	$(MAKE) -C buildroot O=output/wb40n source
