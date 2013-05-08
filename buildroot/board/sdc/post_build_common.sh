@@ -15,6 +15,13 @@ set -x -e
 ## echo "/dev/mtdblock7\t\t/applog\tjffs2\tdefaults\t\t0\t0" \
 ## >> $TARGETDIR/etc/fstab
 
+# disable 3.8.0-laird1 ipv6 module to avoid ipv6-/-netlink conflict - temporary
+if [ -f $TARGETDIR/lib/modules/3.8.0-laird1/kernel/net/ipv6/ipv6.ko ]
+then
+  mv -f $TARGETDIR/lib/modules/3.8.0-laird1/kernel/net/ipv6/ipv6.ko \
+        $TARGETDIR/lib/modules/3.8.0-laird1/kernel/net/ipv6/-ipv6.ko
+fi
+
 # delete the default ssh init file
 # real version is in init.d/opt and works w/ inetd
 rm -f $TARGETDIR/etc/init.d/S50sshd
