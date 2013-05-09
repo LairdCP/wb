@@ -481,11 +481,12 @@ diff -Naur old/package/openssh/openssh.mk new/package/openssh/openssh.mk
  OPENSSH_POST_INSTALL_TARGET_HOOKS += OPENSSH_INSTALL_INITSCRIPT
 diff -Naur old/package/openssh/S50sshd new/package/openssh/S50sshd
 --- old/package/openssh/S50sshd	2013-04-22 23:49:34.941440166 +0100
-+++ new/package/openssh/S50sshd	2013-04-22 21:36:40.000000000 +0100
-@@ -2,70 +2,88 @@
- #
- # sshd        Starts sshd.
- #
++++ new/package/openssh/S50sshd	2013-05-09 10:42:23.153760797 -0500
+@@ -1,72 +1,76 @@
+ #!/bin/sh
+-#
+-# sshd        Starts sshd.
+-#
 -
 -# Make sure the ssh-keygen progam exists
 -[ -f /usr/bin/ssh-keygen ] || exit 0
@@ -518,16 +519,18 @@ diff -Naur old/package/openssh/S50sshd new/package/openssh/S50sshd
 -	/usr/bin/ssh-keygen -t ecdsa -f /etc/ssh_host_ecdsa_key -C '' -N ''
 -fi
 -                
- umask 077
- 
-+check() {
+-umask 077
++# sshd init-script
++# supports inetd and pre-checking configuration
++
++check_configuration() {
 +  echo "Checking sshd configuration..."
 +  
 +  # Make sure the ssh-keygen progam exists
-+  [ -f /usr/bin/ssh-keygen ] || exit 0
++  [ -f /usr/bin/ssh-keygen ] || { echo "  ...missing ssh-keygen"; exit 1; }
 +
 +  # Check that the sshd_config file exists
-+  [ -f /etc/ssh/sshd_config ] || exit 0
++  [ -f /etc/ssh/sshd_config ] || { echo "  ...missing sshd_config"; exit 1; }
 +
 +  # See if need to generate the SSH1 RSA key
 +  if [ ! -f /etc/ssh/ssh_host_key ] \
@@ -561,68 +564,65 @@ diff -Naur old/package/openssh/S50sshd new/package/openssh/S50sshd
 +    /usr/bin/ssh-keygen -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -C '' -N ''
 +  fi
 +}                
-+
- start() {
+ 
+-start() {
 - 	echo -n "Starting sshd: "
 -	/usr/sbin/sshd
 -	touch /var/lock/sshd
 -	echo "OK"
 -}	
-+ echo -n "Starting sshd: "
-+  /usr/sbin/sshd
-+  #/usr/sbin/sshd -f /etc/ssh/sshd_config
-+# touch /var/lock/sshd.lock
-+  echo "OK"
-+}  
- stop() {
+-stop() {
 -	echo -n "Stopping sshd: "
 -        killall	sshd 
 -	rm -f /var/lock/sshd
 -	echo "OK" 
-+  echo -n "Stopping sshd: "
-+  killall sshd 2>/dev/null
-+# rm -f /var/lock/sshd.lock
-+  echo "OK" 
- }
- restart() {
+-}
+-restart() {
 -	stop
 -	start
 -}	
-+  stop
-+  check
-+  start
-+}  
++umask 077
  
  case "$1" in
-+  check)
-+    # support inetd, just check configration during init
-+    check
-+    ;;
-   start)
+-  start)
 -  	start
 -	;;
-+    # always check config if running manually
-+    [ -z $rcS ] && check
-+    start
++  check)
++    # inetd pre-check support
++    check_configuration
 +    ;;
    stop)
 -  	stop
 -	;;
-+    stop
-+    ;;
-   restart|reload)
+-  restart|reload)
 -  	restart
 -	;;
-+    restart
++    echo -n "Stopping sshd: "
++    killall sshd 2>/dev/null
++    #rm -f /var/lock/sshd.lock
++    echo "OK" 
++    ;;
++  start)
++    # always check config if running manually
++    [ -z "$rcS_" ] && check_configuration
++    echo -n "Starting sshd: "
++    /usr/sbin/sshd
++    #touch /var/lock/sshd.lock
++    echo "OK"
++    ;;
++  restart)
++    $0 stop
++    $0 start
 +    ;;
    *)
 -	echo "Usage: $0 {start|stop|restart}"
 -	exit 1
-+    echo $"Usage: $0 {start|stop|restart}"
-+    exit 1
++    echo "Usage: $0 {stop|start|restart}"
++    false
  esac
- 
+-
  exit $?
+-
 diff -Naur old/package/openssl/c_rehash new/package/openssl/c_rehash
 --- old/package/openssl/c_rehash	1970-01-01 01:00:00.000000000 +0100
 +++ new/package/openssl/c_rehash	2013-04-22 21:36:40.000000000 +0100
@@ -670,7 +670,7 @@ diff -Naur old/package/openssl/openssl.mk new/package/openssl/openssl.mk
  define OPENSSL_INSTALL_FIXUPS
 -	rm -f $(TARGET_DIR)/usr/bin/c_rehash
  endef
- 
+
  OPENSSL_POST_INSTALL_TARGET_HOOKS += OPENSSL_INSTALL_FIXUPS
 diff -Naur old/package/pppd/pppd-2.4.5-maxconfreq-30000.patch new/package/pppd/pppd-2.4.5-maxconfreq-30000.patch
 --- old/package/pppd/pppd-2.4.5-maxconfreq-30000.patch	1970-01-01 01:00:00.000000000 +0100
