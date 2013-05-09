@@ -36,6 +36,7 @@ inetd_daemon_check()
 # find any network and bridge init-script pids
 let net_init_pids=$( ps |sed -n '/[S]..[nb][er][ti][wd][og][re]/s/^\ *\([0-9]\+\).*/\1/p' )+0
 
+export inetd_=^
 case $1 in
 
   reload)
