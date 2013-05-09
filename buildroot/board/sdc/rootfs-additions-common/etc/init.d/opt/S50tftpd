@@ -1,10 +1,15 @@
 #!/bin/sh 
+# tftpd init-script
+# supports inetd
 
-tftpd=/usr/sbin/tftpd
-trap "" 1 15
-test -f $tftpd || { echo "$tftpd missing"; exit 1; }
-[ ! -d /var/run/tftpd ] && mkdir -p /var/run/tftpd
-[ ! -f /var/log/wtmp ] && touch /var/log/wtmp
+pre_check() {
+  test -x $tftpd || { echo "$tftpd missing"; exit 1; }
+  
+  [ ! -d /var/run/tftpd ] && mkdir -p /var/run/tftpd
+  [ ! -f /var/log/wtmp ] && touch /var/log/wtmp
+}
+
+tftpd=/usr/bin/tftpd
 
 case "$1" in
   stop)
@@ -14,6 +19,7 @@ case "$1" in
 
   start)
     echo "Starting tftp daemon"
+    [ -z "$rcS_" ] && pre_check
     $tftpd
     ;;
 
@@ -23,12 +29,12 @@ case "$1" in
     ;;
 
   check)
+    pre_check
     ;;
     
   *)
     echo "Usage: $0 {stop|start|restart}"
-    exit 1
+    false
     ;;
 esac
-
-exit 0
+exit $?
