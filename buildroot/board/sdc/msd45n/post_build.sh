@@ -4,6 +4,9 @@ export BR2_SDC_PLATFORM=wb45n
 
 echo "WB45n POST BUILD script: starting..."
 
+# enable tracing and exit on errors
+set -x -e
+
 # cleanup
 rm -f  -- $TARGETDIR/lib64 $TARGETDIR/usr/lib64
 rm -rf -- $TARGETDIR/var $TARGETDIR/etc
