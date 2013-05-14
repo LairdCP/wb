@@ -768,7 +768,7 @@ diff -Naur old/package/proftpd/proftpd.mk new/package/proftpd/proftpd.mk
  		$(if $(BR2_INET_IPV6),,$(SED) 's/^UseIPv6/# UseIPv6/' $(TARGET_DIR)/etc/proftpd.conf;) \
  	fi
 -	$(INSTALL) -m 0755 package/proftpd/S50proftpd $(TARGET_DIR)/etc/init.d
-+	$(INSTALL) -m 0755 package/proftpd/S50proftpd $(TARGET_DIR)/etc/init.d/opt
++	$(INSTALL) -m 0755 package/proftpd/S50proftpd $(TARGET_DIR)/etc/init.d/opt/S50proftpd
  endef
  
  define PROFTPD_UNINSTALL_TARGET_CMDS
