@@ -22,12 +22,12 @@ then
         $TARGETDIR/lib/modules/3.8.0-laird1/kernel/net/ipv6/-ipv6.ko
 fi
 
-# delete the default ssh init file
-# real version is in init.d/opt and works w/ inetd
+# remove default ssh init file
+# real version is in init.d/opt and works w/ inetd or standalone
 rm -f $TARGETDIR/etc/init.d/S50sshd
 
-# TODO: init-script is not ready for use
-chmod a-x $TARGETDIR/etc/init.d/S??openvpn
+# remove default lighttpd init
+rm -f $TARGETDIR/etc/init.d/S50lighttpd
 
 # remove bash cruft
 rm -fr $TARGETDIR/etc/bash*
@@ -42,8 +42,8 @@ rm -f $TARGETDIR/etc/os-release
 # remove conflicting rcK
 rm -f $TARGETDIR/etc/init.d/rcK
 
-# Copy the common rootfs additions first so that they can be overriden,
-# if necessary, by the product specific rootfs-additions
+# Copy the rootfs-additions-common in place first.
+# If necessary, these can be overwritten by the product specific rootfs-additions.
 tar c --exclude=.svn -C board/sdc/rootfs-additions-common/ . | tar x -C $TARGETDIR/
 
 # install libnl*.so.3 links
@@ -51,13 +51,14 @@ tar c --exclude=.svn -C board/sdc/rootfs-additions-common/ . | tar x -C $TARGETD
   && ln -sf libnl-3.so libnl.so.3 \
   && ln -sf libnl-genl-3.so libnl-genl.so.3 )
 
-# Services to disable by default
-chmod a-x $TARGETDIR/etc/init.d/S??lighttpd
-
 # create missing symbolic link
 # TODO: shouldn't have to do this here, temporary workaround
 ( cd $TARGETDIR/usr/lib \
   && ln -sf libsdc_sdk.so.1.0 libsdc_sdk.so.1 )
+
+# Services to disable by default
+chmod a-x $TARGETDIR/etc/init.d/S??lighttpd
+chmod a-x $TARGETDIR/etc/init.d/S??openvpn     #not ready for use
 
 # create firmware release file
 echo "SDC Linux Release `date +%Y%m%d`" \
