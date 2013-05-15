@@ -154,7 +154,7 @@ diff -Naur old/package/crda/Config.in new/package/crda/Config.in
 +	help
 +	  Central Regulatory Domain Agent.
 +
-+	  http://linuxwireless.org/en/developers/Regulatory/CRDA
++	  http://wireless.kernel.org/en/developers/Regulatory/CRDA
 +
 diff -Naur old/package/crda/crda-genl3.patch new/package/crda/crda-genl3.patch
 --- old/package/crda/crda-genl3.patch	1970-01-01 01:00:00.000000000 +0100
@@ -184,7 +184,7 @@ diff -Naur old/package/crda/crda.mk new/package/crda/crda.mk
 +
 +CRDA_VERSION = 1.1.2
 +CRDA_SOURCE = crda-$(CRDA_VERSION).tar.bz2
-+CRDA_SITE = http://linuxwireless.org/download/crda
++CRDA_SITE = http://wireless.kernel.org/download/crda
 +CRDA_DEPENDENCIES = host-pkgconf libnl openssl regulatory
 +CRDA_CONFIG = $(CRDA_DIR)/.config
 +CRDA_MAKE_ENV = PKG_CONFIG_PATH="$(STAGING_DIR)/usr/lib/pkgconfig" \
@@ -882,7 +882,7 @@ diff -Naur old/package/regulatory/Config.in new/package/regulatory/Config.in
 +	help
 +	  Wireless regulatory database.
 +
-+	  http://linuxwireless.org/en/developers/Regulatory
++	  http://wireless.kernel.org/en/developers/Regulatory
 +
 diff -Naur old/package/regulatory/regulatory.mk new/package/regulatory/regulatory.mk
 --- old/package/regulatory/regulatory.mk	1970-01-01 01:00:00.000000000 +0100
@@ -895,7 +895,7 @@ diff -Naur old/package/regulatory/regulatory.mk new/package/regulatory/regulator
 +#############################################################
 +REGULATORY_VERSION:=2011.04.28
 +REGULATORY_SOURCE:=wireless-regdb-$(REGULATORY_VERSION).tar.bz2
-+REGULATORY_SITE:=http://linuxwireless.org/download/wireless-regdb
++REGULATORY_SITE:=http://wireless.kernel.org/download/wireless-regdb
 +
 +define REGULATORY_INSTALL_TARGET_CMDS
 +	mkdir -p $(TARGET_DIR)/usr/lib/crda
