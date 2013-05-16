@@ -36,6 +36,7 @@ endif
 	tar xf $(LAIRD_DL_DIR)/$(ARCHV) --xform "s/^$(PKG)/buildroot/"
 	patch -d buildroot -p1 < buildroot-patches/buildroot-2013.02-laird1.patch
 	patch -d buildroot -p1 < buildroot-patches/strip_whitespace_device_table.patch
+	patch -d buildroot -p1 -R < buildroot-patches/external-toolchain-relocatable.patch
 	# link the board configs as *_defconfig names
 	cd buildroot/configs && ln -s ../board/sdc/customers/welch_allyn/configs/buildroot.config welch_allyn_defconfig
 	cd buildroot/configs && ln -s ../board/sdc/customers/carefusion/configs/buildroot.config carefusion_defconfig
