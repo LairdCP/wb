@@ -24,17 +24,19 @@ define SDCSUPP_BUILD_CMDS
     $(MAKE) -C $(@D)/wpa_supplicant clean
     CFLAGS="-I$(STAGING_DIR)/usr/include/libnl3 $(TARGET_CFLAGS) -MMD -Wall -g" \
         $(MAKE) -C $(@D)/wpa_supplicant V=1 NEED_TLS_LIBDL=1 \
-            $(SDCSUPP_RADIO_FLAGS) CROSS_COMPILE="$(TARGET_CROSS)" wpa_supplicant
+            $(SDCSUPP_RADIO_FLAGS) CROSS_COMPILE="$(TARGET_CROSS)"
     $(TARGET_CROSS)objcopy -S $(@D)/wpa_supplicant/wpa_supplicant $(@D)/wpa_supplicant/sdcsupp
     #(cd $(@D)/wpa_supplicant && CROSS_COMPILE=arm-sdc-linux-gnueabi ./sdc-build-linux.sh 4 1 2 3 1)
 endef
 
 define SDCSUPP_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 755 $(@D)/wpa_supplicant/sdcsupp $(SDCSUPP_TARGET_DIR)/usr/bin/sdcsupp
+	$(INSTALL) -D -m 755 $(@D)/wpa_supplicant/wpa_cli $(SDCSUPP_TARGET_DIR)/usr/bin/wpa_cli
 endef
 
 define SDCSUPP_UNINSTALL_TARGET_CMDS
 	rm -f $(SDCSUPP_TARGET_DIR)/usr/bin/sdcsupp
+	rm -f $(SDCSUPP_TARGET_DIR)/usr/bin/wpa_cli
 endef
 
 $(eval $(generic-package))
