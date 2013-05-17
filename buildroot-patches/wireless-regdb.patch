@@ -1,0 +1,114 @@
+commit 3d9ce2f563b78ccc40af80f7d20b7a260a8ab3fd
+Author: Dimitrios Siganos <dimitris@siganos.org>
+Date:   Tue Apr 9 03:22:19 2013 +0000
+
+    wireless-regdb: new package
+    
+    Signed-off-by: Dimitrios Siganos <dimitris@siganos.org>
+    Acked-by: Gustavo Zacarias <gustavo@zacarias.com.ar>
+    Tested-by: Gustavo Zacarias <gustavo@zacarias.com.ar>
+    Signed-off-by: Peter Korsgaard <jacmet@sunsite.dk>
+
+diff --git a/package/Config.in b/package/Config.in
+index 54a9a2b..b9fe726 100644
+--- a/package/Config.in
++++ b/package/Config.in
+@@ -765,6 +765,7 @@ source "package/vtun/Config.in"
+ if BR2_PACKAGE_BUSYBOX_SHOW_OTHERS
+ source "package/wget/Config.in"
+ endif
++source "package/wireless-regdb/Config.in"
+ source "package/wireless_tools/Config.in"
+ source "package/wireshark/Config.in"
+ source "package/wpa_supplicant/Config.in"
+diff --git a/package/wireless-regdb/Config.in b/package/wireless-regdb/Config.in
+new file mode 100644
+index 0000000..89a6147
+--- /dev/null
++++ b/package/wireless-regdb/Config.in
+@@ -0,0 +1,10 @@
++config BR2_PACKAGE_WIRELESS_REGDB
++	bool "wireless-regdb"
++	help
++	  Wireless regulatory database.
++
++	  Wireless regulatory database for CRDA. The database lists the
++	  allowed radio frequencies for each local jurisdiction.
++
++	  http://linuxwireless.org/en/developers/Regulatory
++
+diff --git a/package/wireless-regdb/wireless-regdb.mk b/package/wireless-regdb/wireless-regdb.mk
+new file mode 100644
+index 0000000..b4e038c
+--- /dev/null
++++ b/package/wireless-regdb/wireless-regdb.mk
+@@ -0,0 +1,18 @@
++#############################################################
++#
++# wireless-regdb
++#
++#############################################################
++
++WIRELESS_REGDB_VERSION = 2013.01.11
++WIRELESS_REGDB_SOURCE = wireless-regdb-$(WIRELESS_REGDB_VERSION).tar.bz2
++WIRELESS_REGDB_SITE = http://kernel.org/pub/software/network/wireless-regdb
++WIRELESS_REGDB_LICENSE = ISC
++WIRELESS_REGDB_LICENSE_FILES = LICENSE
++
++define WIRELESS_REGDB_INSTALL_TARGET_CMDS
++    install -m 644 -D -T $(@D)/regulatory.bin $(TARGET_DIR)/usr/lib/crda/regulatory.bin
++    install -m 644 -D -T $(@D)/linville.key.pub.pem $(TARGET_DIR)/etc/wireless-regdb/pubkeys/linville.key.pub.pem
++endef
++
++$(eval $(generic-package))
+commit adc231d6a15dd3d2cdc18190c9befaa655bba7ad
+Author: Peter Korsgaard <jacmet@sunsite.dk>
+Date:   Tue Apr 23 09:04:47 2013 +0200
+
+    wireless-regdb: strip empty line
+    
+    Signed-off-by: Peter Korsgaard <jacmet@sunsite.dk>
+
+diff --git a/package/wireless-regdb/Config.in b/package/wireless-regdb/Config.in
+index 89a6147..d9c7b8d 100644
+--- a/package/wireless-regdb/Config.in
++++ b/package/wireless-regdb/Config.in
+@@ -7,4 +7,3 @@ config BR2_PACKAGE_WIRELESS_REGDB
+ 	  allowed radio frequencies for each local jurisdiction.
+ 
+ 	  http://linuxwireless.org/en/developers/Regulatory
+-
+commit 28431c2c0ee33dd192933954ca2e667624882503
+Author: Gustavo Zacarias <gustavo@zacarias.com.ar>
+Date:   Tue Apr 23 08:59:02 2013 +0000
+
+    wireless-regdb: bump to version 2013.02.13 and style fixes
+    
+    Signed-off-by: Gustavo Zacarias <gustavo@zacarias.com.ar>
+    Signed-off-by: Peter Korsgaard <jacmet@sunsite.dk>
+
+diff --git a/package/wireless-regdb/wireless-regdb.mk b/package/wireless-regdb/wireless-regdb.mk
+index b4e038c..2d5b86a 100644
+--- a/package/wireless-regdb/wireless-regdb.mk
++++ b/package/wireless-regdb/wireless-regdb.mk
+@@ -4,15 +4,17 @@
+ #
+ #############################################################
+ 
+-WIRELESS_REGDB_VERSION = 2013.01.11
++WIRELESS_REGDB_VERSION = 2013.02.13
+ WIRELESS_REGDB_SOURCE = wireless-regdb-$(WIRELESS_REGDB_VERSION).tar.bz2
+ WIRELESS_REGDB_SITE = http://kernel.org/pub/software/network/wireless-regdb
+ WIRELESS_REGDB_LICENSE = ISC
+ WIRELESS_REGDB_LICENSE_FILES = LICENSE
+ 
+ define WIRELESS_REGDB_INSTALL_TARGET_CMDS
+-    install -m 644 -D -T $(@D)/regulatory.bin $(TARGET_DIR)/usr/lib/crda/regulatory.bin
+-    install -m 644 -D -T $(@D)/linville.key.pub.pem $(TARGET_DIR)/etc/wireless-regdb/pubkeys/linville.key.pub.pem
++	$(INSTALL) -m 644 -D -T $(@D)/regulatory.bin \
++		$(TARGET_DIR)/usr/lib/crda/regulatory.bin
++	$(INSTALL) -m 644 -D -T $(@D)/linville.key.pub.pem \
++		$(TARGET_DIR)/etc/wireless-regdb/pubkeys/linville.key.pub.pem
+ endef
+ 
+ $(eval $(generic-package))
