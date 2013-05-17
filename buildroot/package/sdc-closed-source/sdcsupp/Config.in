@@ -3,3 +3,11 @@ config BR2_PACKAGE_SDCSUPP
 	help 
 	  SDC Supplicant
 
+if BR2_PACKAGE_SDCSUPP
+
+config BR2_PACKAGE_SDCSUPP_WPA_CLI
+	bool "Install wpa_cli binary"
+	help
+	  Install wpa_cli command line utility
+
+endif
