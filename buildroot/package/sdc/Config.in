@@ -1,3 +1,4 @@
 source "package/sdc/patchram/Config.in"
 source "package/sdc/libedit/Config.in"
 source "package/sdc/sdcbins/Config.in"
+source "package/sdc/openssl-fips/Config.in"

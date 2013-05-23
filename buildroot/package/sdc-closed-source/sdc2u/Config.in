@@ -1,0 +1,5 @@
+config BR2_PACKAGE_SDC2U
+	bool "SDC2U DRIVER FOR CCMP_FIPS"
+	help
+	  Builds sdc2u.ko extra driver and sdcu app for ccmp_fips on the wb45n.
+	  The ath6kl driver is modified and fips enabled firmware is required.

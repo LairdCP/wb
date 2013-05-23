@@ -19,8 +19,8 @@ SDC_CLI=/usr/bin/sdc_cli
 WIFI_80211=-Dnl80211                          ## supplicant driver nl80211 
 #WIFI_DEBUG=-tdddd                             ## supplicant debugging '-td..'
 
-
-
+## fips mode support - also can invoke via cmdline as 'fips'
+WIFI_FIPS=-F                                  ## FIPS mode support '-F'
 
 
 wifi_config()
@@ -92,16 +92,40 @@ wifi_queryinterface()
   return 0
 }
 
+wifi_fips_mode()
+{
+  msg "enabling FIPS mode"
+  insmod ${WIFI_MODULE%/*}/ath6kl_core.ko fips_mode=y || return 1
+  insmod /lib/modules/`uname -r`/extra/ath6kl_laird.ko || return 1  
+  
+  insmod /lib/modules/`uname -r`/extra/sdc2u.ko || return 1
+  # create device node for user space daemon 
+  major=$( sed -n '/sdc2u/s/^[ ]*\([0-9]*\).*/\1/p' /proc/devices )
+  minor=0
+  rm -f /dev/sdc2u0
+  mknod /dev/sdc2u0 c $major $minor || return 1
+  # launch daemon to perform crypto operations
+  sdcu &
+  
+  return 0
+}
+
 wifi_start()
 {
   if grep -q "${module/.ko/}" /proc/modules
   then
-    wifi_queryinterface
+    [ -n "$WIFI_FIPS" ] && $0 stop && exec $0 $WIFI_DEBUG $fips start $2
+    
+    wifi_queryinterface || exit 1
   else
     ## check for 'slot_b=' setting in kernel args
     grep -o 'slot_b=.' /proc/cmdline \
     && msg "warning: \"slot_b\" setting in bootargs"
 
+    ## fips mode support
+    [ -n "$WIFI_FIPS" ] \
+    && { wifi_fips_mode || { msg " ...fips mode error"; exit 1; }; }
+    
     ## load the atheros driver
     modprobe $WIFI_DRIVER \
     || { msg "  ...driver failed to load"; exit 1; }
@@ -127,7 +151,7 @@ wifi_start()
     [ -f $supp_sd/*.pid ] \
     && { msg "$supp_sd/*.pid exists"; return 1; }
 
-    supp_opt=$WIFI_80211\ $WIFI_DEBUG
+    supp_opt=$WIFI_80211\ $WIFI_DEBUG\ $WIFI_FIPS
     msg -en executing: $SDC_SUPP -i$WIFI_DEV $supp_opt -s'  '
     #
     $SDC_SUPP -i$WIFI_DEV $supp_opt -s >/dev/null 2>&1 &
@@ -169,13 +193,24 @@ wifi_stop()
     ifconfig $WIFI_DEV down && { $usleep 100000; msg ...down; } || msg
   fi
 
+  ## unload fips related modules
+  if let pid=$( pidof sdcu )+0 && kill $pid && n=27
+  then
+    msg -en "sdcu terminating"
+    while [ -d /proc/$pid ] && let n--; do $usleep 50000; msg -en .; done; msg
+  fi
+  if mls=$( grep -os -e "^sdc2u" -e "^ath6kl_laird" /proc/modules )
+  then
+    msg unloading: $mls
+    rmmod $mls
+  fi
+
   ## unload ath6kl modules
   if mls=$( grep -os -e "^ath6kl_sdio" -e "^ath6kl_core" /proc/modules )
   then
     msg unloading: $mls
     rmmod $mls
   fi
-  
   [ $? -eq 0 ] && { msg "  ...okay"; return 0; } || return 1
 }
 
@@ -197,6 +232,9 @@ supp_sd=/tmp/wpa_supplicant
 module=${WIFI_MODULE##*/}
 usleep='busybox usleep'
 
+# optionally, set fips mode via cmdline
+[ "$1" == fips ] && { shift; fips=fips; WIFI_FIPS=-F; }
+
 # command
 case $1 in
   
@@ -212,18 +250,18 @@ case $1 in
     ;;
 
   restart)
-    $0 stop && exec $0 $WIFI_DEBUG start $2
+    $0 stop && exec $0 $WIFI_DEBUG $fips start $2
     ;;
 
   ''|status)
     module=${module/.ko/}
     echo -e "Modules loaded and size:"
-    grep -s -e "^${module%%_*}" /proc/modules \
+    grep -s -e "${module%%_*}" -e "sdcu" -e "sdc2u" /proc/modules \
     || echo "  ..." 
 
     echo -e "\nProcesses related for $WIFI_DRIVER and supplicant:"
     top -bn1 \
-    |sed -n '/sed/d;4H;/'"${SDC_SUPP##*/}"'/H;/'"${module%%_*}"'/{H;x;p;}' \
+    |sed -n '/sed/d;4H;/'"${SDC_SUPP##*/}"'/H;/sdcu/H;/'"${module%%_*}"'/{H;x;p;}' \
     |uniq |grep . || echo "  ..."
 
     if wifi_queryinterface
