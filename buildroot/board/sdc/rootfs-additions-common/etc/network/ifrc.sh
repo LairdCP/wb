@@ -766,8 +766,8 @@ else
       ##
       ## If ifrc.sh exits with non-zero status, then ifplugd will not daemonize.
       ## Only exit non-zero for permanent conditions that prevent configuration.
-    # ${ifplugd:-ifplugd} -i$dev -M $nsl -q -p -a -f -u1 -d1 -I -r$0
-    ( ${ifplugd:-ifplugd} -i$dev -M $nsl -q -p -a -f -u1 -d1 -I -r$0 )&
+    # ${ifplugd:-ifplugd} -i$dev -M $nsl -q -p -a -f -u1 -d0 -I -r$0
+    ( ${ifplugd:-ifplugd} -i$dev -M $nsl -q -p -a -f -u1 -d0 -I -r$0 )&
       #pause 0.333
     }
 fi
