@@ -3,8 +3,9 @@
 # jon.hefling@lairdtech.com 20120520
 
 WIFI_PREFIX=wlan                              ## iface prefix to be enumerated
-WIFI_DRIVER="ath6kl_sdio"                     ## device driver "name"
-WIFI_MODULE=/lib/modules/`uname -r`/kernel/drivers/net/wireless/ath/ath6kl/ath6kl_sdio.ko
+WIFI_DRIVER=ath6kl_sdio                       ## device driver "name"
+WIFI_MODULE=kernel/drivers/net/wireless/ath/ath6kl/ath6kl_sdio.ko
+WIFI_KMPATH=/lib/modules/`uname -r`           ## kernel modules path
 #WIFI_FWPATH=/lib/firmware                     ## location of 'fw' symlink
 #WIFI_NVRAM=/lib/nvram/nv
 
@@ -19,8 +20,8 @@ SDC_CLI=/usr/bin/sdc_cli
 WIFI_80211=-Dnl80211                          ## supplicant driver nl80211 
 #WIFI_DEBUG=-tdddd                             ## supplicant debugging '-td..'
 
-## fips mode support - also can invoke via cmdline as 'fips'
-WIFI_FIPS=-F                                  ## FIPS mode support '-F'
+## fips mode support - also can invoke via cmdline as 'fips' or in the /e/n/i
+#WIFI_FIPS=-F                                  ## FIPS mode support '-F'
 
 
 wifi_config()
@@ -29,6 +30,21 @@ wifi_config()
   # avoids issues while loading drivers and starting the supplicant
   [ ! -s "$WIFI_PROFILES" -a -x "$SDC_CLI" ] \
   && { msg re-generating $WIFI_PROFILES; rm -f $WIFI_PROFILES; $SDC_CLI quit; }
+
+  # check profiles:  fips-mode <off|on>
+  fm=$( ${SDC_CLI:-:} global show fips_mode 2>/dev/null )
+  
+  # or check /e/n/i:  fips_mode <enable>
+  [ -n "$fm" ] \
+  || fm=$( sed -n "/^iface wl/,/^$/s/^[ \t]\+[^#]fips_mode \(.*\)/\1/p" \
+           /etc/network/interfaces 2>/dev/null )
+
+  # assume off
+  case "$fm" in
+    enable|yes|on|-F) fips=fips; WIFI_FIPS=-F;;
+    *) fips=; WIFI_FIPS=;;
+  esac
+
   return 0
 }
 
@@ -94,18 +110,29 @@ wifi_queryinterface()
 
 wifi_fips_mode()
 {
-  msg "enabling FIPS mode"
-  insmod ${WIFI_MODULE%/*}/ath6kl_core.ko fips_mode=y || return 1
-  insmod /lib/modules/`uname -r`/extra/ath6kl_laird.ko || return 1  
-  
-  insmod /lib/modules/`uname -r`/extra/sdc2u.ko || return 1
-  # create device node for user space daemon 
-  major=$( sed -n '/sdc2u/s/^[ ]*\([0-9]*\).*/\1/p' /proc/devices )
-  minor=0
-  rm -f /dev/sdc2u0
-  mknod /dev/sdc2u0 c $major $minor || return 1
-  # launch daemon to perform crypto operations
-  sdcu &
+  if [ -f "$WIFI_KMPATH/extra/ath6kl_laird.ko" ] \
+  && [ -f "$WIFI_KMPATH/extra/sdc2u.ko" ] \
+  && : #[ -x "/usr/bin/sdcu" ]
+  then
+    #msg "enabling FIPS mode"
+    msg "configuring for FIPS mode"
+    insmod ${WIFI_MODULE%/*}/ath6kl_core.ko fips_mode=y || return 1
+    insmod ${WIFI_KMPATH}/extra/ath6kl_laird.ko || return 1  
+    insmod ${WIFI_KMPATH}/extra/sdc2u.ko || return 1
+
+    # create device node for user space daemon 
+    major=$( sed -n '/sdc2u/s/^[ ]*\([0-9]*\).*/\1/p' /proc/devices )
+    minor=0
+    rm -f /dev/sdc2u0
+    mknod /dev/sdc2u0 c $major $minor || return 1
+    # launch daemon to perform crypto operations
+    sdcu >/var/log/sdcu.log 2>&1 &
+  else
+    #msg "disabled FIPS mode - support missing"
+    msg "configuring non-FIPS mode"
+    WIFI_FIPS=
+    fips=
+  fi
   
   return 0
 }
@@ -228,6 +255,7 @@ esac
 # optionally, wait on this script for a link
 [ "$2" == "wait" ] && wfl=true || wfl=false
 
+WIFI_MODULE=$WIFI_KMPATH/$WIFI_MODULE
 supp_sd=/tmp/wpa_supplicant
 module=${WIFI_MODULE##*/}
 usleep='busybox usleep'
@@ -259,7 +287,7 @@ case $1 in
     grep -s -e "${module%%_*}" -e "sdcu" -e "sdc2u" /proc/modules \
     || echo "  ..." 
 
-    echo -e "\nProcesses related for $WIFI_DRIVER and supplicant:"
+    echo -e "\nProcesses related for ${WIFI_DRIVER}${fips:+, fips} and supplicant:"
     top -bn1 \
     |sed -n '/sed/d;4H;/'"${SDC_SUPP##*/}"'/H;/sdcu/H;/'"${module%%_*}"'/{H;x;p;}' \
     |uniq |grep . || echo "  ..."
@@ -289,7 +317,7 @@ case $1 in
     echo "  -d  debug verbosity (-dd even more)"
     echo
     echo "Usage:"
-    echo "# ${0##*/} [-tdddd] {stop|start|restart|status} [wait]"
+    echo "# ${0##*/} [-tdddd] [fips] {stop|start|restart|status} [wait]"
     ;;
 
   *)
