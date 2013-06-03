@@ -39,10 +39,10 @@ wifi_config()
   || fm=$( sed -n "/^iface wl/,/^$/s/^[ \t]\+[^#]fips_mode \(.*\)/\1/p" \
            /etc/network/interfaces 2>/dev/null )
 
-  # assume off
+  # cmdline may override, otherwise not-enabled
   case "$fm" in
     enable|yes|on|-F) fips=fips; WIFI_FIPS=-F;;
-    *) fips=; WIFI_FIPS=;;
+    disable|no|off) fips=; WIFI_FIPS=;;
   esac
 
   return 0
@@ -116,7 +116,7 @@ wifi_fips_mode()
   then
     #msg "enabling FIPS mode"
     msg "configuring for FIPS mode"
-    insmod ${WIFI_MODULE%/*}/ath6kl_core.ko fips_mode=y || return 1
+    insmod ${WIFI_KMPATH}/${WIFI_MODULE%/*}/ath6kl_core.ko fips_mode=y || return 1
     insmod ${WIFI_KMPATH}/extra/ath6kl_laird.ko || return 1  
     insmod ${WIFI_KMPATH}/extra/sdc2u.ko || return 1
 
@@ -255,7 +255,6 @@ esac
 # optionally, wait on this script for a link
 [ "$2" == "wait" ] && wfl=true || wfl=false
 
-WIFI_MODULE=$WIFI_KMPATH/$WIFI_MODULE
 supp_sd=/tmp/wpa_supplicant
 module=${WIFI_MODULE##*/}
 usleep='busybox usleep'

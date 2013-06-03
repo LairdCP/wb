@@ -3,8 +3,9 @@
 # jon.hefling@lairdtech.com 20120520
 
 WIFI_PREFIX=wlan                              ## iface prefix to be enumerated
-WIFI_DRIVER="bcmsdh_sdmmc"                    ## device driver "name"
-WIFI_MODULE=/lib/modules/`uname -r`/extra/drivers/net/wireless/dhd.ko
+WIFI_DRIVER=bcmsdh_sdmmc                      ## device driver "name"
+WIFI_MODULE=extra/drivers/net/wireless/dhd.ko
+WIFI_KMPATH=/lib/modules/`uname -r`           ## kernel modules path
 WIFI_FWPATH=/etc/summit/firmware              ## location of 'fw' symlink
 WIFI_NVRAM=/etc/summit/nvram/nv
 
@@ -135,12 +136,13 @@ wifi_start()
 
     ## load driver using interface prefix
     msg "firmware: ${WIFI_FW##*/} -> `ls -l $WIFI_FW |grep -o '[^ /]*$' 2>/dev/null`"
-    msg -en "loading: `ls -l $WIFI_MODULE |grep -o '[^ /]*$' 2>/dev/null`"
+    msg -en "loading: `ls -l $WIFI_KMPATH/$WIFI_MODULE |grep -o '[^ /]*$' 2>/dev/null`"
     [ -n "$driver_load_fw" ] && echo -en " +fw"
     [ -n "$driver_load_nv" ] && echo -en " +nv"
     #
     eval \
-    insmod $WIFI_MODULE iface_name=$WIFI_PREFIX $driver_load_fw $driver_load_nv \
+    insmod $WIFI_KMPATH/$WIFI_MODULE \
+     iface_name=$WIFI_PREFIX $driver_load_fw $driver_load_nv \
     && msg "" || { msg "  ...driver load failure"; return 1; }
 
     ## await enumerated interface
