@@ -78,7 +78,7 @@ msg() {
 }
 
 # internals
-ifrc_Version=20130323
+ifrc_Version=20130530
 ifrc_Disable=/etc/default/ifrc.disable
 ifrc_Script=/etc/network/ifrc.sh
 ifrc_Time= #$( date +%s.%N )
@@ -107,9 +107,6 @@ then
   # link as system command
   ln -sf $ifrc_Script $ifrc
 fi
-
-# check ifplugd
-#ifplugd=/usr/bin/ifplugd
 
 parse_flag() {
   case $1 in
@@ -745,31 +742,24 @@ esac
 #
 # The rest of this script handles the configuration of an interface.
 # And is run when called again manually, or via the netlink daemon.
-# So, the first step is to ensure that netlink is active for <interface>.
 #
-# exceptions:
+# Firstly, ensure that the netlink daemon is active for <interface>.
+# Exceptions:
 [ "$IFRC_METHOD" == "manual" ] && ifnl_disable=.
 [ "$dev" == "lo" ] && ifnl_disable=.
 
 if [ -n "$ifnl_disable" ]
 then
-  msg1 "  ...ifnl_disable"
   ifrc_stop_netlink_daemon
 else
-  ps \
-    |grep -q "ifplug[d].*${dev}" \
-    && msg "  ...ifplugd running" \
-    || {
-      [ -n "$ifplugd" ] && msg using alternate nl-daemon: $ifplugd
-      [ -n "${vm:1:1}" ] && nsl= || nsl=-s
-      msg2 "netlink support not active, starting ifplugd  "
-      ##
-      ## If ifrc.sh exits with non-zero status, then ifplugd will not daemonize.
-      ## Only exit non-zero for permanent conditions that prevent configuration.
-    # ${ifplugd:-ifplugd} -i$dev -M $nsl -q -p -a -f -u1 -d0 -I -r$0
-    ( ${ifplugd:-ifplugd} -i$dev -M $nsl -q -p -a -f -u1 -d0 -I -r$0 )&
-      #pause 0.333
-    }
+  if ! { ps |grep -q "ifplug[d].*${dev}" && msg "  ...nl-daemon is running"; }
+  then
+    [ -n "${vm:1:1}" ] && nsl= || nsl=-s
+    #
+    # dameon will terminate on error, or if run-script exits w/non-zero status
+    ifplugd -i$dev -M $nsl -q -p -a -f -u1 -d0 -I -r$0
+    #pause 0.333
+  fi
 fi
 
 #
@@ -781,16 +771,16 @@ fi
 # 2. cable/link not present yet
 #
 # The script will exit with a non-zero value whenever a permanent condition
-# will prevent configuration of the interface, such as:
+# prevents configuration of the interface, such as:
 # 1. invalid method specified
 # 2. no hw-phy detectable
 # 3. timeout was used
 # 4. other errors
 #
-# Generally, it is unwise to try waiting on this script, as some actions are 
-# going to be deferred, depending on conditions.  In caller to this script;
+# It is unwise to wait on ifrc, as called, for a configuration to complete.
+# Instead, check configuration with:
 #
-# ...a simple timed-loop test for "inet addr" can be made:
+# ...a simple timed-loop test for "inet addr":
 # $( if ifconfig <iface> 2>/dev/null |grep -q 'inet addr'; then true; fi )
 #
 # ...or use ifrc to check status:
