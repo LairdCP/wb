@@ -2,7 +2,7 @@ TARGETDIR=$1
 
 export BR2_SDC_PLATFORM=wb45n
 
-echo "WB45n POST BUILD script: starting..."
+echo "MSD45n POST BUILD script: starting..."
 
 # enable tracing and exit on errors
 set -x -e
@@ -37,4 +37,4 @@ tar c --exclude=.svn -C board/sdc/wb45n/rootfs-additions/lib/firmware . | tar x 
 ( cd $TARGETDIR/usr/lib \
   && ln -sf libsdc_sdk.so.1.0 libsdc_sdk.so.1 )
 
-echo "WB45n POST BUILD script: done."
+echo "MSD45n POST BUILD script: done."
