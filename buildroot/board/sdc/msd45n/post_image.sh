@@ -8,11 +8,10 @@ echo "MSD45n POST IMAGE script: starting..."
 set -x -e
 
 TARFILE="$IMAGESDIR/msd45n.tar"
-SDKDIR=package/sdc-closed-source/externals/sdk
 
 tar cf "$TARFILE" -C "$IMAGESDIR" rootfs.tar
-tar f "$TARFILE" -C "$SDKDIR" -u include/sdc_sdk.h
-tar f "$TARFILE" -C "$SDKDIR" -u include/sdc_events.h
+tar f "$TARFILE" -C "$STAGING_DIR/usr" -u include/sdc_sdk.h
+tar f "$TARFILE" -C "$STAGING_DIR/usr" -u include/sdc_events.h
 bzip2 -f "$TARFILE"
 
 echo "MSD45n POST BUILD script: done."
