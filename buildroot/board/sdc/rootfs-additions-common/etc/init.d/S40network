@@ -19,7 +19,7 @@
 # A testmode is invoked by appending ' -x' in the 1st line of the /e/n/i file.
 #
 eni=/etc/network/interfaces
-log=/var/log/network
+log=${rcS_log:-/dev/null}
 
 ifconfig=/sbin/ifconfig
 ifrc=/etc/network/ifrc.sh
