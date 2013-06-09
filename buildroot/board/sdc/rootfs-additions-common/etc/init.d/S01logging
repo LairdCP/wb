@@ -7,9 +7,11 @@ case $1 in
   stop)
     echo -n "Stopping logging services:"
     
-    killall syslogd && echo -n " syslogd"
+    killall syslogd \
+    && echo -n " syslogd"
     
-    killall klogd && echo -n " klogd"
+    killall klogd \
+    && echo -n " klogd"
     
     echo
     ;;
@@ -17,7 +19,7 @@ case $1 in
   start)
     echo -n "Starting logging services:"
     
-    /sbin/syslogd -D -C32 -m 0 \
+    /sbin/syslogd -D -C32 -m0 \
     && echo -n " syslogd"
     
     /sbin/klogd \
