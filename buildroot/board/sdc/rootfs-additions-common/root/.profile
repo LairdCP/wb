@@ -4,6 +4,8 @@ export PATH=/usr/local/bin:/usr/bin:/usr/sbin:/bin:/sbin
 
 umask 022
 
+alias which='fe'
+
 # ls variants
 alias ll='ls -l'
 alias la='ls -lA'
