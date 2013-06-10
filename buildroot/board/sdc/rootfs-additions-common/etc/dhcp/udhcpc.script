@@ -9,11 +9,14 @@ source /etc/dhcp/udhcpc.conf 2>/dev/null
 eval $udhcpc_Settings 2>/dev/null
 # otherwise use the right-most string, as default
 LEASES_FILE=${leases_file:-${LEASES_FILE:-'/var/lib/dhcp/dhclient.leases'}}
+
+LOG_FILE=${log_file:-${LOG_FILE:-'/dev/null'}}
+VERBOSE=${vb:-${VERBOSE:-''}}
+
+VENDORINFO_HOOK=${vendorinfo_hook:-${VENDORINFO_HOOK:-''}}
 BOOTFILE_HOOK=${bootfile_hook:-${BOOTFILE_HOOK:-''}}
 RESOLV_CONF=${resolv_conf:-${RESOLV_CONF:-'/etc/resolv.conf'}}
 RESOLV_HOOK=${resolv_hook:-${RESOLV_HOOK:-''}}
-LOG_FILE=${log_file:-${LOG_FILE:-'/dev/null'}}
-VERBOSE=${vb:-${VERBOSE:-''}}
 
 
 write_leases_file() {
@@ -36,14 +39,14 @@ write_leases_file() {
 	lease {
 	  interface "$interface";
 	  option fixed-address $ip;
+	  option broadcast-address $broadcast;
 	  option subnet-mask $subnet;
 	  option routers $router;
-	  option dhcp-lease-time $lease;
-	  option dhcp-message-type $opt53;
+	  option domain-name "$domain";
 	  option domain-name-servers $dns;
 	  option dhcp-server-identifier $serverid;
-	  option broadcast-address $broadcast;
-	  option domain-name "$domain";
+	  option dhcp-message-type $opt53;
+	  option dhcp-lease-time $lease;
 	  expire $eN $date_expire;
 	}
 	lease-entry
@@ -95,6 +98,13 @@ case "$1" in
       source $BOOTFILE_HOOK >>$LOG_FILE 2>&1
     fi
 
+    # Call a vendorinfo-handler if set and it exists.
+    if [ -f "$VENDORINFO_HOOK" -a -n "$opt43" ]
+    then
+      source $VENDORINFO_HOOK
+      source $VENDORINFO_HOOK >>$LOG_FILE 2>&1
+    fi
+
     # Configure the interface.
     $VERBOSE \
     ifconfig $interface ${ip:-up} $broadcast_sv $netmask_sv
@@ -119,7 +129,7 @@ case "$1" in
       done
     fi
 
-    # Call on resolv-conf-handler if setup or write a default one.
+    # Call on a resolv-conf-handler if setup or write the resolv-conf.
     if [ -f "$RESOLV_HOOK" ]
     then
       $VERBOSE \
