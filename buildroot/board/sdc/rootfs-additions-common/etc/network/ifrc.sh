@@ -78,7 +78,7 @@ msg() {
 }
 
 # internals
-ifrc_Version=20130530
+ifrc_Version=20130607
 ifrc_Disable=/etc/default/ifrc.disable
 ifrc_Script=/etc/network/ifrc.sh
 ifrc_Time= #$( date +%s.%N )
@@ -516,6 +516,7 @@ then
         then
           msg1 deconfigure iface for dhcp method - still active
           #( interface=$dev /etc/dhcp/udhcpc.script deconfig )
+          
           ifconfig $dev 0.0.0.0 2>/dev/null
         fi
         IFRC_ACTION=xxx
@@ -919,43 +920,49 @@ check_link() {
 
 run_udhcpc() {
   # BusyBox v1.19.3 multi-call binary.
-  #source /etc/dhcp/udhcpc.conf 2>/dev/null
-
+  source /etc/dhcp/udhcpc.conf 2>/dev/null
+  
   # set no-verbose or verbose mode level
   [ -z "$vm" ] && nv='|grep -E "obtained|udhcpc"'
-  [ "${vm:2:1}" == "." ] && vb='-v'
+  [ "${vm:2:1}" == "." ] && vb='-v' 
   [ "${vm:1:1}" == "." ] && q=
 
   # optional exit-no-lease and quit
   nq=
 
-  # optional request for ip-address
+  # request ip-address (given via cmdline)
   rip=${rip:+--request $rip}
 
-  # specific options to request
-  ropt='-O lease -O domain -O dns -O hostname -O subnet -O router -O serverid -O broadcast'
+  # specific options to request in lieu of defaults
+  for t in ${OPT_REQ}; do ropt=$ropt\ -O$t; done
+  ropt=${ropt:+-o $ropt}
 
-  # optional request for bootfile 
-  rbf=${rbf:+-O $rbf}
+  # vendor-class-id support (as last line of file or a string)
+  vci=$( sed '$!d;s/.*=["]\(.*\)["]/\1/' ${OPT_VCI:-/} 2>/dev/null \
+      || echo "$OPT_VCI" )
+  vci=${vci:+--vendorclass $vci}
+  ropt=${ropt}${vci:+ -O43}
+
+  # specific opt:val pairs to send - must be hex
+  for t in ${OPT_SND}; do xopt=$xopt\ -x$t; done
+  
+  # request bootfile (via flag-file)
+  rbf=${rbf:+-O$rbf}
 
   # run-script: /usr/share/udhcpc/default.script
-  rs='-s /etc/dhcp/udhcpc.script'
+  rs='-s/etc/dhcp/udhcpc.script'
 
-  # The 'wb.script' file handles states and writes to a leases file.
+  # The run-script handles client states and writes to a leases file.
   # options: vb, log_file, leases_file, resolv_conf
   export udhcpc_Settings="vb=$vb log_file=$ifrc_Log"
 
   # Client normally continues running in background, and upon obtaining a lease.
-  # May be signalled or spawned again depending on events/conditions. Flags are:
+  # May be signalled or spawned again depending on events/conditions. Flags are: 
   # iface, verbose, request-ip, exit-no-lease/quit-option, exit-release, retry..
-  # for retry, send 4-discovers, paused at 2sec, and repeat after 5sec
-  # the request-bootfile option is conditional, other options are required
-  eval udhcpc -i$dev $vb $rip $nq -R -t4 -T2 -A5 -o $ropt $rbf $rs $nv
-
-# eval udhcpc -i$dev $vb $rip $nq -R -t4 -T2 -A5 -o $ropt $rbf $rs $nv &
+  # For retry, send 4-discovers, paused at 2sec, and repeat after 5sec.
+  eval udhcpc -i$dev $vb $rip $nq -R -t4 -T2 -A5 $ropt $vci $xopt $rbf $rs $nv
   #
   #return $?
-
 }
 
 run_dhclient() {
