@@ -4,9 +4,9 @@
 #
 #############################################################
 
-SDCSDK_VERSION = local
-SDCSDK_SITE = package/sdc-closed-source/externals/sdk
-SDCSDK_SITE_METHOD = local
+SDCSDK_VERSION = 19616
+SDCSDK_SITE = svn://10.1.10.7/dev_linux/sdk/trunk
+SDCSDK_SITE_METHOD = svn
 SDCSDK_DEPENDENCIES = libnl host-pkgconf
 SDCSDK_INSTALL_STAGING = YES
 SDCSDK_MAKE_ENV = CFLAGS="$(TARGET_CFLAGS)" PKG_CONFIG="$(HOST_DIR)/usr/bin/pkg-config"

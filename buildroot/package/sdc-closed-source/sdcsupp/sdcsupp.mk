@@ -4,9 +4,9 @@
 #
 #############################################################
 
-SDCSUPP_VERSION = local
-SDCSUPP_SITE = package/sdc-closed-source/externals/wpa_supplicant
-SDCSUPP_SITE_METHOD = local
+SDCSUPP_VERSION = 19616
+SDCSUPP_SITE = svn://10.1.10.7/sserver/supplicant/trunk/wpa_supplicant
+SDCSUPP_SITE_METHOD = svn
 SDCSUPP_DEPENDENCIES = libnl openssl sdcsdk
 SDCSUPP_TARGET_DIR = $(TARGET_DIR)
 
