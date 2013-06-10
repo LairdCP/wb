@@ -60,8 +60,9 @@ tar c --exclude=.svn -C board/sdc/rootfs-additions-common/ . | tar x -C $TARGETD
 chmod a-x $TARGETDIR/etc/init.d/S??lighttpd
 chmod a-x $TARGETDIR/etc/init.d/S??openvpn     #not ready for use
 
-# create firmware release file
-echo "SDC Linux Release `date +%Y%m%d`" \
+# Create default firmware description file.
+# This may be overwritten by a proper release file.
+echo "SDC Linux ReleaseCandidate `date +%Y%m%d`" \
   > $TARGETDIR/etc/summit-release
 
 echo "COMMON POST BUILD script: done."
