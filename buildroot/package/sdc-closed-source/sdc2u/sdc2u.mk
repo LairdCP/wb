@@ -7,7 +7,7 @@
 SDC2U_VERSION = local
 SDC2U_SITE = package/sdc-closed-source/externals/sdc2u_fips
 SDC2U_SITE_METHOD = local
-SDC2U_DEPENDENCIES = linux
+SDC2U_DEPENDENCIES = linux openssl
 
 
 MAKE_ENV = \

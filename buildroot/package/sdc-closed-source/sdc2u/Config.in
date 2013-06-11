@@ -1,4 +1,6 @@
 config BR2_PACKAGE_SDC2U
+    select BR2_LINUX_KERNEL
+    select BR2_PACKAGE_OPENSSL
 	bool "SDC2U DRIVER FOR CCMP_FIPS"
 	help
 	  Builds sdc2u.ko extra driver and sdcu app for ccmp_fips on the wb45n.
