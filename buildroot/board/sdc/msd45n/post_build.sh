@@ -28,6 +28,11 @@ rm -f  -- $TARGETDIR/lib/librt[.-]*so*
 rm -f  -- $TARGETDIR/lib/libutil[.-]*so*
 rm -f  -- $TARGETDIR/lib/libgcc_s[.-]*so*
 
+# fips cleanup - shoudl be harmless on non-fips
+rm -rf -- $TARGETDIR/usr/local
+rm -f  -- $TARGETDIR/lib/modules/*/modules*
+rm -rf -- $TARGETDIR/lib/modules/*/kernel
+
 # copy firmware files
 mkdir -p $TARGETDIR/lib/firmware
 tar c --exclude=.svn -C board/sdc/wb45n/rootfs-additions/lib/firmware . | tar x -C $TARGETDIR/lib/firmware
