@@ -1,6 +1,6 @@
 TARGETDIR=$1
 
-export BR2_SDC_PLATFORM=wb45n
+export BR2_SDC_PLATFORM=msd45n
 
 echo "MSD45n POST BUILD script: starting..."
 
