@@ -347,8 +347,8 @@ diff -urN a/arch/arm/boot/dts/at91sam9x5ek.dtsi b/arch/arm/boot/dts/at91sam9x5ek
  };
 diff -urN a/arch/arm/configs/wb45n_defconfig b/arch/arm/configs/wb45n_defconfig
 --- a/arch/arm/configs/wb45n_defconfig	1969-12-31 19:00:00.000000000 -0500
-+++ b/arch/arm/configs/wb45n_defconfig	2013-02-24 13:34:03.417919552 -0500
-@@ -0,0 +1,274 @@
++++ b/arch/arm/configs/wb45n_defconfig	2013-06-12 14:49:41.644888988 -0500
+@@ -0,0 +1,273 @@
 +CONFIG_EXPERIMENTAL=y
 +CONFIG_CROSS_COMPILE="arm-sdc-linux-gnueabi-"
 +# CONFIG_LOCALVERSION_AUTO is not set
@@ -478,7 +478,6 @@ diff -urN a/arch/arm/configs/wb45n_defconfig b/arch/arm/configs/wb45n_defconfig
 +CONFIG_CFG80211=y
 +CONFIG_NL80211_TESTMODE=y
 +CONFIG_CFG80211_DEVELOPER_WARNINGS=y
-+CONFIG_CFG80211_REG_DEBUG=y
 +CONFIG_CFG80211_CERTIFICATION_ONUS=y
 +CONFIG_CFG80211_DEBUGFS=y
 +CONFIG_DEVTMPFS=y
@@ -593,7 +592,7 @@ diff -urN a/arch/arm/configs/wb45n_defconfig b/arch/arm/configs/wb45n_defconfig
 +CONFIG_NET_DMA=y
 +# CONFIG_IOMMU_SUPPORT is not set
 +CONFIG_IIO=y
-+CONFIG_AT91_ADC=m
++CONFIG_AT91_ADC=y
 +CONFIG_PWM=y
 +# CONFIG_DNOTIFY is not set
 +CONFIG_FANOTIFY=y
@@ -623,7 +622,6 @@ diff -urN a/arch/arm/configs/wb45n_defconfig b/arch/arm/configs/wb45n_defconfig
 +CONFIG_CRYPTO_DEV_ATMEL_AES=y
 +CONFIG_CRYPTO_DEV_ATMEL_TDES=y
 +CONFIG_CRYPTO_DEV_ATMEL_SHA=y
-diff -urN a/arch/arm/mach-at91/at91sam9x5.c b/arch/arm/mach-at91/at91sam9x5.c
 --- a/arch/arm/mach-at91/at91sam9x5.c	2013-02-18 18:58:34.000000000 -0500
 +++ b/arch/arm/mach-at91/at91sam9x5.c	2013-02-24 13:33:53.651919819 -0500
 @@ -244,6 +244,8 @@
