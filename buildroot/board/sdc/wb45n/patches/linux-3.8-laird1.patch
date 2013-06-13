@@ -622,6 +622,7 @@ diff -urN a/arch/arm/configs/wb45n_defconfig b/arch/arm/configs/wb45n_defconfig
 +CONFIG_CRYPTO_DEV_ATMEL_AES=y
 +CONFIG_CRYPTO_DEV_ATMEL_TDES=y
 +CONFIG_CRYPTO_DEV_ATMEL_SHA=y
+diff -urN a/arch/arm/mach-at91/at91sam9x5.c b/arch/arm/mach-at91/at91sam9x5.c
 --- a/arch/arm/mach-at91/at91sam9x5.c	2013-02-18 18:58:34.000000000 -0500
 +++ b/arch/arm/mach-at91/at91sam9x5.c	2013-02-24 13:33:53.651919819 -0500
 @@ -244,6 +244,8 @@
