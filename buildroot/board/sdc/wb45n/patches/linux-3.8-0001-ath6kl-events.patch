@@ -35,7 +35,7 @@
  	switch (id) {
  	case WMI_GET_BITRATE_CMDID:
  		ath6kl_dbg(ATH6KL_DBG_WMI, "WMI_GET_BITRATE_CMDID\n");
-@@ -4117,6 +4124,179 @@
+@@ -4117,6 +4124,176 @@
  	return ath6kl_wmi_proc_events(wmi, skb);
  }
  
@@ -46,7 +46,6 @@
 +	ATHEROS_ATTR_EVENT,
 +	ATHEROS_ATTR_CMDID,
 +	ATHEROS_ATTR_DATA,
-+	ATHEROS_ATTR_LEN,
 +    __ATHEROS_ATTR_MAX,
 +};
 +#define ATHEROS_ATTR_MAX (__ATHEROS_ATTR_MAX - 1)
@@ -56,7 +55,6 @@
 +	[ATHEROS_ATTR_EVENT] = { .type = NLA_NESTED },
 +	[ATHEROS_ATTR_CMDID] = { .type = NLA_U32 },
 +	[ATHEROS_ATTR_DATA] = { .type = NLA_BINARY },
-+	[ATHEROS_ATTR_LEN] = { .type = NLA_U32 },
 +};
 +
 +#define ATHEROS_EVENT_VERSION 1
@@ -164,7 +162,6 @@
 +
 +	//build the event contents
 +	if (nla_put_u32(msg, ATHEROS_ATTR_CMDID, cmd_id) ||
-+		nla_put_u32(msg, ATHEROS_ATTR_LEN, len) ||
 +		nla_put(msg, ATHEROS_ATTR_DATA, len, datap))
 +		goto nla_put_failure;
 +
@@ -215,7 +212,7 @@
  void ath6kl_wmi_reset(struct wmi *wmi)
  {
  	spin_lock_bh(&wmi->lock);
-@@ -4135,6 +4315,9 @@
+@@ -4135,6 +4312,9 @@
  	if (!wmi)
  		return NULL;
  
@@ -225,7 +222,7 @@
  	spin_lock_init(&wmi->lock);
  
  	wmi->parent_dev = dev;
-@@ -4150,6 +4333,10 @@
+@@ -4150,6 +4330,10 @@
  {
  	if (!wmi)
  		return;
