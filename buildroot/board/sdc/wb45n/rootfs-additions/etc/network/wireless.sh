@@ -114,6 +114,7 @@ wifi_fips_mode()
   && [ -f "$WIFI_KMPATH/extra/sdc2u.ko" ] \
   && : #[ -x "/usr/bin/sdcu" ]
   then
+    # note - only 'WPA2 EAP-TLS' is supported
     #msg "enabling FIPS mode"
     msg "configuring for FIPS mode"
     insmod ${WIFI_KMPATH}/${WIFI_MODULE%/*}/ath6kl_core.ko fips_mode=y || return 1
