@@ -1,5 +1,5 @@
---- a/drivers/net/wireless/ath/ath6kl/wmi.c	2013-06-10 15:08:42.199721079 -0400
-+++ b/drivers/net/wireless/ath/ath6kl/wmi.c	2013-06-10 09:13:43.937723620 -0400
+--- a/drivers/net/wirelress/ath/ath6kl/wmi.c	2013-06-14 10:03:17.708000008 -0400
++++ b/drivers/net/wirelress/ath/ath6kl/wmi.c	2013-06-14 10:03:09.412000005 -0400
 @@ -17,6 +17,7 @@
  
  #include <linux/ip.h>
@@ -35,7 +35,7 @@
  	switch (id) {
  	case WMI_GET_BITRATE_CMDID:
  		ath6kl_dbg(ATH6KL_DBG_WMI, "WMI_GET_BITRATE_CMDID\n");
-@@ -4117,6 +4124,176 @@
+@@ -4117,6 +4124,247 @@
  	return ath6kl_wmi_proc_events(wmi, skb);
  }
  
@@ -71,6 +71,7 @@
 +	ATHEROS_CMD_UNSPEC,
 +	ATHEROS_CMD_TEST_ECHO,
 +	ATHEROS_CMD_EVENT,
++	ATHEROS_CMD_SET_LOW_RSSI_PARAMS,
 +	__ATHEROS_CMD_MAX,
 +};
 +#define ATHEROS_CMD_MAX (__ATHEROS_CMD_MAX - 1)
@@ -78,6 +79,71 @@
 +static struct genl_multicast_group atheros_events_mcgrp = {
 +	.name = "events",
 +};
++
++struct wmi *gwmi = NULL;  // ugly hack to get access to wmi pointer for netlink entry point functions  FIXME: find alternative to this global!
++
++int ath6kl_genl_set_low_rssi_params (struct sk_buff *skb_2, struct genl_info *info)
++{
++	struct nlattr *na;
++	struct sk_buff *skb;
++	struct low_rssi_scan_params *params;
++	struct roam_ctrl_cmd *cmd;
++	struct ath6kl *ar;  // How to get ?  //efb
++	struct wmi *wmi = gwmi;
++
++	if ( gwmi == NULL )
++		return 0;
++
++	ar = wmi->parent_dev;
++		
++	if (info == NULL)
++	{
++		printk("%s: no data received\n", __func__);
++    	return 0;
++	}
++
++	/*for each attribute there is an index in info->attrs which points to a nlattr structure
++     *in this structure the data is given
++     */
++	na = info->attrs[ATHEROS_ATTR_MSG];
++    
++	if (na) {
++		params = (struct low_rssi_scan_params *)nla_data(na);
++		if (params == NULL)
++			printk("error while receiving data\n");
++		else
++		{
++#if 0
++			printk("received:\n\trssi_scan_period: %d\n", params->lrssi_scan_period);
++			printk("\trssi_scan_threshold: %d\n", params->lrssi_scan_threshold);
++			printk("\trssi_roam_threshold: %d\n", params->lrssi_roam_threshold);
++			printk("\troam_rssi_floor: %d\n", params->roam_rssi_floor);
++#endif
++
++			ar->lrssi_roam_threshold = params->lrssi_roam_threshold; // place holder 
++
++			skb = ath6kl_wmi_get_new_buf(sizeof(*cmd));
++			if (!skb)
++				return -ENOMEM;
++
++			cmd = (struct roam_ctrl_cmd *) skb->data;
++
++			cmd->info.params.lrssi_scan_period = cpu_to_le16(params->lrssi_scan_period);
++			cmd->info.params.lrssi_scan_threshold = a_cpu_to_sle16(params->lrssi_scan_threshold);
++			cmd->info.params.lrssi_roam_threshold = a_cpu_to_sle16(params->lrssi_roam_threshold);
++			cmd->info.params.roam_rssi_floor = params->roam_rssi_floor;
++			cmd->roam_ctrl = WMI_SET_LRSSI_SCAN_PARAMS;
++
++			ath6kl_wmi_cmd_send(wmi, 0, skb, WMI_SET_ROAM_CTRL_CMDID,
++					    NO_SYNC_WMIFLAG);
++			
++		}
++	}
++	else
++		printk("%s: no info->attrs %i\n", __func__, ATHEROS_ATTR_MSG);
++
++	return 0;
++}
 +
 +/* an echo test command, receives a message, prints it and sends another message back */
 +int ath6kl_genl_echo(struct sk_buff *skb_2, struct genl_info *info)
@@ -187,9 +253,14 @@
 +		.policy = atheros_policy,
 +		.doit = ath6kl_genl_echo,
 +		.dumpit = NULL,
++	},	{
++		.cmd = ATHEROS_CMD_SET_LOW_RSSI_PARAMS,
++		.flags = 0,
++		.policy = atheros_policy,
++		.doit = ath6kl_genl_set_low_rssi_params,
++		.dumpit = NULL,
 +	}
 +};
-+
 +
 +int ath6kl_genl_init(void) 
 +{
@@ -212,7 +283,7 @@
  void ath6kl_wmi_reset(struct wmi *wmi)
  {
  	spin_lock_bh(&wmi->lock);
-@@ -4135,6 +4312,9 @@
+@@ -4135,6 +4383,9 @@
  	if (!wmi)
  		return NULL;
  
@@ -222,11 +293,22 @@
  	spin_lock_init(&wmi->lock);
  
  	wmi->parent_dev = dev;
-@@ -4150,6 +4330,10 @@
+@@ -4143,6 +4394,8 @@
+ 
+ 	ath6kl_wmi_reset(wmi);
+ 
++	gwmi = wmi;
++
+ 	return wmi;
+ }
+ 
+@@ -4150,6 +4403,12 @@
  {
  	if (!wmi)
  		return;
 + 	
++	gwmi = NULL;
++
 + 	/* unregister the atheros family*/
 + 	if (genl_unregister_family(&atheros_fam) != 0) 
 +     	ath6kl_err("failed to unregister atheros netlink events\n");
