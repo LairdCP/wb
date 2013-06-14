@@ -28,7 +28,7 @@ define SDCSDK_BUILD_CMDS
 endef
 
 define SDCSDK_INSTALL_STAGING_CMDS
-	rm -r $(STAGING_DIR)/usr/lib/liblrd_platspec.so*
+	rm -f $(STAGING_DIR)/usr/lib/liblrd_platspec.so*
     rm -f $(STAGING_DIR)/usr/lib/libsdc_sdk.so*
 	$(INSTALL) -D -m 0755 $(@D)/libsdc_sdk.so.1.0 $(STAGING_DIR)/usr/lib/
 	$(INSTALL) -D -m 0755 $(@D)/liblrd_platspec.so.1.0 $(STAGING_DIR)/usr/lib/
