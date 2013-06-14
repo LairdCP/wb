@@ -1,5 +1,5 @@
---- a/drivers/net/wirelress/ath/ath6kl/wmi.c	2013-06-14 10:03:17.708000008 -0400
-+++ b/drivers/net/wirelress/ath/ath6kl/wmi.c	2013-06-14 10:03:09.412000005 -0400
+--- a/drivers/net/wireless/ath/ath6kl/wmi.c	2013-06-14 10:03:17.708000008 -0400
++++ b/drivers/net/wireless/ath/ath6kl/wmi.c	2013-06-14 10:03:09.412000005 -0400
 @@ -17,6 +17,7 @@
  
  #include <linux/ip.h>
