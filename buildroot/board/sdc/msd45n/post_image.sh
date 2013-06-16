@@ -12,6 +12,7 @@ TARFILE="$IMAGESDIR/msd45n.tar"
 tar cf "$TARFILE" -C "$IMAGESDIR" rootfs.tar
 tar f "$TARFILE" -C "$STAGING_DIR/usr" -u include/sdc_sdk.h
 tar f "$TARFILE" -C "$STAGING_DIR/usr" -u include/sdc_events.h
+tar f "$TARFILE" -C "$STAGING_DIR/usr" -u include/lrd_platspec.h
 bzip2 -f "$TARFILE"
 
 echo "MSD45n POST BUILD script: done."
