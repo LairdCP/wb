@@ -1,4 +1,4 @@
-MSD45N_BINARIES_SITE = http://boris.corp.lairdtech.com/scratch/releases/msd45n_fips/laird/beta.0.1
+MSD45N_BINARIES_SITE = http://boris.corp.lairdtech.com/scratch/releases/msd45n/laird_fips/beta.0.1
 MSD45N_BINARIES_VERSION = $(call qstrip,$(BR2_MSD45N_BINARIES_VERSION))
 MSD45N_BINARIES_COMPANY_PROJECT = $(call qstrip,$(BR2_MSD45N_BINARIES_COMPANY_PROJECT))
 MSD45N_BINARIES_SOURCE = msd45n-$(MSD45N_BINARIES_COMPANY_PROJECT)-$(MSD45N_BINARIES_VERSION).tar.bz2
