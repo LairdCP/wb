@@ -4,9 +4,16 @@
 #
 #############################################################
 
+ifeq ($(BR2_PACKAGE_SDC2U_PULL_FROM_SVN),y)
+SDC2U_VERSION = $(BR2_PACKAGE_SDC2U_SVN_VERSION)
+SDC2U_SITE = svn://10.1.10.7/sserver/ccmp_fips/trunk
+SDC2U_SITE_METHOD = svn
+else
 SDC2U_VERSION = local
 SDC2U_SITE = package/sdc-closed-source/externals/sdc2u_fips
 SDC2U_SITE_METHOD = local
+endif
+
 SDC2U_DEPENDENCIES = linux openssl
 
 

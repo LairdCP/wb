@@ -4,9 +4,16 @@
 #
 #############################################################
 
+ifeq ($(BR2_PACKAGE_SDCSDK_PULL_FROM_SVN),y)
+SDCSDK_VERSION = $(BR2_PACKAGE_SDCSDK_SVN_VERSION)
+SDCSDK_SITE = svn://10.1.10.7/dev_linux/sdk/trunk
+SDCSDK_SITE_METHOD = svn
+else
 SDCSDK_VERSION = local
 SDCSDK_SITE = package/sdc-closed-source/externals/sdk
 SDCSDK_SITE_METHOD = local
+endif
+
 SDCSDK_DEPENDENCIES = libnl host-pkgconf
 SDCSDK_INSTALL_STAGING = YES
 SDCSDK_MAKE_ENV = CFLAGS="$(TARGET_CFLAGS)" PKG_CONFIG="$(HOST_DIR)/usr/bin/pkg-config"
