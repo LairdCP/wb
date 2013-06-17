@@ -7,7 +7,8 @@ echo "MSD45n POST IMAGE script: starting..."
 # enable tracing and exit on errors
 set -x -e
 
-TARFILE="$IMAGESDIR/msd45n.tar"
+test -z "$BR2_SDC_PLATFORM" && export BR2_SDC_PRODUCT=msd45n
+TARFILE="$IMAGESDIR/$BR2_SDC_PRODUCT.tar"
 
 tar cf "$TARFILE" -C "$IMAGESDIR" rootfs.tar
 tar f "$TARFILE" -C "$STAGING_DIR/usr" -u include/sdc_sdk.h
