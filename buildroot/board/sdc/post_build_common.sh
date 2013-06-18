@@ -55,6 +55,8 @@ tar c --exclude=.svn -C board/sdc/rootfs-additions-common/ . | tar x -C $TARGETD
 # TODO: shouldn't have to do this here, temporary workaround
 ( cd $TARGETDIR/usr/lib \
   && ln -sf libsdc_sdk.so.1.0 libsdc_sdk.so.1 )
+( cd $TARGETDIR/usr/lib \
+  && ln -sf liblrd_platspec.so.1.0 liblrd_platspec.so.1 )
 
 # Services to disable by default
 chmod a-x $TARGETDIR/etc/init.d/S??lighttpd
