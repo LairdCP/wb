@@ -4,7 +4,7 @@
 URL = http://$(shell hostname)/wb/$(PRODUCT)
 
 TOPDIR = ../../..
-IMAGES = $(TOPDIR)/buildroot/output/$(PRODUCT)/images
+IMAGES = $(TOPDIR)/buildroot/output/images
 
 all: fw.txt fw_update fw_select
 
