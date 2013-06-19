@@ -2,7 +2,7 @@
 # FirmWare Select Utility for WB40NBT/WB45NBT Linux
 # Jon Hefling, jon.hefling@lairdtech.com, 29-Jun'12
 #
-VERSION=20130309
+VERSION=20130309c
 SELF=${0##*/}
 TM_FILE=/etc/default/$SELF.test
 
@@ -103,7 +103,8 @@ case $wb in
     ;;
 esac
 
-ask() { eval ${@##* }=; read "$@"; usleep 200000; echo -en \\033[1K\\r; }
+clx='printf `usleep 333333` \\033[1K\\r'
+ask() { read -rst1 -n999 a; eval ${@##* }=; read -r "$@"; eval $clx; }
 
 exit_error() { [ -n "$1" ] && echo -e \ \ ..."$@" >&2; exit 1; }
 
@@ -321,7 +322,7 @@ case $1 in
         $fw_printenv ethaddr 2>/dev/null \
           |sed 's/.*/warning: this will remove the current &/;s/=/ /'
         #
-        ask -t5 -n1 -p"  Are you sure? [y/N ...5s]" -s a
+        ask -p"  Are you sure? [y/N ..5s]" -t5 -n1 a
         [ "$a" != "y" ] && exit_error aborted
         case $wb in
           wb40*) ### erase

@@ -2,7 +2,7 @@
 # FirmWare Update Utility for WB40NBT/WB45NBT Linux
 # Jon Hefling, jon.hefling@lairdtech.com, 29-Jun'12
 #
-VERSION=20130309b
+VERSION=20130309c
 SELF=${0##*/}
 NS_PORT=2012
 TM_FILE=/etc/default/$SELF.test
@@ -144,8 +144,6 @@ n_sync_updated() {
   led0 200 800
 }
 
-ask() { eval ${@##* }=; read "$@"; usleep 200000; echo -en \\033[1K\\r; }
-
 # set testmode if TM_FILE exists
 test -f "$TM_FILE" && tm=echo\ -e || tm=
 grep -sq ^verbose "$TM_FILE" && set -x
@@ -154,10 +152,13 @@ eval `grep -sq ^nsap= "$TM_FILE" `
 # set command utilities - no writes in testmode
 flash_erase=$tm\ flash_erase
 nandwrite=$tm\ nandwrite
-copy=$tm\ cat
+copy=cat
 nc=$tm\ nc
 wget=wget
 [ "$1" == "bb-wget" ] && { shift; wget='busybox wget'; }
+
+clx='printf `usleep 333333` \\033[1K\\r'
+ask() { read -rst1 -n999 a; eval ${@##* }=; read -r "$@"; eval $clx; }
 
 # check fw_printenv
 fw_printenv=fw_printenv
@@ -233,10 +234,7 @@ case $1 in
     # try to get optionally given nsap or rely on the implied nsap as backup
     # parse specified nsap or parse url server address w/default port for nsap
     nsap="${2##*${FWUL##*/}} $( echo ~nsap=${2##*//} |cut -d/ -f1 ):$NS_PORT "
-#    ${tm:-:} --url nsap: $nsap
     nsap=$( echo "$nsap" |sed -n "s/.*nsap=\(.*:[0-9]*\) .*/\1/p" )
-#    nsap=$( echo $@ |sed -n "s/.*[ ?]nsap=\(.*\)/\1/p ;\
-#            s/.*tp:\/\/\([0-9a-z.-\_]*[^/]*\)\/.*/\1:$NS_PORT/p" )
     [ -n "$tm" ] && echo "  --url_nsap=$nsap"
     remote_version=$( echo $2 |sed -n "s/.*\/\(.*\)\/${FWUL##*/}.*/\1/p" )
     fwul_url=$2
@@ -434,17 +432,15 @@ check_image() {
 
 compare_image_md5() {
   # args: <md5_from_image> <md5_from_flash>
+  ${tm:-:} \?: $1 :: ${2:-md5-not-in-flash}
   # compare the two md5sums and prompt if same
-  ${tm:-:} \?: ${2:-unknown} :: $1
-  a=n
   if [ "$2" != "$1" ]
   then
     echo
     return 0
   else
     echo -e "OK"
-    read -p "  ...new image matches, update the flash anyway? [y/N ...9s]" \
-         -t10 -n1 -s a; echo -en '\033[1K\r'
+    ask -p"  ...new image matches, update flash anyway? [y/N ..9s]" -t10 -n1 a
   fi
   [ -n "$2" -a "$a" != "y" ] && return 1 || return 0
 }
@@ -461,8 +457,7 @@ flash_image_procedure() {
   $flash_erase -q /dev/$1 0 0 \
   || { echo "  ...skipping"; return 1; }
   led0 50 100
-  echo -en "writing...(${et}s) "
-  [ -n "$tm" ] && sleep ${et}
+  echo -en "${tm:+  }writing...(${et}s) " #"`[ -n "$tm" ] && sleep ${et}`"
   $nandwrite -mpq $6 /dev/$1 < $FIFO &
   if [ "$4" != "local" ]
   then
@@ -482,6 +477,13 @@ flash_image_procedure() {
 update_bootstrap_mtd() {
   # args: <mtd> <size> <md5sum> <loc|rem> <url/path/-name>
   ${tm:-:} \\\n@: $1 $2 $3 $4\\\n@: $5
+  # if updating via local media, then prompt user for confirmation
+  if [ -z "$fwul_url" ]
+  then
+    [ -z "$tm" ] && echo
+    ask -p"  ...update the bootstrap image? [y/N ..9s]" -t10 -n1 a
+    [ "$a" != "y" ] && { echo "  ...skipping bootstrap"; return; }
+  fi
   # set target partition
   mtd=mtd$1
   compare_image_md5 $3 $( $fw_printenv -n md5_bootstrap 2>/dev/null ) || return
@@ -591,7 +593,7 @@ n_sync_updated
 if [ -n "$rootfs" ] \
 && fw_select -- 2>/dev/null
 then
-  ask -p"Transfer system settings ...[y/N]? " -t3 -n1 a
+  ask -p"Transfer system settings? [y/N ..3s] " -t3 -n1 a
   [ "$a" == "y" ] && $tm fw_select --transfer push
 fi
 
