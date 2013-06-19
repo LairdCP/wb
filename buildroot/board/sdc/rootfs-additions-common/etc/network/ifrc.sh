@@ -78,7 +78,7 @@ msg() {
 }
 
 # internals
-ifrc_Version=20130607
+ifrc_Version=20130619
 ifrc_Disable=/etc/default/ifrc.disable
 ifrc_Script=/etc/network/ifrc.sh
 ifrc_Time= #$( date +%s.%N )
@@ -813,8 +813,8 @@ show_filtered_method_params() {
 }
 
 ifrc_validate_loopback_method_params() {
-  IFS=''
-  for x in ${IFRC_METHOD/loopback/}
+  IFS=$'\n'
+  for x in ${IFRC_METHOD/loopback /}
   do IFS=' '
     echo $x |grep -q "[ia][a-z]*=[0-9].*" \
     || { msg2 "ignoring invalid extra parameter: $x"; continue; }
@@ -830,8 +830,8 @@ ifrc_validate_loopback_method_params() {
 }
 
 ifrc_validate_static_method_params() {
-  IFS=''
-  for x in ${IFRC_METHOD/static/}
+  IFS=$'\n'
+  for x in ${IFRC_METHOD/static /}
   do IFS=' '
     echo $x |grep -q "[aingb][a-z]*=[0-9]*.[0-9]*.[0-9]*.[0-9]*[/0-9]*" \
     || { msg2 "ignoring invalid extra parameter: $x"; continue; }
@@ -856,15 +856,15 @@ ifrc_validate_static_method_params() {
         fpsd=${x##*=}
         ;;
       *)
-        msg2 "ignoring extra parameter: $x"
+        msg2 "ignoring extra parameter: [$x]"
     esac
   done; IFS=' '
   show_filtered_method_params
 }
 
 ifrc_validate_dhcp_method_params() {
-  IFS=''
-  for x in ${IFRC_METHOD/dhcp/}
+  IFS=$'\n'
+  for x in ${IFRC_METHOD/dhcp /}
   do IFS=' '
     echo $x |grep -q "[iatpfc][a-z]*=[0-9].*" \
     || { msg2 "ignoring invalid extra parameter: $x"; continue; }
