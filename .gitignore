@@ -1,0 +1,56 @@
+
+# /
+/unpack.stamp
+
+# /archive/
+/archive/*
+
+# /buildroot/
+/buildroot/arch
+/buildroot/system
+/buildroot/output
+/buildroot/CHANGES
+/buildroot/COPYING
+/buildroot/Config.in
+/buildroot/Config.in.legacy
+/buildroot/Makefile
+/buildroot/Makefile.legacy
+/buildroot/boot
+/buildroot/configs
+/buildroot/docs
+/buildroot/fs
+/buildroot/linux
+/buildroot/support
+/buildroot/target
+/buildroot/toolchain
+/buildroot/.gitignore
+/buildroot/.defconfig
+
+# /buildroot/board/
+/buildroot/board/*
+
+# /buildroot/package/
+/buildroot/package/*
+
+# /buildroot/package/sdc-closed-source/externals/
+
+# /images/
+/images/
+
+# /images/msd45n/
+/images/msd45n/20??????
+
+# /images/msd45n_fips/
+/images/msd45n_fips/20??????
+
+# /images/wb40n/
+/images/wb40n/20??????
+/images/wb40n/fw.txt
+
+# /images/wb45n/
+/images/wb45n/20??????
+/images/wb45n/fw.txt
+
+# /images/welch_allyn/
+/images/welch_allyn/20??????
+/images/welch_allyn/fw.txt
