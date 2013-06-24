@@ -40,9 +40,9 @@ wifi_config()
            /etc/network/interfaces 2>/dev/null )
 
   # cmdline may override, otherwise not-enabled
-  case "$fm" in
+  case "${fm:0:6}" in
     enable|yes|on|-F) fips=fips; WIFI_FIPS=-F;;
-    disable|no|off) fips=; WIFI_FIPS=;;
+    disabl|no|off) fips=; WIFI_FIPS=;;
   esac
 
   return 0
