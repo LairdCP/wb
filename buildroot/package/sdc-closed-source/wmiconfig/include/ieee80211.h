@@ -1,8 +1,11 @@
-/*
-* Copyright (c) 2012 Qualcomm Atheros, Inc..
-* All Rights Reserved.
-* Qualcomm Atheros Confidential and Proprietary.
-*/
+//------------------------------------------------------------------------------
+// <copyright file="ieee80211.h" company="Atheros">
+//    Copyright (c) 2004-2010 Atheros Corporation.  All rights reserved.
+// $ATH_LICENSE_HOSTSDK0_C$
+//------------------------------------------------------------------------------
+//==============================================================================
+// Author(s): ="Atheros"
+//==============================================================================
 #ifndef _NET80211_IEEE80211_H_
 #define _NET80211_IEEE80211_H_
 

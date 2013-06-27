@@ -1,8 +1,11 @@
-/*
-* Copyright (c) 2012 Qualcomm Atheros, Inc..
-* All Rights Reserved.
-* Qualcomm Atheros Confidential and Proprietary.
-*/
+//------------------------------------------------------------------------------
+// <copyright file="testcmd.h" company="Atheros">
+//    Copyright (c) 2004-2010 Atheros Corporation.  All rights reserved.
+// $ATH_LICENSE_HOSTSDK0_C$
+//------------------------------------------------------------------------------
+//==============================================================================
+// Author(s): ="Atheros"
+//==============================================================================
 
 #ifndef  TESTCMD_H_
 #define  TESTCMD_H_

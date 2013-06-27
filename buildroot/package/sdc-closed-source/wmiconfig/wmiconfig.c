@@ -1,8 +1,11 @@
 /*
-* Copyright (c) 2012 Qualcomm Atheros, Inc..
-* All Rights Reserved.
-* Qualcomm Atheros Confidential and Proprietary.
-*/
+ * Copyright (c) 2004-2009 Atheros Communications Inc.
+ * All rights reserved.
+ * 
+ * $ATH_LICENSE_HOSTSDK0_C$
+ *
+ *
+ */
 #define SUPPORT_11N
 #include "libtcmd.h"
 #include <sys/types.h>
@@ -119,9 +122,7 @@ const char commands[] =
         <scan> is 0 to disable scan after setting channel list.\n\
                   1 to enable scan after setting channel list.\n\
 --getwmode \n\
---ssid <index> <ssid> \n\
-        where <ssid> is the wireless network string,'any' mean empty ssid, 'off' means disable \n\
-              <index> is 0 ~ 15 \n\
+--ssid=<ssid> [--num=<index>] where <ssid> is the wireless network string and <index> is 0 or 1 (set to 0 if not specified). Set ssid to 'off' to clear the entry\n\
 --badAP=<macaddr> [--num=<index>] where macaddr is macaddr of AP to be avoided in xx:xx:xx:xx:xx:xx format, and num is index from 0-1.\n\
 --clrAP [--num=<index>] is used to clear a badAP entry.  num is index from 0-1\n\
 --createqos <user priority> <direction> <traffic class> <trafficType> <voice PS capability> \n\
@@ -566,18 +567,6 @@ const char commands[] =
                         : 5: stack overflow\n\
         <delay_time_ms> : 0~65534 ,delay time ms\n\
                         : 65535 ,delay random time( 0~65535) ms\n\
---disablebcast <enable> \n\
---blwl <control> <index> <mac> \n\
-        where  <control>: 0 disable blwl \n\
-                        : 1 enable blwl \n\
-                        : 2 add white mac \n\
-                        : 3 add black mac \n\
-                        : 4 reset whitelist \n\
-                        : 5 reset blacklist \n\
-         <index>        : valid when control=2 3 4 5, mac address index [0,9] \n\
-         <mac>          : valid when control=2 3 4 5, mac address xx:xx:xx:xx:xx:xx  \n\
---setrssifilter <snr_value> \n\
-	where <snr_value> : 0~127 the rssi value, (DBM: value-95dbm) \n\
 ";
 
 A_UINT32 mercuryAdd[5][2] = {
@@ -671,7 +660,6 @@ main (int argc, char **argv)
     int clearstat = 0;
     
 
-WMI_DISABLE_BCAST_IN_PM_CMD *disableBcastCmd = (WMI_DISABLE_BCAST_IN_PM_CMD *) (buf+4);
     WMI_LISTEN_INT_CMD *listenCmd         = (WMI_LISTEN_INT_CMD*)buf;
     WMI_BMISS_TIME_CMD *bmissCmd         = (WMI_BMISS_TIME_CMD*)buf;
 
@@ -772,8 +760,6 @@ WMI_DISABLE_BCAST_IN_PM_CMD *disableBcastCmd = (WMI_DISABLE_BCAST_IN_PM_CMD *) (
     WMI_VOICE_DETECTION_ENABLE_CMD *pVoiceDetectionEnable = (WMI_VOICE_DETECTION_ENABLE_CMD *)(buf + 4);
     WMI_SET_TXE_NOTIFY_CMD *pTXe = (WMI_SET_TXE_NOTIFY_CMD *)(buf + 4);
     WMI_SET_RECOVERY_TEST_PARAMETER_CMD *pSetRecoveryParam = (WMI_SET_RECOVERY_TEST_PARAMETER_CMD*)(buf + 4);
-    WMI_SET_RSSI_FILTER_CMD *pSetRssiFilter = (WMI_SET_RSSI_FILTER_CMD*)(buf + 4);
-    WMI_PROBED_SSID_CMD *pSsidCmd = (WMI_PROBED_SSID_CMD*)(buf + 4);
     profile_t   cp;
     A_UINT8 *pWpaOffloadState = (A_UINT8 *) (buf + 4);
     A_UINT32 *pExcessTxRetryThres = (A_UINT32 *)(buf + 4);
@@ -1007,9 +993,6 @@ WMI_DISABLE_BCAST_IN_PM_CMD *disableBcastCmd = (WMI_DISABLE_BCAST_IN_PM_CMD *) (
             {"enablevoicedetection", 1, NULL, WMI_VOICE_DETECTION_ENABLE}, /* enable/disable voice detection command */            
 	    {"txe-notify", 1, NULL, WMI_SET_TXE_NOTIFY},
             {"setrecoverysim", 0, NULL, WMI_SET_RECOVERY_SIMULATE}, /* set recovery simulation */   
-{"disablebcast", 1, NULL, WMI_DISABLE_BCAST_IN_PM},  /* disable broadcast in power save */
-            {"blwl", 0, NULL, WMI_AP_BLWL},                 /* AP mode */
-            {"setrssifilter", 0, NULL, WMI_SET_RSSI_FILTER},
             {0, 0, 0, 0}
         };
 
@@ -1186,9 +1169,7 @@ WMI_DISABLE_BCAST_IN_PM_CMD *disableBcastCmd = (WMI_DISABLE_BCAST_IN_PM_CMD *) (
             break;
         case 't':
             cmd = WMI_SET_SSID;
-            index = optind-1;
-            pSsidCmd->entryIndex =(A_UINT8)atoi(argv[index++]);
-            ssid = (A_UCHAR *)argv[index++];
+            ssid = (A_UCHAR *)optarg;
             break;
         case 'u':
             cmd = WMI_SET_RSSI_THRESHOLDS;
@@ -1763,9 +1744,6 @@ WMI_DISABLE_BCAST_IN_PM_CMD *disableBcastCmd = (WMI_DISABLE_BCAST_IN_PM_CMD *) (
             break;
         case WMI_START_SCAN:
             cmd = WMI_START_SCAN;
-            startScanCmd->scanType= 0;
-            startScanCmd->forceFgScan= false;
-            startScanCmd->isLegacy= false;
             startScanCmd->homeDwellTime = 0;
             startScanCmd->forceScanInterval = 0;
             startScanCmd->numChannels = 0;
@@ -2560,81 +2538,7 @@ WMI_DISABLE_BCAST_IN_PM_CMD *disableBcastCmd = (WMI_DISABLE_BCAST_IN_PM_CMD *) (
             pSetRecoveryParam->type = atoi(argv[index++]);
             pSetRecoveryParam->delay_time_ms = atoi(argv[index++]);
             break;
-case WMI_DISABLE_BCAST_IN_PM:
-/* wmiconfig -i wlan0 --disablebcast <para0> */
-index = optind-1;
-if (argc - index != 1) {
-printf("Error: WMI_DISABLE_BCAST_IN_PM optind:%x argc:%x\n", optind, argc);
-cmd = 0;
-break;
-}
-cmd = WMI_DISABLE_BCAST_IN_PM;
-disableBcastCmd->disable = atoi(argv[index++]);
-break;
-       case WMI_AP_BLWL:
-        {
-           A_UINT8 control, macindex;
 
-           index = optind;
-           control = atoi(argv[index++]);
-
-           if (0 == control)     //enable blwl
-           {
-                cmd = WMI_AP_BLWL_POLICY;
-                pACLpolicy->policy = AP_ACL_DISABLE;
-           }
-           else if (1 == control)   //enable blwl
-           {
-                cmd = WMI_AP_BLWL_POLICY;
-                pACLpolicy->policy = AP_ACL_BLWL_MAC;
-           }
-           else if (2 == control)   //add a mac into whitelist
-           {
-                cmd = WMI_AP_BLWL_MAC_LIST;
-                macindex = atoi(argv[index++]);
-                pACL->action = ADD_WHITE_MAC_ADDR;
-                pACL->index = macindex;
-                if (wmic_ether_aton_wild(argv[index], pACL->mac, &pACL->wildcard) != A_OK)
-                {
-                    printf("bad mac address\n");
-                    exit (0);
-                }
-           }
-           else if (3 == control)   //add a mac into blacklist
-           {
-                cmd = WMI_AP_BLWL_MAC_LIST;
-                macindex = atoi(argv[index++]);
-                pACL->action = ADD_BLACK_MAC_ADDR;
-                pACL->index = macindex;
-                if (wmic_ether_aton_wild(argv[index], pACL->mac, &pACL->wildcard) != A_OK)
-                {
-                    printf("bad mac address\n");
-                    exit (0);
-                }
-           }
-           else if (4 == control)   //reset whitelist
-           {
-                cmd = WMI_AP_BLWL_MAC_LIST;
-                pACL->action = RESET_WHITE_LIST;
-           }
-           else if (5 == control)   //reset blacklist
-           {
-                cmd = WMI_AP_BLWL_MAC_LIST;
-                pACL->action = RESET_BLACK_LIST;
-           }
-           else
-           {
-                printf("cmd para error\n");
-                exit (0);
-           }
-
-           break;
-       }
-       case WMI_SET_RSSI_FILTER:
-         cmd = WMI_SET_RSSI_FILTER;
-         pSetRssiFilter->rssi_value = atoi(argv[optind]);
-         pSetRssiFilter->rssi_value -= 95; /*the configure value is the real dbm*/
-         break;
        default:
             usage();
             break;
@@ -2708,72 +2612,6 @@ break;
         ((int *)buf)[0] = WMI_SET_RECOVERY_TEST_PARAMETER_CMDID;
         printf("Sending WMI_SET_RECOVERY_TEST_PARAMETER_CMDID(0x%x),type:%d, delay:%d\n", WMI_SET_RECOVERY_TEST_PARAMETER_CMDID,pSetRecoveryParam->type,pSetRecoveryParam->delay_time_ms);        
         tcmd_tx(buf, sizeof(WMI_SET_RECOVERY_TEST_PARAMETER_CMD) + 4, false);
-        break;
-case WMI_DISABLE_BCAST_IN_PM:
-((int *)buf)[0] =  WMI_DISABLE_BCAST_IN_PM_CMDID;
-printf("Sending  WMI_DISABLE_BCAST_IN_PM(0x%x),disable:%d\n", WMI_DISABLE_BCAST_IN_PM, disableBcastCmd->disable);
-tcmd_tx(buf, sizeof(WMI_DISABLE_BCAST_IN_PM_CMD)+4, false);
-break;
-    case WMI_AP_BLWL_POLICY:
-        ((int *)buf)[0] = WMI_AP_ACL_POLICY_CMDID;
-        printf("Sending WMI_AP_ACL_POLICY_CMDID(0x%x), policy = %d\n", WMI_AP_ACL_POLICY_CMDID, pACLpolicy->policy);
-        tcmd_tx(buf, sizeof(WMI_AP_ACL_POLICY_CMD) + 4, false);
-        break;
-    case WMI_AP_BLWL_MAC_LIST:
-        ((int *)buf)[0] = WMI_AP_ACL_MAC_LIST_CMDID;
-        printf("Sending WMI_AP_ACL_MAC_LIST_CMDID(0x%x), action = %d, index = %d, mac=%02X:%02X:%02X:%02X:%02X:%02X\n",
-            WMI_AP_ACL_MAC_LIST_CMDID, pACL->action, pACL->index,
-            pACL->mac[0], pACL->mac[1], pACL->mac[2], pACL->mac[3], pACL->mac[4], pACL->mac[5]);
-        tcmd_tx(buf, sizeof(WMI_AP_ACL_MAC_CMD) + 4, false);
-        break;
-    case WMI_AP_SET_NUM_STA:
-        ((int *)buf)[0] =  WMI_AP_SET_NUM_STA_CMDID;
-        printf("Sending  WMI_AP_SET_NUM_STA_CMDID(0x%x),NUMBER:%d\n", WMI_AP_SET_NUM_STA_CMDID, pNumSta->num_sta);
-        tcmd_tx(buf, sizeof(WMI_AP_NUM_STA_CMD)+4, false);
-        break;
-    case WMI_SET_RSSI_FILTER:
-        ((int *)buf)[0] =  WMI_SET_RSSI_FILTER_CMDID;
-        printf("Sending  WMI_SET_RSSI_FILTER_CMDID(0x%x),rssi:%d\n", WMI_SET_RSSI_FILTER_CMDID, pSetRssiFilter->rssi_value);
-        tcmd_tx(buf, sizeof(WMI_SET_RSSI_FILTER_CMD)+4, false);
-        break;
-    case WMI_SET_SSID:
-        ((int *)buf)[0] =  WMI_SET_PROBED_SSID_CMDID;
-        printf("Sending  WMI_SET_PROBED_SSID_CMDID(0x%x),ssid:%s index:%d\n", WMI_SET_PROBED_SSID_CMDID, ssid, pSsidCmd->entryIndex);
-        if (ssid && (strlen((const char *)ssid) > sizeof (pSsidCmd->ssid))) {
-            break;
-        }
-        if (strcmp((const char *)ssid, "off") == 0) {
-            pSsidCmd->ssidLength = 0;
-            pSsidCmd->flag = DISABLE_SSID_FLAG;
-        } else if (strcmp((const char *)ssid, "any") == 0) {
-            pSsidCmd->ssidLength = 0;
-            pSsidCmd->flag = ANY_SSID_FLAG;
-        } else {
-            pSsidCmd->flag = SPECIFIC_SSID_FLAG;
-            pSsidCmd->ssidLength = (A_UINT8)strlen((const char *)ssid);
-            memcpy(pSsidCmd->ssid, ssid, pSsidCmd->ssidLength);
-        }
-        tcmd_tx(buf, sizeof(WMI_PROBED_SSID_CMD)+4, false);
-        break;
-    case WMI_START_SCAN:
-        ((int *)buf)[0] = WMI_START_SCAN_CMDID;
-        printf("Sending  WMI_START_SCAN_CMDID(0x%x),scanType:%d forceFgScan:%d,isLegacy:%d,homeDwellTime:%d,forceScanInterval:%d,numChannels:%d\n",  
-               WMI_START_SCAN_CMDID, startScanCmd->scanType,startScanCmd->forceFgScan,startScanCmd->isLegacy,startScanCmd->homeDwellTime,startScanCmd->forceScanInterval,startScanCmd->numChannels);
-       tcmd_tx(buf, sizeof(WMI_START_SCAN_CMD)+4, false);
-        break;
-    case WMI_AP_SET_DTIM:
-        ((int *)buf)[0] = WMI_AP_SET_DTIM_CMDID;
-        printf("Sending WMI_AP_SET_DTIM_CMD(0x%x), dtim = %d\n", WMI_AP_SET_DTIM_CMDID, pDtim->dtim);
-        tcmd_tx(buf, sizeof(WMI_AP_SET_DTIM_CMD) + 4, false);
-        break;
-    case WMI_SET_DIVERSITY_PARAM:
-        ((int *)buf)[0] = WMI_SET_DIV_PARAMS_CMDID;
-        printf("Sending WMI_SET_DIVERSITY_PARAM IdleTime %d, antRssiThresh %d, divEnable %d, active_threshols_rate %d\n",
-            pDiversity->divIdleTime,
-            pDiversity->antRssiThresh,
-            pDiversity->divEnable,
-            pDiversity->active_treshold_rate);
-        tcmd_tx(buf, sizeof(WMI_DIV_PARAMS_CMD) + 4, false);
         break;
     default:
         usage();

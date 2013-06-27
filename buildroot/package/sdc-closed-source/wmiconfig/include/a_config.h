@@ -1,8 +1,8 @@
-/*
-* Copyright (c) 2012 Qualcomm Atheros, Inc..
-* All Rights Reserved.
-* Qualcomm Atheros Confidential and Proprietary.
-*/
+//------------------------------------------------------------------------------
+// <copyright file="a_config.h" company="Atheros">
+//    Copyright (c) 2004-2010 Atheros Corporation.  All rights reserved.
+// $ATH_LICENSE_HOSTSDK0_C$
+//------------------------------------------------------------------------------
 //==============================================================================
 // This file contains software configuration options that enables
 // specific software "features"

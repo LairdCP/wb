@@ -1,8 +1,9 @@
 /*
-* Copyright (c) 2012 Qualcomm Atheros, Inc..
-* All Rights Reserved.
-* Qualcomm Atheros Confidential and Proprietary.
-*
+ * Copyright (c) 2004-2009 Atheros Communications Inc.
+ * All rights reserved.
+ *
+ * $ATH_LICENSE_HOSTSDK0_C$
+ *
  * This file contains the definitions for wmiconfig utility
  */
 
@@ -218,11 +219,6 @@ enum {
     WMI_VOICE_DETECTION_ENABLE, /* enable/disable voice detection */
     WMI_SET_TXE_NOTIFY,
     WMI_SET_RECOVERY_SIMULATE, /*set recovery simulate*/
-WMI_DISABLE_BCAST_IN_PM,  /* enable/disable broadcast in power save */
-    WMI_AP_BLWL,                /*set SAP blacklist/whitelist*/
-    WMI_AP_BLWL_POLICY,          /*set SAP blacklist/whitelist policy*/
-    WMI_AP_BLWL_MAC_LIST,         /*set SAP blacklist/whitelist mac*/
-    WMI_SET_RSSI_FILTER,
 };
 
 /*
