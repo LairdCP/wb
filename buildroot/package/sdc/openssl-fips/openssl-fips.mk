@@ -43,9 +43,7 @@ define OPENSSL_FIPS_INSTALL_STAGING_CMDS
 	)
 endef
 
-define OPENSSL_FIPS_INSTALL_TARGET_CMDS
-	$(MAKE1) -C $(@D) INSTALL_PREFIX=$(TARGET_DIR) install
-endef
+# NOTE: OPENSSL_FIPS_INSTALL_TARGET_CMDS is not required (see BZ2297)
 
 #define OPENSSL_FIPS_UNINSTALL_CMDS
 #	rm -rf $(addprefix $(TARGET_DIR)/,etc/ssl usr/bin/openssl usr/include/openssl)
