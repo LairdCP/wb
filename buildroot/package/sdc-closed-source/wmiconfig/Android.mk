@@ -1,11 +1,8 @@
-#------------------------------------------------------------------------------
-# <copyright file="makefile" company="Atheros">
-#    Copyright (c) 2005-2010 Atheros Corporation.  All rights reserved.
-# $ATH_LICENSE_HOSTSDK0_C$
-#------------------------------------------------------------------------------
-#==============================================================================
-# Author(s): ="Atheros"
-#==============================================================================
+#------------------------------------------------
+# Copyright (c) 2012 Qualcomm Atheros, Inc..
+# All Rights Reserved.
+# Qualcomm Atheros Confidential and Proprietary.
+#------------------------------------------------
 
 LOCAL_PATH := $(call my-dir)
 

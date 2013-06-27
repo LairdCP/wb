@@ -1,11 +1,8 @@
-//------------------------------------------------------------------------------
-// Copyright (c) 2004-2010 Atheros Communications Inc.
-// All rights reserved.
-//
-// $ATH_LICENSE_HOSTSDK0_C$
-//
-// Author(s): ="Atheros"
-//------------------------------------------------------------------------------
+/*
+* Copyright (c) 2012 Qualcomm Atheros, Inc..
+* All Rights Reserved.
+* Qualcomm Atheros Confidential and Proprietary.
+*/
 
 #ifndef _IEEE80211_IOCTL_H_
 #define _IEEE80211_IOCTL_H_
