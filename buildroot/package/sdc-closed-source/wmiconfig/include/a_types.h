@@ -1,8 +1,8 @@
-//------------------------------------------------------------------------------
-// <copyright file="a_types.h" company="Atheros">
-//    Copyright (c) 2004-2010 Atheros Corporation.  All rights reserved.
-// $ATH_LICENSE_HOSTSDK0_C$
-//------------------------------------------------------------------------------
+/*
+* Copyright (c) 2012 Qualcomm Atheros, Inc..
+* All Rights Reserved.
+* Qualcomm Atheros Confidential and Proprietary.
+*/
 //==============================================================================
 // This file contains the definitions of the basic atheros data types.
 // It is used to map the data types in atheros files to a platform specific

@@ -1,10 +1,8 @@
-//------------------------------------------------------------------------------
-// Copyright (c) 2004-2010 Atheros Corporation.  All rights reserved.
-// $ATH_LICENSE_HOSTSDK0_C$
-//------------------------------------------------------------------------------
-//==============================================================================
-// Author(s): ="Atheros"
-//==============================================================================
+/*
+* Copyright (c) 2012 Qualcomm Atheros, Inc..
+* All Rights Reserved.
+* Qualcomm Atheros Confidential and Proprietary.
+*/
 
 /*
  * This file contains the definitions of the WMI protocol specified in the
@@ -691,6 +689,9 @@ typedef enum {
 
     WMI_SET_RECOVERY_TEST_PARAMETER_CMDID,
 
+    WMI_ENABLE_SCHED_SCAN,
+
+WMI_DISABLE_BCAST_IN_PM_CMDID = 0xf200,
 
 } WMI_COMMAND_ID;
 
@@ -3977,6 +3978,7 @@ typedef PREPACK struct {
 #define AP_ACL_DISABLE          0x00
 #define AP_ACL_ALLOW_MAC        0x01
 #define AP_ACL_DENY_MAC         0x02
+#define AP_ACL_BLWL_MAC         0x03
 #define AP_ACL_RETAIN_LIST_MASK 0x80
 typedef PREPACK struct {
     A_UINT8     policy;
@@ -3987,6 +3989,13 @@ typedef PREPACK struct {
  */
 #define ADD_MAC_ADDR    1
 #define DEL_MAC_ADDR    2
+
+#define ADD_WHITE_MAC_ADDR  0x01
+#define ADD_BLACK_MAC_ADDR  0x02
+#define RESET_WHITE_LIST	0x03
+#define RESET_BLACK_LIST	0x04
+#define RESET_BWLIST		0x10
+
 typedef PREPACK struct {
     A_UINT8     action;
     A_UINT8     index;
@@ -4808,6 +4817,14 @@ typedef PREPACK struct {
     A_UINT8 reserved; /*unused now*/
     A_UINT16 delay_time_ms;   /*0xffff means the simulate will delay for random time (0 ~0xffff ms)*/
 }POSTPACK WMI_SET_RECOVERY_TEST_PARAMETER_CMD;
+
+typedef PREPACK struct {
+A_UINT8 disable;  /*0: enable broadcast,  1: disable broadcast */
+} POSTPACK WMI_DISABLE_BCAST_IN_PM_CMD;
+
+typedef PREPACK struct {
+    A_INT8 rssi_value;
+} POSTPACK WMI_SET_RSSI_FILTER_CMD;
 
 
 #ifndef ATH_TARGET
