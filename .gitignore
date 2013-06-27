@@ -32,7 +32,7 @@
 # /buildroot/package/
 /buildroot/package/*
 
-# /buildroot/package/sdc-closed-source/externals/
+/buildroot/package/sdc-closed-source/externals/*
 
 # /images/
 /images/
@@ -56,3 +56,6 @@
 /images/welch_allyn/fw.txt
 
 #
+
+.*.swp
+*~
