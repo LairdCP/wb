@@ -32,6 +32,8 @@
 
 # /buildroot/package/
 /buildroot/package/*
+!/buildroot/package/sdc
+!/buildroot/package/sdc-closed-source
 
 /buildroot/package/sdc-closed-source/externals/*
 
