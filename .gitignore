@@ -28,6 +28,7 @@
 
 # /buildroot/board/
 /buildroot/board/*
+!/buildroot/board/sdc
 
 # /buildroot/package/
 /buildroot/package/*
