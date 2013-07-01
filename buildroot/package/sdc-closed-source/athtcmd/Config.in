@@ -1,5 +1,0 @@
-config BR2_PACKAGE_ATHTCMD
-	bool "tcmd"
-	help
-	  Atheros TCMD utility.
-
