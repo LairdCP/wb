@@ -4,22 +4,25 @@
 #
 #############################################################
 
-AR6KL_TOOLS_VERSION = 3.1.1
-AR6KL_TOOLS_SITE = http://boris.corp.lairdtech.com/scratch/archive-closed-source
-AR6KL_TOOLS_SOURCE = AR6K_Linux_ISC_$(AR6KL_TOOLS_VERSION)_RC_Release.tgz
-
-define AR6KL_TOOLS_CONFIGURE_CMDS
-	(cd $(@D) && tar zxf AR6K_PKG_ISC.build_3.1_RC.563.tgz)
-endef
+AR6KL_TOOLS_VERSION = local
+AR6KL_TOOLS_SITE    = package/sdc-closed-source/externals/ath6kl_devkit
+AR6KL_TOOLS_METHOD  = local
 
 define AR6KL_TOOLS_BUILD_CMDS
-    $(MAKE) -C $(@D)/host/tools/dbgParser CC="$(TARGET_CC)" ARCH=arm
+	$(MAKE) -C $(@D)/Proprietary_tools/libtcmd \
+            CC="$(TARGET_CC)" AR="$(TARGET_AR)" \
+            PKGCONFIG="$(HOST_DIR)/usr/bin/pkg-config"
+    $(MAKE) -C $(@D)/Proprietary_tools/ath6kl-tcmd \
+               CC="$(TARGET_CC)" AR="$(TARGET_AR)" \
+               PKGCONFIG="$(HOST_DIR)/usr/bin/pkg-config"
+    $(MAKE) -C $(@D)/Proprietary_tools/ath6kl-wmiconfig \
+               CC="$(TARGET_CC)" AR="$(TARGET_AR)" \
+               PKGCONFIG="$(HOST_DIR)/usr/bin/pkg-config"
 endef
 
 define AR6KL_TOOLS_INSTALL_TARGET_CMDS
-    $(INSTALL) -D -m 755 $(@D)/host/tools/dbgParser/dbgParser $(TARGET_DIR)/usr/bin/dbgParser
-    $(INSTALL) -D -m 755 $(@D)/include/dbglog.h $(TARGET_DIR)/etc/ar6kl-tools/dbgParser/include/dbglog.h
-    $(INSTALL) -D -m 755 $(@D)/include/dbglog_id.h $(TARGET_DIR)/etc/ar6kl-tools/dbgParser/include/dbglog_id.h
+	$(INSTALL) -D -m 755 $(@D)/Proprietary_tools/ath6kl-tcmd/athtestcmd $(TARGET_DIR)/usr/bin/athtestcmd
+	$(INSTALL) -D -m 755 $(@D)/Proprietary_tools/ath6kl-wmiconfig/wmiconfig $(TARGET_DIR)/usr/bin/wmiconfig
 endef
 
 $(eval $(generic-package))

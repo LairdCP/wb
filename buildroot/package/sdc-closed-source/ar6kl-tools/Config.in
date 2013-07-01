@@ -1,4 +1,4 @@
 config BR2_PACKAGE_AR6KL_TOOLS
-	bool "Ar6kl Tools (dbgParser)"
+	bool "Ar6kl Tools"
 	help
 	  Ar6kl Tools
