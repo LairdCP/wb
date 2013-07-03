@@ -37,9 +37,6 @@
 
 /buildroot/package/sdc-closed-source/externals/*
 
-# /images/
-/images/
-
 # /images/msd45n/
 /images/msd45n/20??????
 
