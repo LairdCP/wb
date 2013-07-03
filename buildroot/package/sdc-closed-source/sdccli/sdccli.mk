@@ -21,9 +21,9 @@ SDCCLI_MAKE_ENV = CC="$(TARGET_CC)" \
                   CFLAGS="$(TARGET_CFLAGS)"
 SDCCLI_TARGET_DIR = $(TARGET_DIR)
 
-define SDCCLI_CONFIGURE_CMDS
-    patch -d $(@D) < package/sdc-closed-source/sdccli/makefile.patch
-endef
+#define SDCCLI_CONFIGURE_CMDS
+#    patch -d $(@D) < package/sdc-closed-source/sdccli/makefile.patch
+#endef
 
 define SDCCLI_BUILD_CMDS
     $(MAKE) -C $(@D) clean
