@@ -57,5 +57,7 @@
 
 #
 
+/images/*/latest
+
 .*.swp
 *~
