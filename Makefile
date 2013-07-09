@@ -68,11 +68,9 @@ clean-sdc-pkg: clean-wb40n-sdc-pkg clean-wb45n-sdc-pkg
 
 clean-wb40n:
 	$(MAKE) -C buildroot O=output/wb40n clean
-	rm -rf buildroot/output/wb40n/sdcbins
 
 clean-wb45n:
 	$(MAKE) -C buildroot O=output/wb45n clean
-	rm -rf buildroot/output/wb45n/sdcbins
 
 clean: clean-wb40n clean-wb45n
 
