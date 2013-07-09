@@ -64,7 +64,11 @@ chmod a-x $TARGETDIR/etc/init.d/S??openvpn     #not ready for use
 
 # Create default firmware description file.
 # This may be overwritten by a proper release file.
-echo "SDC Linux ReleaseCandidate `date +%Y%m%d`" \
-  > $TARGETDIR/etc/summit-release
+if [ -z "$LAIRD_RELEASE_STRING" ]; then
+  echo "Laird Linux development build `date +%Y%m%d`" \
+    > $TARGETDIR/etc/summit-release
+else
+  echo "$LAIRD_RELEASE_STRING" > $TARGETDIR/etc/summit-release
+fi
 
 echo "COMMON POST BUILD script: done."
