@@ -59,8 +59,10 @@ tar c --exclude=.svn -C board/sdc/rootfs-additions-common/ . | tar x -C $TARGETD
   && ln -sf liblrd_platspec.so.1.0 liblrd_platspec.so.1 )
 
 # Services to disable by default
-chmod a-x $TARGETDIR/etc/init.d/S??lighttpd
-chmod a-x $TARGETDIR/etc/init.d/S??openvpn     #not ready for use
+[ -f $TARGETDIR/etc/init.d/S??lighttpd ] \
+&& chmod a-x $TARGETDIR/etc/init.d/S??lighttpd
+[ -f $TARGETDIR/etc/init.d/S??openvpn ] \
+&& chmod a-x $TARGETDIR/etc/init.d/S??openvpn     #not ready for use
 
 # Create default firmware description file.
 # This may be overwritten by a proper release file.
