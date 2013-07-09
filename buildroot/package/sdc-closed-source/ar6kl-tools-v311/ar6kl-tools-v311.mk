@@ -6,7 +6,7 @@
 
 AR6KL_TOOLS_V311_VERSION = 3.1.1
 AR6KL_TOOLS_V311_SITE = http://boris.corp.lairdtech.com/scratch/archive-closed-source
-AR6KL_TOOLS_V311_SOURCE = AR6K_Linux_ISC_$(AR6KL_TOOLS_VERSION)_RC_Release.tgz
+AR6KL_TOOLS_V311_SOURCE = AR6K_Linux_ISC_$(AR6KL_TOOLS_V311_VERSION)_RC_Release.tgz
 
 define AR6KL_TOOLS_V311_CONFIGURE_CMDS
 	(cd $(@D) && tar zxf AR6K_PKG_ISC.build_3.1_RC.563.tgz)
