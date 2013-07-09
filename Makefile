@@ -80,7 +80,9 @@ cleanall:
                     -not -name '.svn' -not -name '.git' \
                     -exec rm -rf "{}" ";"
 	find buildroot/package buildroot/board  -mindepth 1 -maxdepth 1 \
-                -not -name sdc -not -name sdc-closed-source -not -name '.svn' -exec rm -rf "{}" ";"
+                -not -name sdc -not -name sdc-closed-source \
+                -not -name '.svn' -not -name .git \
+                -exec rm -rf "{}" ";"
 	rm -f unpack.stamp
 
 .PHONY: default all unpack clean cleanall clean-wb40n clean-wb45n wb40n wb45n \
