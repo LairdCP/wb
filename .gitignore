@@ -55,7 +55,9 @@
 /images/welch_allyn/20??????
 /images/welch_allyn/fw.txt
 
-#
+# /images/wb45n_devel
+/images/wb45n_devel/20??????
+/images/wb45n_devel/fw.txt
 
 /images/*/latest
 

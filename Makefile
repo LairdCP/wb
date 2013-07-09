@@ -18,7 +18,7 @@ default: wb40n wb45n
 
 all: wb40n wb45n msd45n welch_allyn
 
-msd45n msd45n_fips welch_allyn wb40n wb45n: unpack.stamp
+msd45n msd45n_fips welch_allyn wb40n wb45n wb45n_devel: unpack.stamp
 	# install the config file
 	$(MAKE) O=output/$@ -C buildroot $@_defconfig
 	$(MAKE) O=output/$@ -C buildroot
@@ -42,6 +42,7 @@ endif
 	cd buildroot/configs && ln -s ../board/sdc/customers/carefusion/configs/buildroot.config carefusion_defconfig
 	cd buildroot/configs && ln -s ../board/sdc/wb40n/configs/buildroot.config wb40n_defconfig
 	cd buildroot/configs && ln -s ../board/sdc/wb45n/configs/buildroot.config wb45n_defconfig
+	cd buildroot/configs && ln -s ../board/sdc/wb45n/configs/buildroot-wb45n_devel.config wb45n_devel_defconfig
 	cd buildroot/configs && ln -s ../board/sdc/msd45n/configs/buildroot.config msd45n_defconfig
 	cd buildroot/configs && ln -s ../board/sdc/msd45n/configs/buildroot-fips.config msd45n_fips_defconfig
 	# mark operation as done
