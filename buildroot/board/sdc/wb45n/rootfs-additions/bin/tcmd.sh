@@ -6,7 +6,7 @@
 # For normal wifi operation, we use latest firmware, which requires a symlink.
 #
 FW_LINK=/lib/firmware/ath6k/AR6003/hw2.1.1/fw-4.bin
-FIRMWARE=fw_v3.4.0.62.bin
+FIRMWARE=fw_v3.4.0.66.bin
 
 do_() {
   echo -e "# $@"; $@; return $?
@@ -80,11 +80,13 @@ case $1 in
     echo "  However, the driver will load fw-4 instead, if available."
 
     n='[0-9]'
-    echo "    fw-3: " \
-    `grep -s -e "^QCA" -e "^$n\.$n\.$n\.$n" ${FW_LINK%/*}/fw-3.bin || echo n/a`
-    
-    echo "    fw-4: " \
-    `grep -s -e "^QCA" -e "^$n\.$n\.$n\.$n" ${FW_LINK%/*}/fw-4.bin || echo n/a`
+    echo -e "    fw-3: " \
+    `grep -s -e "^QCA" -e "^$n\.$n\.$n\.$n" ${FW_LINK%/*}/fw-3.bin || echo n/a` \
+    \\\t`md5sum ${FW_LINK%/*}/fw-3.bin |cut -d' ' -f1`
+
+    echo -e "    fw-4: " \
+    `grep -s -e "^QCA" -e "^$n\.$n\.$n\.$n" ${FW_LINK%/*}/fw-4.bin || echo n/a` \
+    \\\t`md5sum ${FW_LINK%/*}/fw-4.bin |cut -d' ' -f1`
     
     echo
     ;;
