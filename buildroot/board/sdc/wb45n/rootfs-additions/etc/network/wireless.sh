@@ -20,7 +20,7 @@ SDC_CLI=/usr/bin/sdc_cli
 WIFI_80211=-Dnl80211                          ## supplicant driver nl80211 
 #WIFI_DEBUG=-tdddd                             ## supplicant debugging '-td..'
 
-## fips mode support - also can invoke via cmdline as 'fips' or in the /e/n/i
+## fips mode support - also can invoke directly via the cmdline as 'fips'
 #WIFI_FIPS=-F                                  ## FIPS mode support '-F'
 
 
@@ -31,14 +31,9 @@ wifi_config()
   [ ! -s "$WIFI_PROFILES" -a -x "$SDC_CLI" ] \
   && { msg re-generating $WIFI_PROFILES; rm -f $WIFI_PROFILES; $SDC_CLI quit; }
 
-  # check profiles:  fips-mode <off|on>
-  fm=$( ${SDC_CLI:-:} global show fips_mode 2>/dev/null )
+  # check global profile:  fips-mode <off|on>
+  fm=$( ${SDC_CLI:-:} global show fips-mode 2>/dev/null )
   
-  # or check /e/n/i:  fips_mode <enable>
-  [ -n "$fm" ] \
-  || fm=$( sed -n "/^iface wl/,/^$/s/^[ \t]\+[^#]fips_mode \(.*\)/\1/p" \
-           /etc/network/interfaces 2>/dev/null )
-
   # cmdline may override, otherwise not-enabled
   case "${fm:0:6}" in
     enable|yes|on|-F) fips=fips; WIFI_FIPS=-F;;
@@ -280,6 +275,8 @@ case $1 in
   restart)
     $0 stop && exec $0 $WIFI_DEBUG $fips start $2
     ;;
+
+
 
   ''|status)
     module=${module/.ko/}
