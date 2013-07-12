@@ -18,11 +18,8 @@ set -x -e
 # disable 3.8* ipv6 module to kernel space corruption - temporary
 # pv6-/-netlink conflict
 # bluetooth init conflict
-if [ -f $TARGETDIR/lib/modules/3.8*/kernel/net/ipv6/ipv6.ko ]
-then
-  mv -f $TARGETDIR/lib/modules/3.8*/kernel/net/ipv6/ipv6.ko \
-        $TARGETDIR/lib/modules/3.8*/kernel/net/ipv6/-ipv6.ko
-fi
+[ -f $TARGETDIR/lib/modules/3.8*/kernel/net/ipv6/ipv6.ko ] \
+&& ( cd $TARGETDIR/lib/modules/3.8*/kernel/net/ipv6 && mv -- ipv6.ko -ipv6.ko )
 
 # remove default ssh init file
 # real version is in init.d/opt and works w/ inetd or standalone
