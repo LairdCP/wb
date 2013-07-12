@@ -15,11 +15,13 @@ set -x -e
 ## echo "/dev/mtdblock7\t\t/applog\tjffs2\tdefaults\t\t0\t0" \
 ## >> $TARGETDIR/etc/fstab
 
-# disable 3.8.0-laird1 ipv6 module to avoid ipv6-/-netlink conflict - temporary
-if [ -f $TARGETDIR/lib/modules/3.8.0-laird1/kernel/net/ipv6/ipv6.ko ]
+# disable 3.8* ipv6 module to kernel space corruption - temporary
+# pv6-/-netlink conflict
+# bluetooth init conflict
+if [ -f $TARGETDIR/lib/modules/3.8*/kernel/net/ipv6/ipv6.ko ]
 then
-  mv -f $TARGETDIR/lib/modules/3.8.0-laird1/kernel/net/ipv6/ipv6.ko \
-        $TARGETDIR/lib/modules/3.8.0-laird1/kernel/net/ipv6/-ipv6.ko
+  mv -f $TARGETDIR/lib/modules/3.8*/kernel/net/ipv6/ipv6.ko \
+        $TARGETDIR/lib/modules/3.8*/kernel/net/ipv6/-ipv6.ko
 fi
 
 # remove default ssh init file
