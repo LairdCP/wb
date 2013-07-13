@@ -6,7 +6,7 @@ all:
 	mkdir -p "$(DATE)"
 	$(MAKE) -f ../../common.mk -C "$(DATE)"
 	ln -sf "$(DATE)/fw.txt" fw.txt
-	rm latest
+	rm -f latest
 	ln -s "$(DATE)" latest
 
 .PHONY: all
