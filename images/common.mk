@@ -17,7 +17,7 @@ copyall:
 	cp $(IMAGES)/fw_update .
 	cp $(IMAGES)/fw_select .
 	cp $(IMAGES)/rootfs.tar .
-	rm rootfs.tar.bz2
+	rm -f rootfs.tar.bz2
 	bzip2 rootfs.tar
 
 .PHONY: all copyall
