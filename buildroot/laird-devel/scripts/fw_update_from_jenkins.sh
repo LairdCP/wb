@@ -1,21 +1,22 @@
+#!/bin/bash
 # This is a template script written as an example of how to automate
 # the update of a wb45n board from Jenkins build. This script should
 # form the basis of the first Jenkins regression test.
 
 # Jenkins variables
-JENKINS_BUILD_NUMBER=23
-JENKINS_JOB_NAME=wb45n_devel-trunk
-JENKINS_URL=http://natasha.corp.lairdtech.com/jenkins
+: ${JENKINS_BUILD_NUMBER:=23}
+: ${JENKINS_JOB_NAME:=wb45n_devel-trunk}
+: ${JENKINS_URL:=http://natasha.corp.lairdtech.com/jenkins}
 
 # per host system variables
-PUBLISH_DIR=/var/www/jenkins
-PUBLISH_BASE_URL=http://beast/jenkins
+: ${PUBLISH_DIR:=/var/www/jenkins}
+: ${PUBLISH_BASE_URL:=http://beast/jenkins}
 
 # per wb45n board variables
-WB45N_ADDRESS=192.168.100.111
+: ${WB45N_ADDRESS:=192.168.100.111}
 
 # buildroot target name
-BUILDROOT_TARGET_NAME=wb45n_devel
+: ${BUILDROOT_TARGET_NAME:=wb45n_devel}
 
 set -e
 
