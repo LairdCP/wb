@@ -1,3 +1,18 @@
+From 2e1bfa5be8e493388b4e0667a83dfe1568ff7704 Mon Sep 17 00:00:00 2001
+From: Dimitrios Siganos <dimitris@siganos.org>
+Date: Tue, 2 Jul 2013 14:39:11 -0400
+Subject: [PATCH 4/9] Applying patch linux-3.8-0003-ath6kl-wmiconfig.patch
+
+---
+ drivers/net/wireless/ath/ath6kl/Makefile    |    1 +
+ drivers/net/wireless/ath/ath6kl/main.c      |    5 ++
+ drivers/net/wireless/ath/ath6kl/testmode.c  |   28 +++++++++
+ drivers/net/wireless/ath/ath6kl/wmiconfig.c |   88 +++++++++++++++++++++++++++
+ drivers/net/wireless/ath/ath6kl/wmiconfig.h |   25 ++++++++
+ 5 files changed, 147 insertions(+)
+ create mode 100644 drivers/net/wireless/ath/ath6kl/wmiconfig.c
+ create mode 100644 drivers/net/wireless/ath/ath6kl/wmiconfig.h
+
 diff --git a/drivers/net/wireless/ath/ath6kl/Makefile b/drivers/net/wireless/ath/ath6kl/Makefile
 index fc26b1f..e292fd4 100644
 --- a/drivers/net/wireless/ath/ath6kl/Makefile
@@ -234,3 +249,6 @@ index 0000000..bcc29ae
 +void ath6kl_wmicfg_send_stats(struct ath6kl_vif *vif,
 +			      struct target_stats *stats);
 +#endif
+-- 
+1.7.9.5
+

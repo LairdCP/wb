@@ -1,7 +1,41 @@
-diff -urN a/drivers/net/wireless/ath/ath6kl/cfg80211.c b/drivers/net/wireless/ath/ath6kl/cfg80211.c
---- a/drivers/net/wireless/ath/ath6kl/cfg80211.c	2013-04-18 21:46:36.691077669 -0500
-+++ b/drivers/net/wireless/ath/ath6kl/cfg80211.c	2013-05-04 10:41:04.761419788 -0500
-@@ -784,6 +784,10 @@
+From b6e1cd4094b2230075264f10877b9f111ae90318 Mon Sep 17 00:00:00 2001
+From: Dimitrios Siganos <dimitris@siganos.org>
+Date: Tue, 2 Jul 2013 14:37:57 -0400
+Subject: [PATCH 3/9] Applying patch linux-3.8-0002-ath6kl-fips.patch
+
+---
+ drivers/net/wireless/ath/ath6kl/Makefile       |    4 +
+ drivers/net/wireless/ath/ath6kl/cfg80211.c     |   21 +++++
+ drivers/net/wireless/ath/ath6kl/common.h       |    3 +
+ drivers/net/wireless/ath/ath6kl/core.c         |   18 +++++
+ drivers/net/wireless/ath/ath6kl/init.c         |    9 +++
+ drivers/net/wireless/ath/ath6kl/laird.h        |   83 ++++++++++++++++++++
+ drivers/net/wireless/ath/ath6kl/laird_common.h |   66 ++++++++++++++++
+ drivers/net/wireless/ath/ath6kl/main.c         |   13 +++
+ drivers/net/wireless/ath/ath6kl/txrx.c         |  100 +++++++++++++++++++++++-
+ drivers/net/wireless/ath/ath6kl/wmi.c          |   40 ++++++++++
+ drivers/net/wireless/ath/ath6kl/wmi.h          |   11 +++
+ 11 files changed, 367 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/net/wireless/ath/ath6kl/laird.h
+ create mode 100644 drivers/net/wireless/ath/ath6kl/laird_common.h
+
+diff --git a/drivers/net/wireless/ath/ath6kl/Makefile b/drivers/net/wireless/ath/ath6kl/Makefile
+index cab0ec0..fc26b1f 100644
+--- a/drivers/net/wireless/ath/ath6kl/Makefile
++++ b/drivers/net/wireless/ath/ath6kl/Makefile
+@@ -42,3 +42,7 @@ ath6kl_sdio-y += sdio.o
+ 
+ obj-$(CONFIG_ATH6KL_USB) += ath6kl_usb.o
+ ath6kl_usb-y += usb.o
++
++ccflags-y += -DLAIRD_FIPS
++#ccflags-y += -DCONFIG_ATH6KL_DEBUG
++
+diff --git a/drivers/net/wireless/ath/ath6kl/cfg80211.c b/drivers/net/wireless/ath/ath6kl/cfg80211.c
+index 5516a8c..7822f25 100644
+--- a/drivers/net/wireless/ath/ath6kl/cfg80211.c
++++ b/drivers/net/wireless/ath/ath6kl/cfg80211.c
+@@ -784,6 +784,10 @@ void ath6kl_cfg80211_connect_event(struct ath6kl_vif *vif, u16 channel,
  		cfg80211_roamed_bss(vif->ndev, bss, assoc_req_ie, assoc_req_len,
  				    assoc_resp_ie, assoc_resp_len, GFP_KERNEL);
  	}
@@ -12,7 +46,7 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/cfg80211.c b/drivers/net/wireless/at
  }
  
  static int ath6kl_cfg80211_disconnect(struct wiphy *wiphy,
-@@ -822,6 +826,10 @@
+@@ -822,6 +826,10 @@ static int ath6kl_cfg80211_disconnect(struct wiphy *wiphy,
  
  	vif->sme_state = SME_DISCONNECTED;
  
@@ -23,7 +57,7 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/cfg80211.c b/drivers/net/wireless/at
  	return 0;
  }
  
-@@ -1141,6 +1149,13 @@
+@@ -1141,6 +1149,13 @@ static int ath6kl_cfg80211_add_key(struct wiphy *wiphy, struct net_device *ndev,
  	memcpy(key->seq, params->seq, key->seq_len);
  	key->cipher = params->cipher;
  
@@ -37,7 +71,7 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/cfg80211.c b/drivers/net/wireless/at
  	switch (key->cipher) {
  	case WLAN_CIPHER_SUITE_WEP40:
  	case WLAN_CIPHER_SUITE_WEP104:
-@@ -1240,6 +1255,12 @@
+@@ -1240,6 +1255,12 @@ static int ath6kl_cfg80211_del_key(struct wiphy *wiphy, struct net_device *ndev,
  
  	vif->keys[key_index].key_len = 0;
  
@@ -50,10 +84,11 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/cfg80211.c b/drivers/net/wireless/at
  	return ath6kl_wmi_deletekey_cmd(ar->wmi, vif->fw_vif_idx, key_index);
  }
  
-diff -urN a/drivers/net/wireless/ath/ath6kl/common.h b/drivers/net/wireless/ath/ath6kl/common.h
---- a/drivers/net/wireless/ath/ath6kl/common.h	2013-04-18 21:46:36.691077669 -0500
-+++ b/drivers/net/wireless/ath/ath6kl/common.h	2013-05-04 10:41:04.769419787 -0500
-@@ -83,4 +83,7 @@
+diff --git a/drivers/net/wireless/ath/ath6kl/common.h b/drivers/net/wireless/ath/ath6kl/common.h
+index 98a8861..63e4101 100644
+--- a/drivers/net/wireless/ath/ath6kl/common.h
++++ b/drivers/net/wireless/ath/ath6kl/common.h
+@@ -83,4 +83,7 @@ enum htc_credit_dist_reason;
  struct ath6kl_htc_credit_info;
  
  struct sk_buff *ath6kl_buf_alloc(int size);
@@ -61,9 +96,10 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/common.h b/drivers/net/wireless/ath/
 +#include "laird.h"
 +
  #endif /* COMMON_H */
-diff -urN a/drivers/net/wireless/ath/ath6kl/core.c b/drivers/net/wireless/ath/ath6kl/core.c
---- a/drivers/net/wireless/ath/ath6kl/core.c	2013-04-18 21:46:36.711078650 -0500
-+++ b/drivers/net/wireless/ath/ath6kl/core.c	2013-05-13 08:35:48.355413313 -0500
+diff --git a/drivers/net/wireless/ath/ath6kl/core.c b/drivers/net/wireless/ath/ath6kl/core.c
+index 4b46adb..ac224cf 100644
+--- a/drivers/net/wireless/ath/ath6kl/core.c
++++ b/drivers/net/wireless/ath/ath6kl/core.c
 @@ -27,6 +27,8 @@
  #include "htc-ops.h"
  #include "cfg80211.h"
@@ -73,7 +109,7 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/core.c b/drivers/net/wireless/ath/at
  unsigned int debug_mask;
  static unsigned int suspend_mode;
  static unsigned int wow_mode;
-@@ -344,3 +346,19 @@
+@@ -344,3 +346,19 @@ EXPORT_SYMBOL(ath6kl_core_destroy);
  MODULE_AUTHOR("Qualcomm Atheros");
  MODULE_DESCRIPTION("Core module for AR600x SDIO and USB devices.");
  MODULE_LICENSE("Dual BSD/GPL");
@@ -93,9 +129,10 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/core.c b/drivers/net/wireless/ath/at
 +EXPORT_SYMBOL(ath6kl_laird_register);
 +
 +#endif
-diff -urN a/drivers/net/wireless/ath/ath6kl/init.c b/drivers/net/wireless/ath/ath6kl/init.c
---- a/drivers/net/wireless/ath/ath6kl/init.c	2013-04-18 21:46:36.691077669 -0500
-+++ b/drivers/net/wireless/ath/ath6kl/init.c	2013-05-13 08:35:48.351413313 -0500
+diff --git a/drivers/net/wireless/ath/ath6kl/init.c b/drivers/net/wireless/ath/ath6kl/init.c
+index aac973a..043a53c 100644
+--- a/drivers/net/wireless/ath/ath6kl/init.c
++++ b/drivers/net/wireless/ath/ath6kl/init.c
 @@ -32,6 +32,8 @@
  #include "hif-ops.h"
  #include "htc-ops.h"
@@ -105,7 +142,7 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/init.c b/drivers/net/wireless/ath/at
  static const struct ath6kl_hw hw_list[] = {
  	{
  		.id				= AR6003_HW_2_0_VERSION,
-@@ -1759,6 +1761,13 @@
+@@ -1759,6 +1761,13 @@ void ath6kl_stop_txrx(struct ath6kl *ar)
  		return;
  	}
  
@@ -119,79 +156,11 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/init.c b/drivers/net/wireless/ath/at
  	for (i = 0; i < AP_MAX_NUM_STA; i++)
  		aggr_reset_state(ar->sta_list[i].aggr_conn);
  
-diff -urN a/drivers/net/wireless/ath/ath6kl/laird_common.h b/drivers/net/wireless/ath/ath6kl/laird_common.h
---- a/drivers/net/wireless/ath/ath6kl/laird_common.h	1969-12-31 18:00:00.000000000 -0600
-+++ b/drivers/net/wireless/ath/ath6kl/laird_common.h	2013-05-06 16:12:15.954922463 -0500
-@@ -0,0 +1,66 @@
-+/*
-+ * Copyright (c) 2012 Laird Technologies, Inc.
-+ */
-+#ifndef LAIRD_COMMON_H
-+#define LAIRD_COMMON_H
-+
-+#ifdef LAIRD_FIPS
-+
-+// res<0 to fail packet, else continue receive
-+typedef void (*pfn_laird_skb_rx_continue)(struct sk_buff *skb, int res);
-+
-+// transmit: continue transmit after encryption/encapsulation
-+// routine in driver
-+// isfips=-1 to fail the skb
-+// isfips=1 to indicate that skb has been encrypted/encapsulated in 802.11
-+typedef int (*pfn_laird_skb_tx_continue)(
-+    struct sk_buff *skb, struct net_device *dev, int isfips);
-+
-+// receive: laird_skb_rx will return non-zero to let driver process packet
-+// return<0 if a failure occurs
-+// 0 on success and pfncb will be called later (possibly not with same skb)
-+typedef int (*pfn_laird_skb_rx_prep)(
-+	struct sk_buff *skb, pfn_laird_skb_rx_continue pfncb);
-+
-+// transmit: prepare sk_buff -- encryption/encapsulation
-+// return<0 if a failure occurs
-+// 0 on success and pfncb will be called later (possibly not with same skb)
-+typedef int (*pfn_laird_skb_tx_prep)(
-+	struct sk_buff *skb, struct net_device *dev, int wmm,
-+	pfn_laird_skb_tx_continue pfncb);
-+
-+// transmit: flow control
-+typedef void (*pfn_laird_stop_queue)(struct net_device *dev);
-+typedef void (*pfn_laird_wake_queue)(struct net_device *dev);
-+
-+// key operations
-+typedef void (*pfn_laird_addkey)(struct net_device *ndev, u8 key_index,
-+                         bool pairwise,
-+                         const u8 *mac_addr,
-+                         const u8 *key, int keylen,
-+                         const u8 *seq, int seqlen);
-+typedef void (*pfn_laird_delkey)(struct net_device *ndev, u8 key_index);
-+
-+// bssid
-+typedef void (*pfn_laird_setbssid)(const u8 *bssid);
-+
-+// stopping the driver (rmmod) support
-+typedef int (*pfn_laird_stop_txrx)(void);
-+
-+typedef struct {
-+	pfn_laird_skb_rx_prep pfn_rx_prep;
-+	pfn_laird_skb_tx_prep pfn_tx_prep;
-+	pfn_laird_stop_queue pfn_stop_queue;
-+	pfn_laird_wake_queue pfn_wake_queue;
-+	pfn_laird_addkey pfn_addkey;
-+	pfn_laird_delkey pfn_delkey;
-+	pfn_laird_setbssid pfn_setbssid;
-+	pfn_laird_stop_txrx pfn_stop_txrx;
-+} laird_register_data_t;
-+
-+// external driver function that the laird module will call
-+extern int ath6kl_laird_register(const laird_register_data_t *ptr);
-+
-+#endif // LAIRD_FIPS
-+#endif /* LAIRD_COMMON_H */
-+
-diff -urN a/drivers/net/wireless/ath/ath6kl/laird.h b/drivers/net/wireless/ath/ath6kl/laird.h
---- a/drivers/net/wireless/ath/ath6kl/laird.h	1969-12-31 18:00:00.000000000 -0600
-+++ b/drivers/net/wireless/ath/ath6kl/laird.h	2013-05-06 16:12:15.950922462 -0500
+diff --git a/drivers/net/wireless/ath/ath6kl/laird.h b/drivers/net/wireless/ath/ath6kl/laird.h
+new file mode 100644
+index 0000000..eb99b10
+--- /dev/null
++++ b/drivers/net/wireless/ath/ath6kl/laird.h
 @@ -0,0 +1,83 @@
 +/*
 + * Copyright (c) 2012 Laird Technologies, Inc.
@@ -276,9 +245,82 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/laird.h b/drivers/net/wireless/ath/a
 +
 +#endif // LAIRD_FIPS
 +#endif /* LAIRD_DRIVER_H */
-diff -urN a/drivers/net/wireless/ath/ath6kl/main.c b/drivers/net/wireless/ath/ath6kl/main.c
---- a/drivers/net/wireless/ath/ath6kl/main.c	2013-04-18 21:46:36.711078650 -0500
-+++ b/drivers/net/wireless/ath/ath6kl/main.c	2013-05-04 10:41:04.765419788 -0500
+diff --git a/drivers/net/wireless/ath/ath6kl/laird_common.h b/drivers/net/wireless/ath/ath6kl/laird_common.h
+new file mode 100644
+index 0000000..a848610
+--- /dev/null
++++ b/drivers/net/wireless/ath/ath6kl/laird_common.h
+@@ -0,0 +1,66 @@
++/*
++ * Copyright (c) 2012 Laird Technologies, Inc.
++ */
++#ifndef LAIRD_COMMON_H
++#define LAIRD_COMMON_H
++
++#ifdef LAIRD_FIPS
++
++// res<0 to fail packet, else continue receive
++typedef void (*pfn_laird_skb_rx_continue)(struct sk_buff *skb, int res);
++
++// transmit: continue transmit after encryption/encapsulation
++// routine in driver
++// isfips=-1 to fail the skb
++// isfips=1 to indicate that skb has been encrypted/encapsulated in 802.11
++typedef int (*pfn_laird_skb_tx_continue)(
++    struct sk_buff *skb, struct net_device *dev, int isfips);
++
++// receive: laird_skb_rx will return non-zero to let driver process packet
++// return<0 if a failure occurs
++// 0 on success and pfncb will be called later (possibly not with same skb)
++typedef int (*pfn_laird_skb_rx_prep)(
++	struct sk_buff *skb, pfn_laird_skb_rx_continue pfncb);
++
++// transmit: prepare sk_buff -- encryption/encapsulation
++// return<0 if a failure occurs
++// 0 on success and pfncb will be called later (possibly not with same skb)
++typedef int (*pfn_laird_skb_tx_prep)(
++	struct sk_buff *skb, struct net_device *dev, int wmm,
++	pfn_laird_skb_tx_continue pfncb);
++
++// transmit: flow control
++typedef void (*pfn_laird_stop_queue)(struct net_device *dev);
++typedef void (*pfn_laird_wake_queue)(struct net_device *dev);
++
++// key operations
++typedef void (*pfn_laird_addkey)(struct net_device *ndev, u8 key_index,
++                         bool pairwise,
++                         const u8 *mac_addr,
++                         const u8 *key, int keylen,
++                         const u8 *seq, int seqlen);
++typedef void (*pfn_laird_delkey)(struct net_device *ndev, u8 key_index);
++
++// bssid
++typedef void (*pfn_laird_setbssid)(const u8 *bssid);
++
++// stopping the driver (rmmod) support
++typedef int (*pfn_laird_stop_txrx)(void);
++
++typedef struct {
++	pfn_laird_skb_rx_prep pfn_rx_prep;
++	pfn_laird_skb_tx_prep pfn_tx_prep;
++	pfn_laird_stop_queue pfn_stop_queue;
++	pfn_laird_wake_queue pfn_wake_queue;
++	pfn_laird_addkey pfn_addkey;
++	pfn_laird_delkey pfn_delkey;
++	pfn_laird_setbssid pfn_setbssid;
++	pfn_laird_stop_txrx pfn_stop_txrx;
++} laird_register_data_t;
++
++// external driver function that the laird module will call
++extern int ath6kl_laird_register(const laird_register_data_t *ptr);
++
++#endif // LAIRD_FIPS
++#endif /* LAIRD_COMMON_H */
++
+diff --git a/drivers/net/wireless/ath/ath6kl/main.c b/drivers/net/wireless/ath/ath6kl/main.c
+index bd50b6b..728c24c 100644
+--- a/drivers/net/wireless/ath/ath6kl/main.c
++++ b/drivers/net/wireless/ath/ath6kl/main.c
 @@ -22,6 +22,7 @@
  #include "cfg80211.h"
  #include "target.h"
@@ -287,7 +329,7 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/main.c b/drivers/net/wireless/ath/at
  
  struct ath6kl_sta *ath6kl_find_sta(struct ath6kl_vif *vif, u8 *node_addr)
  {
-@@ -1326,11 +1327,23 @@
+@@ -1326,11 +1327,23 @@ void init_netdev(struct net_device *dev)
  	dev->destructor = free_netdev;
  	dev->watchdog_timeo = ATH6KL_TX_TIMEOUT;
  
@@ -311,20 +353,10 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/main.c b/drivers/net/wireless/ath/at
  	dev->hw_features |= NETIF_F_IP_CSUM | NETIF_F_RXCSUM;
  
  	return;
-diff -urN a/drivers/net/wireless/ath/ath6kl/Makefile b/drivers/net/wireless/ath/ath6kl/Makefile
---- a/drivers/net/wireless/ath/ath6kl/Makefile	2013-04-18 21:46:36.711078650 -0500
-+++ b/drivers/net/wireless/ath/ath6kl/Makefile	2013-05-13 08:35:48.355413313 -0500
-@@ -42,3 +42,7 @@
- 
- obj-$(CONFIG_ATH6KL_USB) += ath6kl_usb.o
- ath6kl_usb-y += usb.o
-+
-+ccflags-y += -DLAIRD_FIPS
-+#ccflags-y += -DCONFIG_ATH6KL_DEBUG
-+
-diff -urN a/drivers/net/wireless/ath/ath6kl/txrx.c b/drivers/net/wireless/ath/ath6kl/txrx.c
---- a/drivers/net/wireless/ath/ath6kl/txrx.c	2013-04-18 21:46:36.691077669 -0500
-+++ b/drivers/net/wireless/ath/ath6kl/txrx.c	2013-05-13 08:35:48.355413313 -0500
+diff --git a/drivers/net/wireless/ath/ath6kl/txrx.c b/drivers/net/wireless/ath/ath6kl/txrx.c
+index 78b3692..dede2f2 100644
+--- a/drivers/net/wireless/ath/ath6kl/txrx.c
++++ b/drivers/net/wireless/ath/ath6kl/txrx.c
 @@ -21,6 +21,8 @@
  #include "debug.h"
  #include "htc-ops.h"
@@ -334,7 +366,7 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/txrx.c b/drivers/net/wireless/ath/at
  /*
   * tid - tid_mux0..tid_mux3
   * aid - tid_mux4..tid_mux7
-@@ -348,7 +350,13 @@
+@@ -348,7 +350,13 @@ fail_ctrl_tx:
  	return status;
  }
  
@@ -348,7 +380,7 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/txrx.c b/drivers/net/wireless/ath/at
  {
  	struct ath6kl *ar = ath6kl_priv(dev);
  	struct ath6kl_cookie *cookie = NULL;
-@@ -365,6 +373,11 @@
+@@ -365,6 +373,11 @@ int ath6kl_data_tx(struct sk_buff *skb, struct net_device *dev)
  	u8 meta_ver = 0;
  	u32 flags = 0;
  
@@ -360,7 +392,7 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/txrx.c b/drivers/net/wireless/ath/at
  	ath6kl_dbg(ATH6KL_DBG_WLAN_TX,
  		   "%s: skb=0x%p, data=0x%p, len=0x%x\n", __func__,
  		   skb, skb->data, skb->len);
-@@ -386,6 +399,12 @@
+@@ -386,6 +399,12 @@ int ath6kl_data_tx(struct sk_buff *skb, struct net_device *dev)
  	}
  
  	if (test_bit(WMI_ENABLED, &ar->flag)) {
@@ -373,7 +405,7 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/txrx.c b/drivers/net/wireless/ath/at
  		if ((dev->features & NETIF_F_IP_CSUM) &&
  		    (csum == CHECKSUM_PARTIAL)) {
  			csum_start = skb->csum_start -
-@@ -410,6 +429,10 @@
+@@ -410,6 +429,10 @@ int ath6kl_data_tx(struct sk_buff *skb, struct net_device *dev)
  			goto fail_tx;
  		}
  
@@ -384,7 +416,7 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/txrx.c b/drivers/net/wireless/ath/at
  		if ((dev->features & NETIF_F_IP_CSUM) &&
  		    (csum == CHECKSUM_PARTIAL)) {
  			meta_v2.csum_start = csum_start;
-@@ -424,8 +447,14 @@
+@@ -424,8 +447,14 @@ int ath6kl_data_tx(struct sk_buff *skb, struct net_device *dev)
  			meta = NULL;
  		}
  
@@ -400,7 +432,7 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/txrx.c b/drivers/net/wireless/ath/at
  				meta_ver,
  				meta, vif->fw_vif_idx);
  
-@@ -520,6 +549,28 @@
+@@ -520,6 +549,28 @@ fail_tx:
  	return 0;
  }
  
@@ -429,7 +461,7 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/txrx.c b/drivers/net/wireless/ath/at
  /* indicate tx activity or inactivity on a WMI stream */
  void ath6kl_indicate_tx_activity(void *devt, u8 traffic_class, bool active)
  {
-@@ -628,6 +679,12 @@
+@@ -628,6 +679,12 @@ enum htc_send_full_action ath6kl_tx_queue_full(struct htc_target *target,
  			spin_unlock_bh(&ar->list_lock);
  
  			set_bit(NETQ_STOPPED, &vif->flags);
@@ -442,7 +474,7 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/txrx.c b/drivers/net/wireless/ath/at
  			netif_stop_queue(vif->ndev);
  
  			return action;
-@@ -800,6 +857,12 @@
+@@ -800,6 +857,12 @@ void ath6kl_tx_complete(struct htc_target *target,
  		if (test_bit(CONNECTED, &vif->flags) &&
  		    !flushing[vif->fw_vif_idx]) {
  			spin_unlock_bh(&ar->list_lock);
@@ -455,7 +487,7 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/txrx.c b/drivers/net/wireless/ath/at
  			netif_wake_queue(vif->ndev);
  			spin_lock_bh(&ar->list_lock);
  		}
-@@ -1298,6 +1361,9 @@
+@@ -1298,6 +1361,9 @@ static void ath6kl_uapsd_trigger_frame_rx(struct ath6kl_vif *vif,
  	return;
  }
  
@@ -465,7 +497,7 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/txrx.c b/drivers/net/wireless/ath/at
  void ath6kl_rx(struct htc_target *target, struct htc_packet *packet)
  {
  	struct ath6kl *ar = target->dev->ar;
-@@ -1542,6 +1608,24 @@
+@@ -1542,6 +1608,24 @@ void ath6kl_rx(struct htc_target *target, struct htc_packet *packet)
  
  	skb_pull(skb, pad_before_data_start);
  
@@ -490,7 +522,7 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/txrx.c b/drivers/net/wireless/ath/at
  	if (dot11_hdr)
  		status = ath6kl_wmi_dot11_hdr_remove(ar->wmi, skb);
  	else if (!is_amsdu)
-@@ -1617,6 +1701,20 @@
+@@ -1617,6 +1701,20 @@ void ath6kl_rx(struct htc_target *target, struct htc_packet *packet)
  	ath6kl_deliver_frames_to_nw_stack(vif->ndev, skb);
  }
  
@@ -511,10 +543,11 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/txrx.c b/drivers/net/wireless/ath/at
  static void aggr_timeout(unsigned long arg)
  {
  	u8 i, j;
-diff -urN a/drivers/net/wireless/ath/ath6kl/wmi.c b/drivers/net/wireless/ath/ath6kl/wmi.c
---- a/drivers/net/wireless/ath/ath6kl/wmi.c	2013-04-18 21:46:36.687077528 -0500
-+++ b/drivers/net/wireless/ath/ath6kl/wmi.c	2013-05-13 08:35:48.355413313 -0500
-@@ -271,6 +271,22 @@
+diff --git a/drivers/net/wireless/ath/ath6kl/wmi.c b/drivers/net/wireless/ath/ath6kl/wmi.c
+index 1ef09ab..d685cb8 100644
+--- a/drivers/net/wireless/ath/ath6kl/wmi.c
++++ b/drivers/net/wireless/ath/ath6kl/wmi.c
+@@ -274,6 +274,22 @@ int ath6kl_wmi_implicit_create_pstream(struct wmi *wmi, u8 if_idx,
  	if (!wmm_enabled) {
  		/* If WMM is disabled all traffic goes as BE traffic */
  		usr_pri = 0;
@@ -537,7 +570,7 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/wmi.c b/drivers/net/wireless/ath/ath
  	} else {
  		hdr_size = sizeof(struct ethhdr);
  
-@@ -3479,11 +3495,35 @@
+@@ -3484,11 +3500,35 @@ int ath6kl_wmi_set_rx_frame_format_cmd(struct wmi *wmi, u8 if_idx,
  	struct wmi_rx_frame_format_cmd *cmd;
  	int ret;
  
@@ -573,10 +606,11 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/wmi.c b/drivers/net/wireless/ath/ath
  	cmd->dot11_hdr = rx_dot11_hdr ? 1 : 0;
  	cmd->defrag_on_host = defrag_on_host ? 1 : 0;
  	cmd->meta_ver = rx_meta_ver;
-diff -urN a/drivers/net/wireless/ath/ath6kl/wmi.h b/drivers/net/wireless/ath/ath6kl/wmi.h
---- a/drivers/net/wireless/ath/ath6kl/wmi.h	2013-04-18 21:46:36.687077528 -0500
-+++ b/drivers/net/wireless/ath/ath6kl/wmi.h	2013-05-04 10:41:04.757419788 -0500
-@@ -2189,6 +2189,17 @@
+diff --git a/drivers/net/wireless/ath/ath6kl/wmi.h b/drivers/net/wireless/ath/ath6kl/wmi.h
+index 98b1755..4da12f7 100644
+--- a/drivers/net/wireless/ath/ath6kl/wmi.h
++++ b/drivers/net/wireless/ath/ath6kl/wmi.h
+@@ -2189,6 +2189,17 @@ struct wmi_delba_event {
  	__le16 reason_code;
  } __packed;
  
@@ -594,3 +628,6 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/wmi.h b/drivers/net/wireless/ath/ath
  #define PEER_NODE_JOIN_EVENT		0x00
  #define PEER_NODE_LEAVE_EVENT		0x01
  #define PEER_FIRST_NODE_JOIN_EVENT	0x10
+-- 
+1.7.9.5
+

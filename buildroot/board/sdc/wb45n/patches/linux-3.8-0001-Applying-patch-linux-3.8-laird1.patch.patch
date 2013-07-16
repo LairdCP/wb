@@ -1,7 +1,40 @@
-diff -urN a/Documentation/devicetree/bindings/usb/atmel-usb.txt b/Documentation/devicetree/bindings/usb/atmel-usb.txt
---- a/Documentation/devicetree/bindings/usb/atmel-usb.txt	2013-02-18 18:58:34.000000000 -0500
-+++ b/Documentation/devicetree/bindings/usb/atmel-usb.txt	2013-02-24 13:33:53.641919820 -0500
-@@ -47,3 +47,88 @@
+From bae76797f44c8a7af07b00c39b151abea9450b9c Mon Sep 17 00:00:00 2001
+From: Dimitrios Siganos <dimitris@siganos.org>
+Date: Tue, 2 Jul 2013 14:35:38 -0400
+Subject: [PATCH 1/9] Applying patch linux-3.8-laird1.patch
+
+---
+ .../devicetree/bindings/usb/atmel-usb.txt          |   85 +++
+ Makefile                                           |    2 +-
+ arch/arm/boot/dts/at91sam9x5.dtsi                  |   64 ++
+ arch/arm/boot/dts/at91sam9x5cm.dtsi                |   65 +-
+ arch/arm/boot/dts/at91sam9x5ek.dtsi                |   27 +-
+ arch/arm/configs/wb45n_defconfig                   |  273 ++++++++
+ arch/arm/mach-at91/at91sam9x5.c                    |    2 +
+ arch/arm/mach-at91/board-dt.c                      |    2 +-
+ drivers/mmc/host/atmel-mci.c                       |    7 +
+ drivers/mtd/nand/atmel_nand.c                      |    6 +-
+ drivers/net/wireless/ath/ath6kl/init.c             |    2 +-
+ drivers/usb/gadget/Kconfig                         |    2 +-
+ drivers/usb/gadget/atmel_usba_udc.c                |  211 +++++--
+ drivers/usb/gadget/atmel_usba_udc.h                |    1 +
+ include/uapi/linux/netfilter_bridge/ebt_nat.h      |    1 +
+ net/bridge/br_fdb.c                                |    1 +
+ net/bridge/netfilter/Kconfig                       |   10 +
+ net/bridge/netfilter/Makefile                      |    1 +
+ net/bridge/netfilter/ebt_arpnat.c                  |  650 ++++++++++++++++++++
+ net/wireless/core.c                                |    3 +-
+ net/wireless/nl80211.c                             |    2 -
+ net/wireless/util.c                                |    6 +-
+ 22 files changed, 1335 insertions(+), 88 deletions(-)
+ create mode 100644 arch/arm/configs/wb45n_defconfig
+ create mode 100644 net/bridge/netfilter/ebt_arpnat.c
+
+diff --git a/Documentation/devicetree/bindings/usb/atmel-usb.txt b/Documentation/devicetree/bindings/usb/atmel-usb.txt
+index 60bd215..24bfbff 100644
+--- a/Documentation/devicetree/bindings/usb/atmel-usb.txt
++++ b/Documentation/devicetree/bindings/usb/atmel-usb.txt
+@@ -47,3 +47,88 @@ usb1: gadget@fffa4000 {
  	interrupts = <10 4>;
  	atmel,vbus-gpio = <&pioC 5 0>;
  };
@@ -90,9 +123,10 @@ diff -urN a/Documentation/devicetree/bindings/usb/atmel-usb.txt b/Documentation/
 +	... ...
 +
 +};
-diff -urN a/Makefile b/Makefile
---- a/Makefile	2013-02-18 18:58:34.000000000 -0500
-+++ b/Makefile	2013-02-24 13:33:53.641919820 -0500
+diff --git a/Makefile b/Makefile
+index d69266c..c204b89 100644
+--- a/Makefile
++++ b/Makefile
 @@ -1,7 +1,7 @@
  VERSION = 3
  PATCHLEVEL = 8
@@ -102,9 +136,10 @@ diff -urN a/Makefile b/Makefile
  NAME = Unicycling Gorilla
  
  # *DOCUMENTATION*
-diff -urN a/arch/arm/boot/dts/at91sam9x5.dtsi b/arch/arm/boot/dts/at91sam9x5.dtsi
---- a/arch/arm/boot/dts/at91sam9x5.dtsi	2013-02-18 18:58:34.000000000 -0500
-+++ b/arch/arm/boot/dts/at91sam9x5.dtsi	2013-02-24 13:33:53.650919819 -0500
+diff --git a/arch/arm/boot/dts/at91sam9x5.dtsi b/arch/arm/boot/dts/at91sam9x5.dtsi
+index 8ecca69..af0419d 100644
+--- a/arch/arm/boot/dts/at91sam9x5.dtsi
++++ b/arch/arm/boot/dts/at91sam9x5.dtsi
 @@ -518,6 +518,9 @@
  			#address-cells = <1>;
  			#size-cells = <1>;
@@ -183,9 +218,10 @@ diff -urN a/arch/arm/boot/dts/at91sam9x5.dtsi b/arch/arm/boot/dts/at91sam9x5.dts
  	};
  
  	i2c@0 {
-diff -urN a/arch/arm/boot/dts/at91sam9x5cm.dtsi b/arch/arm/boot/dts/at91sam9x5cm.dtsi
---- a/arch/arm/boot/dts/at91sam9x5cm.dtsi	2013-02-18 18:58:34.000000000 -0500
-+++ b/arch/arm/boot/dts/at91sam9x5cm.dtsi	2013-02-24 13:33:53.650919819 -0500
+diff --git a/arch/arm/boot/dts/at91sam9x5cm.dtsi b/arch/arm/boot/dts/at91sam9x5cm.dtsi
+index 31e7be2..623d19c 100644
+--- a/arch/arm/boot/dts/at91sam9x5cm.dtsi
++++ b/arch/arm/boot/dts/at91sam9x5cm.dtsi
 @@ -26,33 +26,62 @@
  	ahb {
  		nand0: nand@40000000 {
@@ -283,9 +319,10 @@ diff -urN a/arch/arm/boot/dts/at91sam9x5cm.dtsi b/arch/arm/boot/dts/at91sam9x5cm
  		};
  	};
  };
-diff -urN a/arch/arm/boot/dts/at91sam9x5ek.dtsi b/arch/arm/boot/dts/at91sam9x5ek.dtsi
---- a/arch/arm/boot/dts/at91sam9x5ek.dtsi	2013-02-18 18:58:34.000000000 -0500
-+++ b/arch/arm/boot/dts/at91sam9x5ek.dtsi	2013-02-24 13:33:53.650919819 -0500
+diff --git a/arch/arm/boot/dts/at91sam9x5ek.dtsi b/arch/arm/boot/dts/at91sam9x5ek.dtsi
+index 8a7cf1d..b09e0c8 100644
+--- a/arch/arm/boot/dts/at91sam9x5ek.dtsi
++++ b/arch/arm/boot/dts/at91sam9x5ek.dtsi
 @@ -27,7 +27,7 @@
  				slot@0 {
  					reg = <0>;
@@ -345,9 +382,11 @@ diff -urN a/arch/arm/boot/dts/at91sam9x5ek.dtsi b/arch/arm/boot/dts/at91sam9x5ek
 +		atheros,board-id = "SD32";
 + 	};
  };
-diff -urN a/arch/arm/configs/wb45n_defconfig b/arch/arm/configs/wb45n_defconfig
---- a/arch/arm/configs/wb45n_defconfig	1969-12-31 19:00:00.000000000 -0500
-+++ b/arch/arm/configs/wb45n_defconfig	2013-06-12 14:49:41.644888988 -0500
+diff --git a/arch/arm/configs/wb45n_defconfig b/arch/arm/configs/wb45n_defconfig
+new file mode 100644
+index 0000000..da121e0
+--- /dev/null
++++ b/arch/arm/configs/wb45n_defconfig
 @@ -0,0 +1,273 @@
 +CONFIG_EXPERIMENTAL=y
 +CONFIG_CROSS_COMPILE="arm-sdc-linux-gnueabi-"
@@ -622,10 +661,11 @@ diff -urN a/arch/arm/configs/wb45n_defconfig b/arch/arm/configs/wb45n_defconfig
 +CONFIG_CRYPTO_DEV_ATMEL_AES=y
 +CONFIG_CRYPTO_DEV_ATMEL_TDES=y
 +CONFIG_CRYPTO_DEV_ATMEL_SHA=y
-diff -urN a/arch/arm/mach-at91/at91sam9x5.c b/arch/arm/mach-at91/at91sam9x5.c
---- a/arch/arm/mach-at91/at91sam9x5.c	2013-02-18 18:58:34.000000000 -0500
-+++ b/arch/arm/mach-at91/at91sam9x5.c	2013-02-24 13:33:53.651919819 -0500
-@@ -244,6 +244,8 @@
+diff --git a/arch/arm/mach-at91/at91sam9x5.c b/arch/arm/mach-at91/at91sam9x5.c
+index 44a9a62..48815d4 100644
+--- a/arch/arm/mach-at91/at91sam9x5.c
++++ b/arch/arm/mach-at91/at91sam9x5.c
+@@ -244,6 +244,8 @@ static struct clk_lookup periph_clocks_lookups[] = {
  	/* additional fake clock for macb_hclk */
  	CLKDEV_CON_DEV_ID("hclk", "f802c000.ethernet", &macb0_clk),
  	CLKDEV_CON_DEV_ID("hclk", "f8030000.ethernet", &macb1_clk),
@@ -634,10 +674,11 @@ diff -urN a/arch/arm/mach-at91/at91sam9x5.c b/arch/arm/mach-at91/at91sam9x5.c
  	CLKDEV_CON_DEV_ID("hclk", "600000.ohci", &uhphs_clk),
  	CLKDEV_CON_DEV_ID("ohci_clk", "600000.ohci", &uhphs_clk),
  	CLKDEV_CON_DEV_ID("ehci_clk", "700000.ehci", &uhphs_clk),
-diff -urN a/arch/arm/mach-at91/board-dt.c b/arch/arm/mach-at91/board-dt.c
---- a/arch/arm/mach-at91/board-dt.c	2013-02-18 18:58:34.000000000 -0500
-+++ b/arch/arm/mach-at91/board-dt.c	2013-02-24 13:33:53.651919819 -0500
-@@ -47,7 +47,7 @@
+diff --git a/arch/arm/mach-at91/board-dt.c b/arch/arm/mach-at91/board-dt.c
+index 881170c..9be2e25 100644
+--- a/arch/arm/mach-at91/board-dt.c
++++ b/arch/arm/mach-at91/board-dt.c
+@@ -47,7 +47,7 @@ static const char *at91_dt_board_compat[] __initdata = {
  	NULL
  };
  
@@ -646,10 +687,11 @@ diff -urN a/arch/arm/mach-at91/board-dt.c b/arch/arm/mach-at91/board-dt.c
  	/* Maintainer: Atmel */
  	.timer		= &at91sam926x_timer,
  	.map_io		= at91_map_io,
-diff -urN a/drivers/mmc/host/atmel-mci.c b/drivers/mmc/host/atmel-mci.c
---- a/drivers/mmc/host/atmel-mci.c	2013-02-18 18:58:34.000000000 -0500
-+++ b/drivers/mmc/host/atmel-mci.c	2013-02-24 13:33:54.386919799 -0500
-@@ -2350,6 +2350,13 @@
+diff --git a/drivers/mmc/host/atmel-mci.c b/drivers/mmc/host/atmel-mci.c
+index 722af1d..38e2d5d 100644
+--- a/drivers/mmc/host/atmel-mci.c
++++ b/drivers/mmc/host/atmel-mci.c
+@@ -2350,6 +2350,13 @@ static int __init atmci_probe(struct platform_device *pdev)
  		}
  	}
  
@@ -663,10 +705,11 @@ diff -urN a/drivers/mmc/host/atmel-mci.c b/drivers/mmc/host/atmel-mci.c
  	irq = platform_get_irq(pdev, 0);
  	if (irq < 0)
  		return irq;
-diff -urN a/drivers/mtd/nand/atmel_nand.c b/drivers/mtd/nand/atmel_nand.c
---- a/drivers/mtd/nand/atmel_nand.c	2013-02-18 18:58:34.000000000 -0500
-+++ b/drivers/mtd/nand/atmel_nand.c	2013-02-24 13:33:54.386919799 -0500
-@@ -65,10 +65,10 @@
+diff --git a/drivers/mtd/nand/atmel_nand.c b/drivers/mtd/nand/atmel_nand.c
+index c516a94..0310ad5 100644
+--- a/drivers/mtd/nand/atmel_nand.c
++++ b/drivers/mtd/nand/atmel_nand.c
+@@ -65,10 +65,10 @@ module_param(on_flash_bbt, int, 0);
   * several NAND_CMD_RNDOUT during read
   */
  static struct nand_ecclayout atmel_oobinfo_large = {
@@ -680,10 +723,11 @@ diff -urN a/drivers/mtd/nand/atmel_nand.c b/drivers/mtd/nand/atmel_nand.c
  	},
  };
  
-diff -urN a/drivers/net/wireless/ath/ath6kl/init.c b/drivers/net/wireless/ath/ath6kl/init.c
---- a/drivers/net/wireless/ath/ath6kl/init.c	2013-02-18 18:58:34.000000000 -0500
-+++ b/drivers/net/wireless/ath/ath6kl/init.c	2013-02-24 13:33:54.387919799 -0500
-@@ -1432,7 +1432,7 @@
+diff --git a/drivers/net/wireless/ath/ath6kl/init.c b/drivers/net/wireless/ath/ath6kl/init.c
+index f21fa32..aac973a 100644
+--- a/drivers/net/wireless/ath/ath6kl/init.c
++++ b/drivers/net/wireless/ath/ath6kl/init.c
+@@ -1432,7 +1432,7 @@ static int ath6kl_init_upload(struct ath6kl *ar)
  
  	/* WAR to avoid SDIO CRC err */
  	if (ar->hw.flags & ATH6KL_HW_SDIO_CRC_ERROR_WAR) {
@@ -692,10 +736,11 @@ diff -urN a/drivers/net/wireless/ath/ath6kl/init.c b/drivers/net/wireless/ath/at
  
  		param = 0x28;
  		address = GPIO_BASE_ADDRESS + GPIO_PIN9_ADDRESS;
-diff -urN a/drivers/usb/gadget/Kconfig b/drivers/usb/gadget/Kconfig
---- a/drivers/usb/gadget/Kconfig	2013-02-18 18:58:34.000000000 -0500
-+++ b/drivers/usb/gadget/Kconfig	2013-02-24 13:33:54.387919799 -0500
-@@ -154,7 +154,7 @@
+diff --git a/drivers/usb/gadget/Kconfig b/drivers/usb/gadget/Kconfig
+index 14625fd..6008cd0 100644
+--- a/drivers/usb/gadget/Kconfig
++++ b/drivers/usb/gadget/Kconfig
+@@ -154,7 +154,7 @@ config USB_LPC32XX
  
  config USB_ATMEL_USBA
  	tristate "Atmel USBA"
@@ -704,9 +749,10 @@ diff -urN a/drivers/usb/gadget/Kconfig b/drivers/usb/gadget/Kconfig
  	help
  	  USBA is the integrated high-speed USB Device controller on
  	  the AT32AP700x, some AT91SAM9 and AT91CAP9 processors from Atmel.
-diff -urN a/drivers/usb/gadget/atmel_usba_udc.c b/drivers/usb/gadget/atmel_usba_udc.c
---- a/drivers/usb/gadget/atmel_usba_udc.c	2013-02-18 18:58:34.000000000 -0500
-+++ b/drivers/usb/gadget/atmel_usba_udc.c	2013-02-24 13:33:54.388919799 -0500
+diff --git a/drivers/usb/gadget/atmel_usba_udc.c b/drivers/usb/gadget/atmel_usba_udc.c
+index a7aed84..bd01a20 100644
+--- a/drivers/usb/gadget/atmel_usba_udc.c
++++ b/drivers/usb/gadget/atmel_usba_udc.c
 @@ -22,6 +22,8 @@
  #include <linux/usb/atmel_usba_udc.h>
  #include <linux/delay.h>
@@ -716,7 +762,7 @@ diff -urN a/drivers/usb/gadget/atmel_usba_udc.c b/drivers/usb/gadget/atmel_usba_
  
  #include <asm/gpio.h>
  
-@@ -1852,9 +1854,145 @@
+@@ -1852,9 +1854,145 @@ static int atmel_usba_stop(struct usb_gadget *gadget,
  	return 0;
  }
  
@@ -863,7 +909,7 @@ diff -urN a/drivers/usb/gadget/atmel_usba_udc.c b/drivers/usb/gadget/atmel_usba_
  	struct resource *regs, *fifo;
  	struct clk *pclk, *hclk;
  	struct usba_udc *udc = &the_udc;
-@@ -1862,7 +2000,7 @@
+@@ -1862,7 +2000,7 @@ static int __init usba_udc_probe(struct platform_device *pdev)
  
  	regs = platform_get_resource(pdev, IORESOURCE_MEM, CTRL_IOMEM_ID);
  	fifo = platform_get_resource(pdev, IORESOURCE_MEM, FIFO_IOMEM_ID);
@@ -872,7 +918,7 @@ diff -urN a/drivers/usb/gadget/atmel_usba_udc.c b/drivers/usb/gadget/atmel_usba_
  		return -ENXIO;
  
  	irq = platform_get_irq(pdev, 0);
-@@ -1912,46 +2050,14 @@
+@@ -1912,46 +2050,14 @@ static int __init usba_udc_probe(struct platform_device *pdev)
  	usba_writel(udc, CTRL, USBA_DISABLE_MASK);
  	clk_disable(pclk);
  
@@ -926,7 +972,7 @@ diff -urN a/drivers/usb/gadget/atmel_usba_udc.c b/drivers/usb/gadget/atmel_usba_
  	}
  
  	ret = request_irq(irq, usba_udc_irq, 0, "atmel_usba_udc", udc);
-@@ -1968,10 +2074,8 @@
+@@ -1968,10 +2074,8 @@ static int __init usba_udc_probe(struct platform_device *pdev)
  		goto err_device_add;
  	}
  
@@ -939,7 +985,7 @@ diff -urN a/drivers/usb/gadget/atmel_usba_udc.c b/drivers/usb/gadget/atmel_usba_
  
  			ret = request_irq(gpio_to_irq(udc->vbus_pin),
  					usba_vbus_irq, 0,
-@@ -1996,13 +2100,13 @@
+@@ -1996,13 +2100,13 @@ static int __init usba_udc_probe(struct platform_device *pdev)
  		goto err_add_udc;
  
  	usba_init_debugfs(udc);
@@ -955,7 +1001,7 @@ diff -urN a/drivers/usb/gadget/atmel_usba_udc.c b/drivers/usb/gadget/atmel_usba_
  		free_irq(gpio_to_irq(udc->vbus_pin), udc);
  		gpio_free(udc->vbus_pin);
  	}
-@@ -2031,13 +2135,12 @@
+@@ -2031,13 +2135,12 @@ static int __exit usba_udc_remove(struct platform_device *pdev)
  {
  	struct usba_udc *udc;
  	int i;
@@ -970,7 +1016,7 @@ diff -urN a/drivers/usb/gadget/atmel_usba_udc.c b/drivers/usb/gadget/atmel_usba_
  		usba_ep_cleanup_debugfs(&usba_ep[i]);
  	usba_cleanup_debugfs(udc);
  
-@@ -2058,11 +2161,21 @@
+@@ -2058,11 +2161,21 @@ static int __exit usba_udc_remove(struct platform_device *pdev)
  	return 0;
  }
  
@@ -992,10 +1038,11 @@ diff -urN a/drivers/usb/gadget/atmel_usba_udc.c b/drivers/usb/gadget/atmel_usba_
  	},
  };
  
-diff -urN a/drivers/usb/gadget/atmel_usba_udc.h b/drivers/usb/gadget/atmel_usba_udc.h
---- a/drivers/usb/gadget/atmel_usba_udc.h	2013-02-18 18:58:34.000000000 -0500
-+++ b/drivers/usb/gadget/atmel_usba_udc.h	2013-02-24 13:33:54.388919799 -0500
-@@ -323,6 +323,7 @@
+diff --git a/drivers/usb/gadget/atmel_usba_udc.h b/drivers/usb/gadget/atmel_usba_udc.h
+index 9791259..a7b2d25 100644
+--- a/drivers/usb/gadget/atmel_usba_udc.h
++++ b/drivers/usb/gadget/atmel_usba_udc.h
+@@ -323,6 +323,7 @@ struct usba_udc {
  	int irq;
  	int vbus_pin;
  	int vbus_pin_inverted;
@@ -1003,28 +1050,31 @@ diff -urN a/drivers/usb/gadget/atmel_usba_udc.h b/drivers/usb/gadget/atmel_usba_
  	struct clk *pclk;
  	struct clk *hclk;
  
-diff -urN a/include/uapi/linux/netfilter_bridge/ebt_nat.h b/include/uapi/linux/netfilter_bridge/ebt_nat.h
---- a/include/uapi/linux/netfilter_bridge/ebt_nat.h	2013-02-18 18:58:34.000000000 -0500
-+++ b/include/uapi/linux/netfilter_bridge/ebt_nat.h	2013-02-24 13:33:54.388919799 -0500
-@@ -9,5 +9,6 @@
+diff --git a/include/uapi/linux/netfilter_bridge/ebt_nat.h b/include/uapi/linux/netfilter_bridge/ebt_nat.h
+index 5e74e3b..1024b62 100644
+--- a/include/uapi/linux/netfilter_bridge/ebt_nat.h
++++ b/include/uapi/linux/netfilter_bridge/ebt_nat.h
+@@ -9,5 +9,6 @@ struct ebt_nat_info {
  };
  #define EBT_SNAT_TARGET "snat"
  #define EBT_DNAT_TARGET "dnat"
 +#define EBT_ARPNAT_TARGET "arpnat"
  
  #endif
-diff -urN a/net/bridge/br_fdb.c b/net/bridge/br_fdb.c
---- a/net/bridge/br_fdb.c	2013-02-18 18:58:34.000000000 -0500
-+++ b/net/bridge/br_fdb.c	2013-02-24 13:33:54.388919799 -0500
-@@ -674,3 +674,4 @@
+diff --git a/net/bridge/br_fdb.c b/net/bridge/br_fdb.c
+index d9576e6..fe73224 100644
+--- a/net/bridge/br_fdb.c
++++ b/net/bridge/br_fdb.c
+@@ -674,3 +674,4 @@ int br_fdb_delete(struct ndmsg *ndm, struct net_device *dev,
  
  	return err;
  }
 +
-diff -urN a/net/bridge/netfilter/Kconfig b/net/bridge/netfilter/Kconfig
---- a/net/bridge/netfilter/Kconfig	2013-02-18 18:58:34.000000000 -0500
-+++ b/net/bridge/netfilter/Kconfig	2013-02-24 13:33:54.389919799 -0500
-@@ -177,6 +177,16 @@
+diff --git a/net/bridge/netfilter/Kconfig b/net/bridge/netfilter/Kconfig
+index a9aff9c..0bcf1d9 100644
+--- a/net/bridge/netfilter/Kconfig
++++ b/net/bridge/netfilter/Kconfig
+@@ -177,6 +177,16 @@ config BRIDGE_EBT_SNAT
  	  source address of frames.
  
  	  To compile it as a module, choose M here.  If unsure, say N.
@@ -1041,10 +1091,11 @@ diff -urN a/net/bridge/netfilter/Kconfig b/net/bridge/netfilter/Kconfig
  #
  # watchers
  #
-diff -urN a/net/bridge/netfilter/Makefile b/net/bridge/netfilter/Makefile
---- a/net/bridge/netfilter/Makefile	2013-02-18 18:58:34.000000000 -0500
-+++ b/net/bridge/netfilter/Makefile	2013-02-24 13:33:54.389919799 -0500
-@@ -27,6 +27,7 @@
+diff --git a/net/bridge/netfilter/Makefile b/net/bridge/netfilter/Makefile
+index 0718699..2017bc4 100644
+--- a/net/bridge/netfilter/Makefile
++++ b/net/bridge/netfilter/Makefile
+@@ -27,6 +27,7 @@ obj-$(CONFIG_BRIDGE_EBT_MARK_T) += ebt_mark.o
  obj-$(CONFIG_BRIDGE_EBT_DNAT) += ebt_dnat.o
  obj-$(CONFIG_BRIDGE_EBT_REDIRECT) += ebt_redirect.o
  obj-$(CONFIG_BRIDGE_EBT_SNAT) += ebt_snat.o
@@ -1052,9 +1103,11 @@ diff -urN a/net/bridge/netfilter/Makefile b/net/bridge/netfilter/Makefile
  
  # watchers
  obj-$(CONFIG_BRIDGE_EBT_LOG) += ebt_log.o
-diff -urN a/net/bridge/netfilter/ebt_arpnat.c b/net/bridge/netfilter/ebt_arpnat.c
---- a/net/bridge/netfilter/ebt_arpnat.c	1969-12-31 19:00:00.000000000 -0500
-+++ b/net/bridge/netfilter/ebt_arpnat.c	2013-02-24 13:33:54.389919799 -0500
+diff --git a/net/bridge/netfilter/ebt_arpnat.c b/net/bridge/netfilter/ebt_arpnat.c
+new file mode 100644
+index 0000000..4023340
+--- /dev/null
++++ b/net/bridge/netfilter/ebt_arpnat.c
 @@ -0,0 +1,650 @@
 +/*
 + *  ebt_arpnat
@@ -1706,10 +1759,11 @@ diff -urN a/net/bridge/netfilter/ebt_arpnat.c b/net/bridge/netfilter/ebt_arpnat.
 +MODULE_LICENSE("GPL");
 +
 +
-diff -urN a/net/wireless/core.c b/net/wireless/core.c
---- a/net/wireless/core.c	2013-02-18 18:58:34.000000000 -0500
-+++ b/net/wireless/core.c	2013-02-24 13:33:54.389919799 -0500
-@@ -868,8 +868,7 @@
+diff --git a/net/wireless/core.c b/net/wireless/core.c
+index b677eab..f6ca501 100644
+--- a/net/wireless/core.c
++++ b/net/wireless/core.c
+@@ -868,8 +868,7 @@ static int cfg80211_netdev_notifier_call(struct notifier_block *nb,
  
  		netdev_set_default_ethtool_ops(dev, &cfg80211_ethtool_ops);
  
@@ -1719,10 +1773,11 @@ diff -urN a/net/wireless/core.c b/net/wireless/core.c
  		     wdev->iftype == NL80211_IFTYPE_ADHOC) && !wdev->use_4addr)
  			dev->priv_flags |= IFF_DONT_BRIDGE;
  		break;
-diff -urN a/net/wireless/nl80211.c b/net/wireless/nl80211.c
---- a/net/wireless/nl80211.c	2013-02-18 18:58:34.000000000 -0500
-+++ b/net/wireless/nl80211.c	2013-02-24 13:33:54.391919799 -0500
-@@ -1960,8 +1960,6 @@
+diff --git a/net/wireless/nl80211.c b/net/wireless/nl80211.c
+index f45706a..b6752cb 100644
+--- a/net/wireless/nl80211.c
++++ b/net/wireless/nl80211.c
+@@ -1960,8 +1960,6 @@ static int nl80211_valid_4addr(struct cfg80211_registered_device *rdev,
  			       enum nl80211_iftype iftype)
  {
  	if (!use_4addr) {
@@ -1731,10 +1786,11 @@ diff -urN a/net/wireless/nl80211.c b/net/wireless/nl80211.c
  		return 0;
  	}
  
-diff -urN a/net/wireless/util.c b/net/wireless/util.c
---- a/net/wireless/util.c	2013-02-18 18:58:34.000000000 -0500
-+++ b/net/wireless/util.c	2013-02-24 13:33:54.392919799 -0500
-@@ -817,7 +817,6 @@
+diff --git a/net/wireless/util.c b/net/wireless/util.c
+index 16d76a8..08e1653 100644
+--- a/net/wireless/util.c
++++ b/net/wireless/util.c
+@@ -817,7 +817,6 @@ int cfg80211_change_iface(struct cfg80211_registered_device *rdev,
  	/* if it's part of a bridge, reject changing type to station/ibss */
  	if ((dev->priv_flags & IFF_BRIDGE_PORT) &&
  	    (ntype == NL80211_IFTYPE_ADHOC ||
@@ -1742,7 +1798,7 @@ diff -urN a/net/wireless/util.c b/net/wireless/util.c
  	     ntype == NL80211_IFTYPE_P2P_CLIENT))
  		return -EBUSY;
  
-@@ -864,14 +863,11 @@
+@@ -864,14 +863,11 @@ int cfg80211_change_iface(struct cfg80211_registered_device *rdev,
  	if (!err) {
  		dev->priv_flags &= ~IFF_DONT_BRIDGE;
  		switch (ntype) {
@@ -1758,3 +1814,6 @@ diff -urN a/net/wireless/util.c b/net/wireless/util.c
  		case NL80211_IFTYPE_P2P_GO:
  		case NL80211_IFTYPE_AP:
  		case NL80211_IFTYPE_AP_VLAN:
+-- 
+1.7.9.5
+

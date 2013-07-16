@@ -1,5 +1,16 @@
---- a/drivers/net/wireless/ath/ath6kl/wmi.c	2013-06-14 10:03:17.708000008 -0400
-+++ b/drivers/net/wireless/ath/ath6kl/wmi.c	2013-06-14 10:03:09.412000005 -0400
+From 8809d0b7360962677522bc5182ffbf3a1e71ebb2 Mon Sep 17 00:00:00 2001
+From: Dimitrios Siganos <dimitris@siganos.org>
+Date: Tue, 2 Jul 2013 14:37:11 -0400
+Subject: [PATCH 2/9] Applying patch linux-3.8-0001-ath6kl-events.patch
+
+---
+ drivers/net/wireless/ath/ath6kl/wmi.c |  259 +++++++++++++++++++++++++++++++++
+ 1 file changed, 259 insertions(+)
+
+diff --git a/drivers/net/wireless/ath/ath6kl/wmi.c b/drivers/net/wireless/ath/ath6kl/wmi.c
+index 998f8b0..1ef09ab 100644
+--- a/drivers/net/wireless/ath/ath6kl/wmi.c
++++ b/drivers/net/wireless/ath/ath6kl/wmi.c
 @@ -17,6 +17,7 @@
  
  #include <linux/ip.h>
@@ -17,7 +28,7 @@
  static const s32 wmi_rate_tbl[][2] = {
  	/* {W/O SGI, with SGI} */
  	{1000, 1000},
-@@ -1772,6 +1775,8 @@
+@@ -1756,6 +1759,8 @@ int ath6kl_wmi_cmd_send(struct wmi *wmi, u8 if_idx, struct sk_buff *skb,
  	ath6kl_dbg_dump(ATH6KL_DBG_WMI_DUMP, NULL, "wmi tx ",
  			skb->data, skb->len);
  
@@ -26,7 +37,7 @@
  	if (sync_flag >= END_WMIFLAG) {
  		dev_kfree_skb(skb);
  		return -EINVAL;
-@@ -3975,6 +3980,8 @@
+@@ -3935,6 +3940,8 @@ static int ath6kl_wmi_proc_events(struct wmi *wmi, struct sk_buff *skb)
  	ath6kl_dbg_dump(ATH6KL_DBG_WMI_DUMP, NULL, "wmi rx ",
  			datap, len);
  
@@ -35,7 +46,7 @@
  	switch (id) {
  	case WMI_GET_BITRATE_CMDID:
  		ath6kl_dbg(ATH6KL_DBG_WMI, "WMI_GET_BITRATE_CMDID\n");
-@@ -4117,6 +4124,247 @@
+@@ -4077,6 +4084,247 @@ int ath6kl_wmi_control_rx(struct wmi *wmi, struct sk_buff *skb)
  	return ath6kl_wmi_proc_events(wmi, skb);
  }
  
@@ -283,7 +294,7 @@
  void ath6kl_wmi_reset(struct wmi *wmi)
  {
  	spin_lock_bh(&wmi->lock);
-@@ -4135,6 +4383,9 @@
+@@ -4095,6 +4343,9 @@ void *ath6kl_wmi_init(struct ath6kl *dev)
  	if (!wmi)
  		return NULL;
  
@@ -293,7 +304,7 @@
  	spin_lock_init(&wmi->lock);
  
  	wmi->parent_dev = dev;
-@@ -4143,6 +4394,8 @@
+@@ -4103,6 +4354,8 @@ void *ath6kl_wmi_init(struct ath6kl *dev)
  
  	ath6kl_wmi_reset(wmi);
  
@@ -302,7 +313,7 @@
  	return wmi;
  }
  
-@@ -4150,6 +4403,12 @@
+@@ -4110,6 +4363,12 @@ void ath6kl_wmi_shutdown(struct wmi *wmi)
  {
  	if (!wmi)
  		return;
@@ -315,3 +326,6 @@
  
  	kfree(wmi->last_mgmt_tx_frame);
  	kfree(wmi);
+-- 
+1.7.9.5
+
