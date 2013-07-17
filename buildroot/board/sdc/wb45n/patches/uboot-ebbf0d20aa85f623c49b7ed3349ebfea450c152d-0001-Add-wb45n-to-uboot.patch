@@ -1,7 +1,23 @@
-diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c
---- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c	2012-12-14 15:43:22.000000000 -0600
-+++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c	2013-03-19 17:11:22.505695266 -0500
-@@ -167,16 +167,16 @@
+From d167456c120d5790e16fadf5bfd13c2787eb6c20 Mon Sep 17 00:00:00 2001
+From: Steve deRosier <Steve.Derosier@lairdtech.com>
+Date: Mon, 8 Jul 2013 15:49:39 -0700
+Subject: [PATCH 1/4] Add wb45n to uboot
+
+Adds platform support for Laird WB45n. Add board definition and setup hardware.
+---
+ arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c |   20 +-
+ board/atmel/at91sam9x5ek/at91sam9x5ek.c        |    9 +-
+ board/atmel/at91sam9x5ek/config.mk             |    2 +-
+ boards.cfg                                     |    1 +
+ include/configs/wb45n.h                        |  289 ++++++++++++++++++++++++
+ 5 files changed, 308 insertions(+), 13 deletions(-)
+ create mode 100644 include/configs/wb45n.h
+
+diff --git a/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c b/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c
+index db2ecb8..564b32e 100644
+--- a/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c
++++ b/arch/arm/cpu/arm926ejs/at91/at91cap9_devices.c
+@@ -167,16 +167,16 @@ void at91_spi1_hw_init(unsigned long cs_mask)
  #ifdef CONFIG_MACB
  void at91_macb_hw_init(void)
  {
@@ -28,10 +44,11 @@ diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/arch/arm/cpu/arm926ejs
  
  #ifndef CONFIG_RMII
  	at91_set_b_periph(AT91_PIO_PORTC, 25, 0);	/* ECRS */
-diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/at91sam9x5ek.c uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/at91sam9x5ek.c
---- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/at91sam9x5ek.c	2012-12-14 15:43:22.000000000 -0600
-+++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/at91sam9x5ek.c	2013-03-19 17:11:22.505695266 -0500
-@@ -61,11 +61,12 @@
+diff --git a/board/atmel/at91sam9x5ek/at91sam9x5ek.c b/board/atmel/at91sam9x5ek/at91sam9x5ek.c
+index edb0886..3a81335 100644
+--- a/board/atmel/at91sam9x5ek/at91sam9x5ek.c
++++ b/board/atmel/at91sam9x5ek/at91sam9x5ek.c
+@@ -61,11 +61,12 @@ static void at91sam9x5ek_nand_hw_init(void)
  	/* Enable CS3 */
  	csa = readl(&matrix->ebicsa);
  	csa |= AT91_MATRIX_EBI_CS3A_SMC_SMARTMEDIA;
@@ -46,7 +63,7 @@ diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5
  
  	writel(csa, &matrix->ebicsa);
  
-@@ -94,11 +95,14 @@
+@@ -94,11 +95,14 @@ static void at91sam9x5ek_nand_hw_init(void)
  	at91_set_gpio_input(CONFIG_SYS_NAND_READY_PIN, 1);
  	/* Enable NandFlash */
  	at91_set_gpio_output(CONFIG_SYS_NAND_ENABLE_PIN, 1);
@@ -61,7 +78,7 @@ diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5
  	at91_set_a_periph(AT91_PIO_PORTD, 6, 1);
  	at91_set_a_periph(AT91_PIO_PORTD, 7, 1);
  	at91_set_a_periph(AT91_PIO_PORTD, 8, 1);
-@@ -107,6 +111,7 @@
+@@ -107,6 +111,7 @@ static void at91sam9x5ek_nand_hw_init(void)
  	at91_set_a_periph(AT91_PIO_PORTD, 11, 1);
  	at91_set_a_periph(AT91_PIO_PORTD, 12, 1);
  	at91_set_a_periph(AT91_PIO_PORTD, 13, 1);
@@ -69,16 +86,18 @@ diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5
  }
  #endif
  
-diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/config.mk uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/config.mk
---- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/config.mk	2012-12-14 15:43:22.000000000 -0600
-+++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/board/atmel/at91sam9x5ek/config.mk	2013-03-19 17:11:22.505695266 -0500
+diff --git a/board/atmel/at91sam9x5ek/config.mk b/board/atmel/at91sam9x5ek/config.mk
+index 6589a12..e554a45 100644
+--- a/board/atmel/at91sam9x5ek/config.mk
++++ b/board/atmel/at91sam9x5ek/config.mk
 @@ -1 +1 @@
 -CONFIG_SYS_TEXT_BASE = 0x26f00000
 +CONFIG_SYS_TEXT_BASE = 0x23f00000
-diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/boards.cfg uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/boards.cfg
---- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/boards.cfg	2012-12-14 15:43:22.000000000 -0600
-+++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/boards.cfg	2013-03-19 17:11:22.509695046 -0500
-@@ -96,6 +96,7 @@
+diff --git a/boards.cfg b/boards.cfg
+index 35f38f3..cad7566 100644
+--- a/boards.cfg
++++ b/boards.cfg
+@@ -96,6 +96,7 @@ at91sam9g20ek_nandflash      arm         arm926ejs   at91sam9260ek       atmel
  at91sam9m10g45ek_nandflash   arm         arm926ejs   at91sam9m10g45ek    atmel          at91        at91sam9m10g45ek:AT91SAM9M10G45,SYS_USE_NANDFLASH
  at91sam9rlek_dataflash       arm         arm926ejs   at91sam9rlek        atmel          at91        at91sam9rlek:AT91SAM9RL,SYS_USE_DATAFLASH
  at91sam9rlek_nandflash       arm         arm926ejs   at91sam9rlek        atmel          at91        at91sam9rlek:AT91SAM9RL,SYS_USE_NANDFLASH
@@ -86,37 +105,11 @@ diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/boards.cfg uboot-ebbf0
  at91sam9x5ek_nandflash       arm         arm926ejs   at91sam9x5ek        atmel          at91        at91sam9x5ek:AT91SAM9X5,SYS_USE_NANDFLASH
  at91sam9x5ek_spiflash        arm         arm926ejs   at91sam9x5ek        atmel          at91        at91sam9x5ek:AT91SAM9X5,SYS_USE_SPIFLASH
  at91sam9x5ek_mmc             arm         arm926ejs   at91sam9x5ek        atmel          at91        at91sam9x5ek:AT91SAM9X5,SYS_USE_MMC
-diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/common/env_common.c uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/common/env_common.c
---- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/common/env_common.c	2012-12-14 15:43:22.000000000 -0600
-+++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/common/env_common.c	2013-03-19 17:11:22.509695046 -0500
-@@ -141,6 +141,7 @@
- 		error("Environment import failed: errno = %d\n", errno);
- 
- 	gd->flags |= GD_FLG_ENV_READY;
-+	saveenv();
- }
- 
- 
-diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/drivers/mtd/nand/atmel_nand.c uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/drivers/mtd/nand/atmel_nand.c
---- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/drivers/mtd/nand/atmel_nand.c	2012-12-14 15:43:22.000000000 -0600
-+++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/drivers/mtd/nand/atmel_nand.c	2013-03-19 17:11:22.509695046 -0500
-@@ -720,10 +720,10 @@
-  * several NAND_CMD_RNDOUT during read
-  */
- static struct nand_ecclayout atmel_oobinfo_large = {
--	.eccbytes = 4,
--	.eccpos = {60, 61, 62, 63},
-+	.eccbytes = 28,
-+	.eccpos = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
- 	.oobfree = {
--		{2, 58}
-+		{30, 34}
- 	},
- };
- 
-diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb45n.h uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb45n.h
---- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb45n.h	1969-12-31 18:00:00.000000000 -0600
-+++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb45n.h	2013-04-26 11:02:02.807616782 -0500
+diff --git a/include/configs/wb45n.h b/include/configs/wb45n.h
+new file mode 100644
+index 0000000..d956197
+--- /dev/null
++++ b/include/configs/wb45n.h
 @@ -0,0 +1,289 @@
 +/*
 + * Copyright (C) 2012 Atmel Corporation
@@ -407,15 +400,6 @@ diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb45n.
 +//#define CONFIG_AT91SAM9_WATCHDOG        1
 +#endif
 +
-diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env_main.c uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env_main.c
---- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env_main.c	2012-12-14 15:43:22.000000000 -0600
-+++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/tools/env/fw_env_main.c	2013-03-19 17:11:22.509695046 -0500
-@@ -94,7 +94,7 @@
- 	int lockfd = -1;
- 	int retval = EXIT_SUCCESS;
- 
--	lockfd = open(lockname, O_WRONLY | O_CREAT | O_TRUNC);
-+	lockfd = open(lockname, O_WRONLY | O_CREAT | O_TRUNC, 0666);
- 	if (-1 == lockfd) {
- 		fprintf(stderr, "Error opening lock file %s\n", lockname);
- 		return EXIT_FAILURE;
+-- 
+1.7.9.5
+
