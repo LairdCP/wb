@@ -19,8 +19,4 @@ menu "Laird (SDC) Properties"
         source "package/sdc/Config.in"
     endmenu
 
-    menu "Packages (Closed Source)"
-        source "package/sdc-closed-source/Config.in"
-    endmenu
-
 endmenu
