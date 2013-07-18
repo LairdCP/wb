@@ -45,9 +45,8 @@ done
 cat fw.txt
 
 echo "Connecting to the wb45n device" 
-ssh-copy-id root@$WB45N_ADDRESS
-if [ yes != "`ssh root@$WB45N_ADDRESS cat /jenkins_update`" ]; then
+if [ yes != "`sshpass -psummit ssh root@$WB45N_ADDRESS cat /jenkins_update`" ]; then
     echo "ERROR: /jenkins_update doesnt exist or doesnt contain yes"
     exit 1
 fi
-ssh root@$WB45N_ADDRESS fw_update --url $PUBLISH_BASE_URL/$JENKINS_JOB_NAME/$JENKINS_BUILD_NUMBER/fw.txt
+sshpass -psummit ssh root@$WB45N_ADDRESS fw_update --url $PUBLISH_BASE_URL/$JENKINS_JOB_NAME/$JENKINS_BUILD_NUMBER/fw.txt
