@@ -4,9 +4,10 @@
 
 
 # For normal wifi operation, we use latest firmware, which requires a symlink.
+# An alternate fw_v#.#.#.#.bin may be set by doing:
+# tcmd.sh norm fw_v#.#.#.#.bin
 #
 FW_LINK=/lib/firmware/ath6k/AR6003/hw2.1.1/fw-4.bin
-FIRMWARE=fw_v3.4.0.66.bin
 
 do_() {
   echo -e "# $@"; $@; return $?
@@ -22,12 +23,12 @@ case $1 in
     echo "However, firmware must be set for using athtestcmd first."
     echo 
     echo "Option:"
-    echo "  testfw - set fw for athtestcmd"
-    echo "  normal - set normal wifi operation"
-    echo "  check - list files in firmware subdir"
+    echo "  testing - set fw for athtestcmd usage"
+    echo "  normal - set fw for normal wifi operation"
+    echo "  check - list fw files and show version details"
     echo 
     echo "Usage:"
-    echo "  $0 [option]"
+    echo "  $0 [option] [fw_v#.#.#.#]"
     echo 
     ;;
 
@@ -53,15 +54,16 @@ case $1 in
     #do_ athtestcmd -i wlan0 --rx report --rxfreq 2417 --rx antenna auto
     ;;
   
-  norm*) ## restore normal wifi
-    echo "  ...restoring fw version for normal wifi"
+  norm*) ## restore normal wifi ...use default or [fw_v#.#.#.#]
+    fw=$( ls -r ${FW_LINK%/*}/${2:-fw_v*.bin} |grep -m1 . ) && [ -f "$fw" ] || exit 1 
+    echo "  ...restoring fw version for normal wifi: ${fw##*/}"
     # restore firmware symlink for normal operation
-    do_ ln -sf ${FIRMWARE} ${FW_LINK} 
+    do_ ln -sf ${fw##*/} ${FW_LINK} || exit 1
     # set /e/n/i option
     do_ ifrc -v -n wlan0 auto
     do_ ifrc -v -n wlan0 stop
     ;;
-  
+
   test*) ## setup for testing
     echo "  ...setting fw version for athtestcmd"
     # remove normal firmware symlink for testmode
@@ -76,8 +78,8 @@ case $1 in
   check) ## list firmware files
     echo  "  ...contents of ${FW_LINK%/*}:"
     ls -ln --color=always ${FW_LINK%/*} |sed '/^.otal/d;s/0\ \ \ \ \ \ \ \ //g'
-    echo "  The 'athtestcmd' can be used when the driver can load fw-3."
-    echo "  However, the driver will load fw-4 instead, if available."
+    echo "  The 'athtestcmd' may be used when the driver can load fw-3."
+    echo "  However, the driver will load a fw-4 instead, if available."
 
     n='[0-9]'
     echo -e "    fw-3: " \
