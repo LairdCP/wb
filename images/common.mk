@@ -4,7 +4,7 @@
 URL = http://$(shell hostname)/wb/$(PRODUCT)
 
 TOPDIR = ../../..
-IMAGES = $(TOPDIR)/buildroot/output/$(PRODUCT)/images
+IMAGES = $(TOPDIR)/buildroot/output/images
 
 fw.txt: copyall
 	$(TOPDIR)/buildroot/board/sdc/mkfwtxt.sh $(URL)/$(DATE)
