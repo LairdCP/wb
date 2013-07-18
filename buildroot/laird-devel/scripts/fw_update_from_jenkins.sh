@@ -44,9 +44,12 @@ for f in bootstrap.bin u-boot.bin kernel.bin rootfs.bin; do
 done
 cat fw.txt
 
-echo "Connecting to the wb45n device" 
-if [ yes != "`sshpass -psummit ssh root@$WB45N_ADDRESS cat /jenkins_update`" ]; then
-    echo "ERROR: /jenkins_update doesnt exist or doesnt contain yes"
+echo "Check that u-boot has: jenkins_update=yes"
+if [ "`sshpass -psummit ssh root@$WB45N_ADDRESS fw_printenv jenkins_update`" != 'jenkins_update=yes' ]; then
+    echo "ERROR: u-boot var jenkins_update doesnt exist or doesnt contain yes"
     exit 1
 fi
+
+echo "Start the upgrade process"
 sshpass -psummit ssh root@$WB45N_ADDRESS fw_update --url $PUBLISH_BASE_URL/$JENKINS_JOB_NAME/$JENKINS_BUILD_NUMBER/fw.txt
+echo "Done"
