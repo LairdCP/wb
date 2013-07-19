@@ -95,6 +95,18 @@ diff -Naur old/linux/linux.mk new/linux/linux.mk
  		else \
  			support/scripts/apply-patches.sh $(@D) `dirname $$p` `basename $$p` ; \
  		fi \
+diff -Naur old/package/busybox/Config.in new/package/busybox/Config.in
+--- old/package/busybox/Config.in	2013-07-18 21:39:00.000000000 -0500
++++ new/package/busybox/Config.in 	2013-07-18 21:38:43.000000000 -0500
+@@ -32,7 +32,7 @@
+ endchoice
+ 
+ config BR2_BUSYBOX_VERSION
+-	string
++	string "BusyBox version to use?"
+ 	default "1.19.4"	if BR2_BUSYBOX_VERSION_1_19_X
+ 	default "1.20.2"	if BR2_BUSYBOX_VERSION_1_20_X
+ 	default "1.21.0"	if BR2_BUSYBOX_VERSION_1_21_X
 diff -Naur old/package/busybox/busybox-networking-ifplugd-iface-err.patch new/package/busybox/busybox-networking-ifplugd-iface-err.patch
 --- old/package/busybox/busybox-networking-ifplugd-iface-err.patch	1970-01-01 01:00:00.000000000 +0100
 +++ new/package/busybox/busybox-networking-ifplugd-iface-err.patch	2013-04-25 21:36:40.000000000 +0100
