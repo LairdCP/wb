@@ -1,7 +1,7 @@
 From 2e1bfa5be8e493388b4e0667a83dfe1568ff7704 Mon Sep 17 00:00:00 2001
 From: Dimitrios Siganos <dimitris@siganos.org>
 Date: Tue, 2 Jul 2013 14:39:11 -0400
-Subject: [PATCH 4/9] Applying patch linux-3.8-0003-ath6kl-wmiconfig.patch
+Subject: [PATCH] Applying patch linux-3.8-0003-ath6kl-wmiconfig.patch
 
 ---
  drivers/net/wireless/ath/ath6kl/Makefile    |    1 +

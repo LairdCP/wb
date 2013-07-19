@@ -1,7 +1,7 @@
 From b6e1cd4094b2230075264f10877b9f111ae90318 Mon Sep 17 00:00:00 2001
 From: Dimitrios Siganos <dimitris@siganos.org>
 Date: Tue, 2 Jul 2013 14:37:57 -0400
-Subject: [PATCH 3/9] Applying patch linux-3.8-0002-ath6kl-fips.patch
+Subject: [PATCH] Applying patch linux-3.8-0002-ath6kl-fips.patch
 
 ---
  drivers/net/wireless/ath/ath6kl/Makefile       |    4 +

@@ -1,7 +1,7 @@
 From 8809d0b7360962677522bc5182ffbf3a1e71ebb2 Mon Sep 17 00:00:00 2001
 From: Dimitrios Siganos <dimitris@siganos.org>
 Date: Tue, 2 Jul 2013 14:37:11 -0400
-Subject: [PATCH 2/9] Applying patch linux-3.8-0001-ath6kl-events.patch
+Subject: [PATCH] Applying patch linux-3.8-0001-ath6kl-events.patch
 
 ---
  drivers/net/wireless/ath/ath6kl/wmi.c |  259 +++++++++++++++++++++++++++++++++
