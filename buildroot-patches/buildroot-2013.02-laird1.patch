@@ -38,9 +38,9 @@ diff -Naur old/boot/at91bootstrap3/at91bootstrap3.mk new/boot/at91bootstrap3/at9
 +	$(MAKE) $(AT91BOOTSTRAP3_MAKE_OPT) -C $(@D)
  endef
  
-+AT91BOOTSTRAP3_BIN_FILE = $(call qstrip,$(BR2_SDC_PLATFORM))-nandflashboot-uboot-3.4.4.bin
++AT91BOOTSTRAP3_BIN_FILE = $(call qstrip,$(BR2_SDC_PLATFORM))-nandflashboot-uboot.bin
 +ifeq ($(call qstrip,$(BR2_SDC_PLATFORM)),wb45n)
-+AT91BOOTSTRAP3_BIN_FILE = at91sam9x5ek-nandflashboot-uboot-3.4.4.bin
++AT91BOOTSTRAP3_BIN_FILE = at91sam9x5ek-nandflashboot-uboot.bin
 +endif
 +
  define AT91BOOTSTRAP3_INSTALL_IMAGES_CMDS
