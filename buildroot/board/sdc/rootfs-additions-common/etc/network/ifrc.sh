@@ -34,8 +34,8 @@ usage() {
 	  auto|noauto   - set or unset auto-starting an interface (for init/rcS)
 	  status   - check an interface and report its ip-address, with exit code
 	  up|dn   - up or down the interface configuration (use '...' to renew)
+	  logs   - manage related files [clean|show <iface>]
 	  eni   - edit file: /etc/network/interfaces
-	  logs   - manage log files
 	  usage   - view file: /etc/network/networking.README
 
 	Method:
@@ -169,8 +169,7 @@ ifnl_s=${ifnl_s//down/dn}
 [ "$vm" == "....." ] && set -x
 
 pause() { 
-  # n[.nnn] sec
-  # zero value means indefinite
+  # n[.nnn] sec -- a zero value means indefinite
   test -p ${ifrc_Lfp}/- || { rm -f ${ifrc_Lfp}/-; mkfifo ${ifrc_Lfp}/-; }
   read -rst${1:-1} <>${ifrc_Lfp}/- 2>/dev/null
   if test $? -eq 2 
@@ -306,7 +305,7 @@ case $1 in
     if [ "$2" == "show" -a -n "$3" ]
     then
       less -Em~ ${ifrc_Lfp}/$3
-    elif [ "$2" == "clean" ]
+    elif [ "${2:0:4}" == "clea" ]
     then
       for f in ${ifrc_Lfp}/${3:-*}*; do
         rm $f 2>/dev/null && let ++c && echo -n ${f##*/}' '
