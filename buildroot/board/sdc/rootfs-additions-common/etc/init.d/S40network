@@ -156,7 +156,7 @@ case $1 in
     echo Stopping network interfaces... $devls
     #
     check_ifrc || ifrc=$ifconfig
-    for dev in $devls; do bring $dev down $1; $wnw; done
+    for dev in $devls; do bring $dev down $1 >>$log; $wnw; done
     ;;
   
   start)
