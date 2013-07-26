@@ -7,6 +7,7 @@
 AR6KL_TOOLS_VERSION = local
 AR6KL_TOOLS_SITE    = package/sdc-closed-source/externals/ath6kl_devkit
 AR6KL_TOOLS_SITE_METHOD = local
+AR6KL_TOOLS_DEPENDENCIES = libnl host-pkgconf
 
 define AR6KL_TOOLS_BUILD_CMDS
 	$(MAKE) -C $(@D)/Proprietary_tools/libtcmd \
