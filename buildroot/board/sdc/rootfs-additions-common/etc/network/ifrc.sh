@@ -20,9 +20,8 @@ usage() {
 	  -h   this helpful summary
 	  -q   be quiet, no stdout
 	  -v   be more verbose...
-	  -m   monitor ifrc events
 	  -n   no logging to files
-	  -r   remove the log files
+	  -m   monitor ifrc events
 	  -x   run w/o netlink daemon
 	     ( Note:  ifrc may be disabled with:  /etc/default/ifrc.disable )
   
@@ -35,14 +34,14 @@ usage() {
 	  auto|noauto   - set or unset auto-starting an interface (for init/rcS)
 	  status   - check an interface and report its ip-address, with exit code
 	  up|dn   - up or down the interface configuration (use '...' to renew)
-	  show   - specific interface info, or general info (default)
+	  logs   - manage related files [clean|show <iface>]
 	  eni   - edit file: /etc/network/interfaces
-	  help   - view file: /etc/network/networking.README
+	  usage   - view file: /etc/network/networking.README
 
 	Method:
 	  dhcp [<param=value> ...]
 	     - employ client to get/renew lease, info stored in leases file
-	       address=x.x.x.x   - request an ip address from dhcp server
+	       address=x.x.x.x   - request an (ip) address from dhcp server
 	       timeout=nn   - seconds to allow client to try/await response
 	       $mii_speed
 
@@ -73,23 +72,25 @@ msg() {
     # to stdout while not quiet-mode
     [ -z "$qm" ] && echo -e "$@" || :
   fi
-  # and log unless set to /dev/null
-  echo -e "$@" >>$ifrc_Log || :
+  # and log to file unless set to /dev/null
+  echo -e "$@" >>${ifrc_Log:-/dev/null} || :
 }
 
 # internals
-ifrc_Version=20130619
+ifrc_Version=20130717
 ifrc_Disable=/etc/default/ifrc.disable
 ifrc_Script=/etc/network/ifrc.sh
-ifrc_Time= #$( date +%s.%N )
-ifrc_Log=/var/log/ifrc
+ifrc_Lfp=/var/log/ifrc
 ifrc_Cmd="$0 $@"
-ifrc_Via=
 ifrc_Pid=$$
+ifrc_Via=''
+ifrc_Log=${ifrc_Lfp}/msg
 
-# ensure ifrc exists as a system executable
+# ensure ifrc exists and is supported as a system executable
 ifrc=/sbin/ifrc
 [ -x "$ifrc" ] || ln -sf $ifrc_Script $ifrc
+[ ${#ifrc_Lfp} -gt 5 ] || ifrc_Lfp=/tmp/ifrc
+[ -d "$ifrc_Lfp" ] || mkdir -p ${ifrc_Lfp}
 
 # check init-script exists
 nis=/etc/init.d/S??network*
@@ -117,10 +118,6 @@ parse_flag() {
     --|--version) ## just report version
       msg ${ifrc_Script##*/} $ifrc_Version
       exit 0
-      ;;
-    -r) ## remove all related ifrc log files on startup
-      for f in /var/log/ifrc*; do rm -f $f && msg ${f##*/} log removed; done
-      let $#-1 && return 1 || exit 0
       ;;
     -n) ## do not use a log file
       ifrc_Log=/dev/null
@@ -172,9 +169,9 @@ ifnl_s=${ifnl_s//down/dn}
 [ "$vm" == "....." ] && set -x
 
 pause() { 
-  # n[.nnn] sec
-  # zero value means indefinite
-  read -rst${1:-1} <>/dev/zero 2>/dev/null
+  # n[.nnn] sec -- a zero value means indefinite
+  test -p ${ifrc_Lfp}/- || { rm -f ${ifrc_Lfp}/-; mkfifo ${ifrc_Lfp}/-; }
+  read -rst${1:-1} <>${ifrc_Lfp}/- 2>/dev/null
   if test $? -eq 2 
   then
     s="${1/.*}"
@@ -266,7 +263,7 @@ signal_dhcp_client() {
   done
 
   # interrupt link-beat check, while in-progress
-  rm /tmp/ifrc.$dev.lbto 2>/dev/null && pause 0.2
+  rm ${ifrc_Lfp}/$dev.lbto 2>/dev/null && pause 0.2
   return $rv
 }
 
@@ -291,7 +288,7 @@ store_ap_info() {
       |tr '\n' ' ' )
 
   [ -n "$ap" ] \
-  && sed "1s/^.*/\tap: ${ap}/" -i /var/log/ifrc.$dev
+  && sed "1s/^.*/\tap: ${ap}/" -i ${ifrc_Lfp}/$dev
 }
 
 # 
@@ -303,7 +300,23 @@ case $1 in
     [ -n "${vm:0:1}" ] && set -x
     exec $nis "" $1 $2
     ;;
-  
+
+  log|logs) ## ifrc files
+    if [ "$2" == "show" -a -n "$3" ]
+    then
+      less -Em~ ${ifrc_Lfp}/$3
+    elif [ "${2:0:4}" == "clea" ]
+    then
+      for f in ${ifrc_Lfp}/${3:-*}*; do
+        rm $f 2>/dev/null && let ++c && echo -n ${f##*/}' '
+      done
+      let c && echo ...removed from $ifrc_Lfp
+    else
+      ls -l ${ifrc_Lfp}/ |sed '/.otal/d'
+    fi
+    exit $?
+    ;;
+
   show|"") ## iface missing, and no other action, so show any/all
     echo "Configuration for all interfaces" \
          "                          (try -h to see usage)"
@@ -324,19 +337,19 @@ case $1 in
     exit 0
     ;;
 
-  help) ## view the readme file
-    less -Em~ /etc/network/networking.README
+  usage) ## view the readme file
+    less -Em~ /etc/network/networking.README || exit 1
     # NOTE - the EOF detect/quit is not working in bb_1.19.3 - bb_1.21.0
     exit 0
     ;;
 
   eni) ## edit the /e/n/i file
-    cp -f $eni /tmp/ifrc.${eni##*/}~
-    if /bin/vi /tmp/ifrc.${eni##*/}~ -c /^iface\ $2 \
-    && ! cmp -s /tmp/ifrc.${eni##*/}~ $eni
+    cp -f $eni ${ifrc_Lfp}/${eni##*/}~
+    if /bin/vi ${ifrc_Lfp}/${eni##*/}~ -c /^iface\ $2 \
+    && ! cmp -s ${ifrc_Lfp}/${eni##*/}~ $eni
     then
-      let $( ls -s /tmp/ifrc.${eni##*/}~ |sed 's/\ *\([0-9]\+\).*/\1/' )+0 \
-      && mv -f /tmp/ifrc.${eni##*/}~ $eni \
+      let $( ls -s ${ifrc_Lfp}/${eni##*/}~ |sed 's/\ *\([0-9]\+\).*/\1/' )+0 \
+      && mv -f ${ifrc_Lfp}/${eni##*/}~ $eni \
       || echo "unable to copy edited $eni into place"
     fi
     exit 0
@@ -439,13 +452,14 @@ test -n "$dev" || exit 1
 # set logfile name and limit the file size to just 100-blocks
 if [ "$ifrc_Log" != "/dev/null" ]
 then
-  ifrc_Log=${dev:+$ifrc_Log.$dev}
+  ifrc_Log=${dev:+${ifrc_Lfp}/$dev}
   let sz=$( ls -s $ifrc_Log 2>/dev/null |sed 's/\ *\([0-9]\+\).*/\1/' )+0
   test $sz -le 100 || ifrc_Log=/dev/null
 fi
 
-# begin a new log entry for the operations that follow 
-echo -e "\n`date +'%b %e %H:%M:%S'` __${ifrc_Cmd}  $ifrc_Via" >>$ifrc_Log
+# begin a new timestamp log entry for the dev operations that follow 
+read -rs us is </proc/uptime
+printf "\n% 13.2f __${ifrc_Cmd}  $ifrc_Via" $us >>$ifrc_Log
 msg3 "` env |sed -n 's/^IF[A-Z]*_.*/  &/p' |sort`"
 
 # external globals - carried per instance and can be used by *-do scripts too 
@@ -472,8 +486,10 @@ then
     then
       methvia="(via /e/n/i)"
       IFRC_METHOD=$( sed -n "s/^iface $devalias inet \([a-z]*\)/\1/p" $eni )
-      mp=$( sed -n "/^iface $devalias inet $IFRC_METHOD/,/^$/s/^[ \t][ ]*\([^#][a-z]*\)[ ]\(.*\)/\1=\2/p" $eni )
-      IFRC_METHOD=$IFRC_METHOD\ $mp
+      mp=$( sed -n "/^iface $devalias inet $IFRC_METHOD/,/^$/\
+                    s/^[ \t][ ]*\([^#][a-z]*\)[ ]\(.*\)/\1=\2/p" $eni )
+
+      IFRC_METHOD=$IFRC_METHOD\ ${mp//$'\n'/ }
     fi
     if [ -z "$IFRC_METHOD" ]
     then
@@ -650,7 +666,7 @@ case $IFRC_ACTION in
       ( eval $pre_dcfg_do |tee -a $ifrc_Log )&
               pre_dcfg_do=
     fi
-    rm -fv /var/log/ifrc.$dev.lock
+    rm -fv ${ifrc_Lfp}/$dev.lock
     msg1 "deconfiguring $dev"
     #
     # terminate any other netlink/dhcp_client daemons and de-configure
@@ -674,9 +690,9 @@ case $IFRC_ACTION in
   up) ## assume up action ->reconfigure . . .
     if [ ! -f /sys/class/net/$dev/uevent ]
     then
-      if [ ! -f /var/log/ifrc.$dev.lock ]
+      if [ ! -f ${ifrc_Lfp}/$dev.lock ]
       then
-        touch /var/log/ifrc.$dev.lock
+        touch ${ifrc_Lfp}/$dev.lock
         IFRC_METHOD=
         IFRC_SCRIPT=
         msg "interface is not kernel-resident, trying to start ..."
@@ -687,7 +703,7 @@ case $IFRC_ACTION in
         exit 1
       fi
     fi
-    rm -fv /var/log/ifrc.$dev.lock
+    rm -fv ${ifrc_Lfp}/$dev.lock
     
     if [ "$dev" != "lo" ] \
     && [ "$devalias" != "wl" ] \
@@ -718,9 +734,9 @@ case $IFRC_ACTION in
     ;;
 
   \.\.\.) ## try signaling the dhcp client
-    if [ ! -f /var/log/ifrc.$dev.lock ]
+    if [ ! -f ${ifrc_Lfp}/$dev.lock ]
     then
-      touch /var/log/ifrc.$dev.lock
+      touch ${ifrc_Lfp}/$dev.lock
       ## request dhcp renewal, and check if was really carried out
       ## under some tested conditions, the signal may be ignored
       ## if client stalls/dies, then re-exec using 'up' action
@@ -728,14 +744,14 @@ case $IFRC_ACTION in
       && [ "${IFRC_STATUS##*->}" == "up" ]
       then
         msg @. \ \ ...exec ifrc $fls $dev up $IFRC_METHOD
-        rm -f /var/log/ifrc.$dev.lock
+        rm -f ${ifrc_Lfp}/$dev.lock
         eval exec ifrc $fls $dev up $IFRC_METHOD
       fi
     else
       msg1 \ \ ...lock file exists, aborted
       exit 0
     fi
-    rm -f /var/log/ifrc.$dev.lock
+    rm -f ${ifrc_Lfp}/$dev.lock
     exit 0
     ;;
     
@@ -797,7 +813,6 @@ fi
 # 
 
 show_filtered_method_params() {
-  #if [ "${vm:0:2}" == ".." ]
   if [ -n "$vm" ] 
   then
     if [ -n "$ip$nm$gw$bc$ns" ]
@@ -813,9 +828,8 @@ show_filtered_method_params() {
 }
 
 ifrc_validate_loopback_method_params() {
-  IFS=$'\n'
   for x in ${IFRC_METHOD/loopback /}
-  do IFS=' '
+  do
     echo $x |grep -q "[ia][a-z]*=[0-9].*" \
     || { msg2 "ignoring invalid extra parameter: $x"; continue; }
     case $x in
@@ -825,14 +839,13 @@ ifrc_validate_loopback_method_params() {
       *)
         msg2 "ignoring extra parameter: $x"
     esac
-  done; IFS=' '
+  done
   show_filtered_method_params
 }
 
 ifrc_validate_static_method_params() {
-  IFS=$'\n'
   for x in ${IFRC_METHOD/static /}
-  do IFS=' '
+  do
     echo $x |grep -q "[aingb][a-z]*=[0-9]*.[0-9]*.[0-9]*.[0-9]*[/0-9]*" \
     || { msg2 "ignoring invalid extra parameter: $x"; continue; }
     ##
@@ -858,14 +871,13 @@ ifrc_validate_static_method_params() {
       *)
         msg2 "ignoring extra parameter: [$x]"
     esac
-  done; IFS=' '
+  done
   show_filtered_method_params
 }
 
 ifrc_validate_dhcp_method_params() {
-  IFS=$'\n'
   for x in ${IFRC_METHOD/dhcp /}
-  do IFS=' '
+  do
     echo $x |grep -q "[iatpfc][a-z]*=[0-9].*" \
     || { msg2 "ignoring invalid extra parameter: $x"; continue; }
     case $x in
@@ -885,7 +897,7 @@ ifrc_validate_dhcp_method_params() {
       *)
         msg2 "ignoring extra parameter: $x"
     esac
-  done; IFS=' '
+  done
   ipa=
   show_filtered_method_params
 }
@@ -902,15 +914,15 @@ check_link() {
 
   # need a link beat in order for dhcp to work
   # so try waiting up to 30s, and then double check
-  touch /tmp/ifrc.$dev.lbto
+  touch ${ifrc_Lfp}/$dev.lbto
   let lbto=30000
   let n=0
-  while [ $n -lt $lbto -a -f /tmp/ifrc.$dev.lbto ]
+  while [ $n -lt $lbto -a -f ${ifrc_Lfp}/$dev.lbto ]
   do
     grep -q 1 /sys/class/net/${dev}/carrier && break
     let n+=200 && pause 0.2
   done
-  rm -f /tmp/ifrc.$dev.lbto
+  rm -f ${ifrc_Lfp}/$dev.lbto
 
   grep -q 1 /sys/class/net/${dev}/carrier \
   || { msg "  ...no carrier/cable/link, deferring"; exit 0; }
