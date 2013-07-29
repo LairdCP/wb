@@ -4,12 +4,15 @@
 #include <unistd.h>
 
 #include "sdc_sdk.h"
+#include "lrd_platspec.h"
 
 void sigproc(int);
  
 void quitproc(int); 
 
 char BUFFER[20] = "                   ";
+
+int testnum = 0;
 
 char * eventToStr(int event)
 {
@@ -40,6 +43,16 @@ char * eventToStr(int event)
         case SDC_E_ICV_ERROR: return "SDC_E_ICV_ERROR"; break;
         case SDC_E_RSSI: return "SDC_E_RSSI"; break;
         case SDC_E_DHCP: return "SDC_E_DHCP"; break;
+		case SDC_E_READY:  return "SDC_E_READY"; break;
+		case SDC_E_CONNECT_REQ:  return "SDC_E_CONNECT_REQ"; break;
+		case SDC_E_CONNECT:  return "SDC_E_CONNECT"; break;
+		case SDC_E_RECONNECT_REQ:  return "SDC_E_RECONNECT_REQ"; break;
+		case SDC_E_DISCONNECT_REQ:  return "SDC_E_DISCONNECT_REQ"; break;
+		case SDC_E_DISCONNECT:  return "SDC_E_DISCONNECT"; break;
+		case SDC_E_SCAN_REQ:  return "SDC_E_SCAN_REQ"; break;
+		case SDC_E_SCAN:  return "SDC_E_SCAN"; break;
+		case SDC_E_REGDOMAIN:  return "SDC_E_REGDOMAIN"; break;
+		case SDC_E_CMDERROR:  return "SDC_E_CMDERROR"; break;
         case SDC_E_MAX: return "SDC_E_MAX"; break;
 	    default :
 		    sprintf(BUFFER, "0x%x", event);
@@ -134,6 +147,42 @@ char * w80211ReasonToStr(reason)
     }
 }
 
+char * disconnectReasontoStr(reason)
+{
+    switch(reason)
+    {
+        case NO_NETWORK_AVAIL		: return "NO_NETWORK_AVAIL"; break;	
+        case LOST_LINK	    		: return "LOST_LINK"; break;
+        case DISCONNECT_CMD			: return "DISCONNECT_CMD"; break;
+        case BSS_DISCONNECTED		: return "BSS_DISCONNECTED"; break;	
+        case AUTH_FAILED			: return "AUTH_FAILED"; break;
+        case ASSOC_FAILED			: return "ASSOC_FAILED"; break;
+        case NO_RESOURCES_AVAIL		: return "NO_RESOURCES_AVAIL"; break;
+		case CSERV_DISCONNECT		: return "CSERV_DISCONNECT"; break;
+        case INVALID_PROFILE		: return "INVALID_PROFILE"; break;
+        case DOT11H_CHANNEL_SWITCH	: return "DOT11H_CHANNEL_SWITCH"; break;
+        case PROFILE_MISMATCH		: return "PROFILE_MISMATCH"; break;
+        case CONNECTION_EVICTED		: return "CONNECTION_EVICTED"; break;
+        case IBSS_MERGE				: return "IBSS_MERGE"; break;
+        default :
+		    sprintf(BUFFER, "%d", reason);
+		    return BUFFER;
+    }
+}
+
+char * authModeToStr( int auth_type )
+{
+    switch(auth_type)
+    {
+        case AUTH_OPEN : return "AUTH_OPEN"; break;
+        case AUTH_SHARED : return "AUTH_SHARED"; break;
+        case AUTH_NETWORK_EAP : return "AUTH_NETWORK_EAP"; break;
+    	default :
+		    sprintf(BUFFER, "%d", auth_type);
+		    return BUFFER;
+    }
+}
+
 char *ether_ntoa(const sdc_ether_addr *ea, char *buf)
 {
 	static const char template[] = "%02x:%02x:%02x:%02x:%02x:%02x";
@@ -147,6 +196,8 @@ unsigned long long historic_bitmask = 0;
 
 SDCERR event_handler(unsigned long event_type, SDC_EVENT *event)
 {
+	DHCP_LEASE dhcp;
+	printf("Test number: %d\n", testnum++);
     historic_bitmask |= (1 << event_type);
     //event/status 
     printf("event: %s\tstatus: %s\n", eventToStr(event_type), statusToStr(event->status));
@@ -170,13 +221,23 @@ SDCERR event_handler(unsigned long event_type, SDC_EVENT *event)
         case SDC_E_QUIET_END :
             if(event->reason)
                 printf("\t80211 reason: %s\n", w80211ReasonToStr(event->reason));     
+			break;
+		case SDC_E_DISCONNECT :
+			if(event->reason)
+				printf("\tDisconnect reason: %s\n", disconnectReasontoStr(event->reason));
+			break;
+		case SDC_E_DHCP:
+			PLAT_GetDHCPInfo(&dhcp);
+			PLAT_PrintDHCPInfo(&dhcp);	
+			break;
     }
     // auth_type
     switch(event_type)
     {
         case SDC_E_AUTH :
         case SDC_E_AUTH_IND :
-            printf("\tAuth type: %s\n", (event->auth_type)?"SHARED_KEY":"OPEN_KEY");
+		case SDC_E_CONNECT_REQ :
+            printf("\tAuth type: %s\n", authModeToStr(event->auth_type));
             break;
         default:
             break;
