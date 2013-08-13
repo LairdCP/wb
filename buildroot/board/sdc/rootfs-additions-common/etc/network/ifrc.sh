@@ -45,7 +45,7 @@ usage() {
 	       timeout=nn   - seconds to allow client to try/await response
 	       $mii_speed
 
-	  static [<param=x.x.x.x[\nn]> ...]
+	  static [<param=x.x.x.x> ...]
 	     - use settings from /e/n/i file or those given on commandline
 	       params:  address, netmask, broadcast, gateway  (ip,nm,bc,gw)
 
