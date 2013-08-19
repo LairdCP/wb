@@ -8,7 +8,7 @@ echo "WB45n POST BUILD script: starting..."
 source "board/sdc/post_build_common.sh" "$TARGETDIR"
 
 # Copy the product specific rootfs additions
-tar c --exclude=.svn -C board/sdc/wb45n/rootfs-additions/ . | tar x -C $TARGETDIR/
+tar c --exclude=.svn --exclude=.empty -C board/sdc/wb45n/rootfs-additions/ . | tar x -C $TARGETDIR/
 
 # Services to disable by default
 

@@ -45,7 +45,7 @@ rm -f $TARGETDIR/etc/init.d/rcK
 
 # Copy the rootfs-additions-common in place first.
 # If necessary, these can be overwritten by the product specific rootfs-additions.
-tar c --exclude=.svn -C board/sdc/rootfs-additions-common/ . | tar x -C $TARGETDIR/
+tar c --exclude=.svn --exclude=.empty -C board/sdc/rootfs-additions-common/ . | tar x -C $TARGETDIR/
 
 # install libnl*.so.3 links
 ( cd "$TARGETDIR/usr/lib" \
