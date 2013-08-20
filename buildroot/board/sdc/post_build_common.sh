@@ -34,6 +34,12 @@ rm -f $TARGETDIR/etc/init.d/S50lighttpd
 rm -fr $TARGETDIR/etc/bash*
 rm -f $TARGETDIR/root/.bash*
 
+# remove perl cruft
+rm -f $TARGET/etc/ssl/misc/tsget
+rm -f $TARGET/etc/ssl/misc/CA.pl
+rm -f $TARGET/usr/bin/pcf2vpnc
+rm -f $TARGET/usr/bin/chkdupexe
+
 # remove debian cruft
 rm -fr $TARGETDIR/etc/network/if-*
 
