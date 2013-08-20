@@ -33,12 +33,14 @@ rm -f $TARGETDIR/etc/init.d/S50lighttpd
 # remove bash cruft
 rm -fr $TARGETDIR/etc/bash*
 rm -f $TARGETDIR/root/.bash*
+rm -f $TARGETDIR/sbin/rtpr
+rm -f $TARGETDIR/usr/share/getopt/getopt-parse.bash
 
 # remove perl cruft
-rm -f $TARGET/etc/ssl/misc/tsget
-rm -f $TARGET/etc/ssl/misc/CA.pl
-rm -f $TARGET/usr/bin/pcf2vpnc
-rm -f $TARGET/usr/bin/chkdupexe
+rm -f $TARGETDIR/etc/ssl/misc/tsget
+rm -f $TARGETDIR/etc/ssl/misc/CA.pl
+rm -f $TARGETDIR/usr/bin/pcf2vpnc
+rm -f $TARGETDIR/usr/bin/chkdupexe
 
 # remove debian cruft
 rm -fr $TARGETDIR/etc/network/if-*
