@@ -23,7 +23,13 @@ bt_start() {
    # hidp
    #  hid - hidp
    #
+
+  # Sleep is necessary so that above modules init and create the device
+  #   Without it we'll get the error "Can't init device hci0: Connection timed out (110)"
+  #   Bug #4520
+  sleep 2
   
+  # Now configure the bt
   hciconfig hci0 reset
   
   # get BT config values
