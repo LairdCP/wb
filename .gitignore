@@ -63,6 +63,10 @@
 /images/wb45n_devel/20??????
 /images/wb45n_devel/fw.txt
 
+# /images/carefusion
+/images/carefusion/20??????
+/images/carefusion/fw.txt
+
 /images/*/latest
 
 .*.swp

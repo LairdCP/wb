@@ -17,9 +17,9 @@ ARCHV := $(PKG).tar.bz2
 
 default: wb40n wb45n
 
-all: wb40n wb45n msd40n msd45n welch_allyn
+all: wb40n wb45n msd40n msd45n welch_allyn carefusion
 
-msd40n msd45n msd45n_fips welch_allyn wb40n wb45n wb45n_devel: unpack.stamp
+msd40n msd45n msd45n_fips welch_allyn carefusion wb40n wb45n wb45n_devel: unpack.stamp
 	# install the config file
 	$(MAKE) O=output/$@ -C buildroot $@_defconfig
 	$(MAKE) O=output/$@ -C buildroot
@@ -87,6 +87,6 @@ cleanall:
                 -exec rm -rf "{}" ";"
 	rm -f unpack.stamp
 
-.PHONY: default all unpack clean cleanall clean-wb40n clean-wb45n wb40n wb45n msd40n msd45n \
-        source source-wb40n source-wb45n clean-sdc-pkg clean-wb40n-sdc-pkg clean-wb45n-sdc-pkg
+.PHONY: default all unpack clean cleanall clean-wb40n clean-wb45n wb40n wb45n \
+        source source-wb40n source-wb45n clean-sdc-pkg clean-wb40n-sdc-pkg clean-wb45n-sdc-pkg welch_allyn carefusion
 .NOTPARALLEL:
