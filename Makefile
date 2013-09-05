@@ -17,9 +17,9 @@ ARCHV := $(PKG).tar.bz2
 
 default: wb40n wb45n
 
-all: wb40n wb45n msd45n welch_allyn
+all: wb40n wb45n msd40n msd45n welch_allyn
 
-msd45n msd45n_fips welch_allyn wb40n wb45n wb45n_devel: unpack.stamp
+msd40n msd45n msd45n_fips welch_allyn wb40n wb45n wb45n_devel: unpack.stamp
 	# install the config file
 	$(MAKE) O=output/$@ -C buildroot $@_defconfig
 	$(MAKE) O=output/$@ -C buildroot
@@ -44,6 +44,7 @@ endif
 	cd buildroot/configs && ln -s ../board/sdc/wb40n/configs/buildroot.config wb40n_defconfig
 	cd buildroot/configs && ln -s ../board/sdc/wb45n/configs/buildroot.config wb45n_defconfig
 	cd buildroot/configs && ln -s ../board/sdc/wb45n/configs/buildroot-wb45n_devel.config wb45n_devel_defconfig
+	cd buildroot/configs && ln -s ../board/sdc/msd40n/configs/buildroot.config msd40n_defconfig
 	cd buildroot/configs && ln -s ../board/sdc/msd45n/configs/buildroot.config msd45n_defconfig
 	cd buildroot/configs && ln -s ../board/sdc/msd45n/configs/buildroot-fips.config msd45n_fips_defconfig
 	# mark operation as done
@@ -86,6 +87,6 @@ cleanall:
                 -exec rm -rf "{}" ";"
 	rm -f unpack.stamp
 
-.PHONY: default all unpack clean cleanall clean-wb40n clean-wb45n wb40n wb45n \
+.PHONY: default all unpack clean cleanall clean-wb40n clean-wb45n wb40n wb45n msd40n msd45n \
         source source-wb40n source-wb45n clean-sdc-pkg clean-wb40n-sdc-pkg clean-wb45n-sdc-pkg
 .NOTPARALLEL:
