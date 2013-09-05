@@ -24,3 +24,5 @@ menu "Laird (SDC) Properties"
     endmenu
 
 endmenu
+
+source "board/sdc/customers/Config.in"
