@@ -1,4 +1,4 @@
-menu "Laird (SDC) Properties"
+menu "Laird"
 
     choice
         prompt "Board"
@@ -23,6 +23,9 @@ menu "Laird (SDC) Properties"
         source "package/sdc-closed-source/Config.in"
     endmenu
 
+    menu "Customers"
+        source "board/sdc/customers/Config.in"
+    endmenu
+
 endmenu
 
-source "board/sdc/customers/Config.in"
