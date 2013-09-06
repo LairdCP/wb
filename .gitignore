@@ -71,3 +71,6 @@
 
 .*.swp
 *~
+
+# ncm
+/buildroot/board/sdc/customers/carefusion/ncm
