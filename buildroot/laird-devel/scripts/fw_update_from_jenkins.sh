@@ -20,7 +20,9 @@
 
 set -e
 
+WS_DIR=`pwd`
 SSH="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+SCP="scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 
 mkdir -p "$PUBLISH_DIR/$JENKINS_JOB_NAME/$JENKINS_BUILD_NUMBER"
 cd "$PUBLISH_DIR/$JENKINS_JOB_NAME/$JENKINS_BUILD_NUMBER"
@@ -63,8 +65,18 @@ rel=`sshpass -psummit $SSH root@$WB45N_ADDRESS cat /etc/summit-release`
 echo "/etc/summit-release=$rel"
 if [ "$rel" = "Laird Linux jenkins-${JENKINS_JOB_NAME}-${JENKINS_BUILD_NUMBER}" ]; then
     echo "Upgrade worked."
-    exit 0
 else
     echo "Upgrade FAILED!"
     exit 1
 fi
+
+# run the autosecurity script
+sshpass -psummit $SSH root@$WB45N_ADDRESS wireless stop
+sshpass -psummit $SCP -r $WS_DIR/buildroot/laird-devel/scripts/certs/* root@$WB45N_ADDRESS:/etc/ssl
+sshpass -psummit $SCP $WS_DIR/buildroot/laird-devel/scripts/wfaXX.conf root@$WB45N_ADDRESS:/etc/summit/profiles.conf
+sshpass -psummit $SCP $WS_DIR/buildroot/laird-devel/scripts/autosecurity.sh root@$WB45N_ADDRESS:/bin/
+sshpass -psummit $SSH root@$WB45N_ADDRESS <<EOF
+wireless start
+chmod a+x /bin/autosecurity.sh
+autosecurity.sh
+EOF
