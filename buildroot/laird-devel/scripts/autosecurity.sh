@@ -1,6 +1,6 @@
 #PROFILE VARIABLES
 
-set -e
+set -e -x
 
 RMODE=ABG 		#B,BG,G,A,ABG,BGA
 BRATE="0" 		#0-Auto,1,2,5.5,6,9,11,12,18,24,36,48,54
