@@ -4,21 +4,23 @@
 # form the basis of the first Jenkins regression test.
 
 # Jenkins variables
-: ${JENKINS_BUILD_NUMBER:=40}
+: ${JENKINS_BUILD_NUMBER:=141}
 : ${JENKINS_JOB_NAME:=wb45n_devel-trunk}
 : ${JENKINS_URL:=http://natasha.corp.lairdtech.com/jenkins}
 
 # per host system variables
-: ${PUBLISH_DIR:=/home/jenkins/userContent/images}
-: ${PUBLISH_BASE_URL:=http://10.16.73.55/jenkins/userContent/images}
+: ${PUBLISH_DIR:=/var/www/scratch/autotest}
+: ${PUBLISH_BASE_URL:=http://10.1.44.227/scratch/autotest}
 
 # per wb45n board variables
-: ${WB45N_ADDRESS:=10.1.44.124}
+: ${WB45N_ADDRESS:=10.1.44.161}
 
 # buildroot target name
 : ${BUILDROOT_TARGET_NAME:=wb45n_devel}
 
 set -e
+
+SSH="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 
 mkdir -p "$PUBLISH_DIR/$JENKINS_JOB_NAME/$JENKINS_BUILD_NUMBER"
 cd "$PUBLISH_DIR/$JENKINS_JOB_NAME/$JENKINS_BUILD_NUMBER"
@@ -45,11 +47,24 @@ done
 cat fw.txt
 
 echo "Check that u-boot has: jenkins_update=yes"
-if [ "`sshpass -psummit ssh root@$WB45N_ADDRESS fw_printenv jenkins_update`" != 'jenkins_update=yes' ]; then
+if [ "`sshpass -psummit $SSH root@$WB45N_ADDRESS fw_printenv jenkins_update`" != 'jenkins_update=yes' ]; then
     echo "ERROR: u-boot var jenkins_update doesnt exist or doesnt contain yes"
     exit 1
 fi
 
 echo "Start the upgrade process"
-sshpass -psummit ssh root@$WB45N_ADDRESS fw_update --url $PUBLISH_BASE_URL/$JENKINS_JOB_NAME/$JENKINS_BUILD_NUMBER/fw.txt
-echo "Done"
+sshpass -psummit $SSH root@$WB45N_ADDRESS fw_update --url $PUBLISH_BASE_URL/$JENKINS_JOB_NAME/$JENKINS_BUILD_NUMBER/fw.txt
+
+echo "Wait 60 seconds for the reboot"
+sleep 60
+
+echo "Check that the upgrade worked"
+rel=`sshpass -psummit $SSH root@$WB45N_ADDRESS cat /etc/summit-release`
+echo "/etc/summit-release=$rel"
+if [ "$rel" = "Laird Linux jenkins-${JENKINS_JOB_NAME}-${JENKINS_BUILD_NUMBER}" ]; then
+    echo "Upgrade worked."
+    exit 0
+else
+    echo "Upgrade FAILED!"
+    exit 1
+fi
