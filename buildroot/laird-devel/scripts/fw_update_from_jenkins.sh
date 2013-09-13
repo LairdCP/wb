@@ -70,13 +70,3 @@ else
     exit 1
 fi
 
-# run the autosecurity script
-sshpass -psummit $SSH root@$WB45N_ADDRESS wireless stop
-sshpass -psummit $SCP -r $WS_DIR/buildroot/laird-devel/scripts/certs/* root@$WB45N_ADDRESS:/etc/ssl
-sshpass -psummit $SCP $WS_DIR/buildroot/laird-devel/scripts/wfaXX.conf root@$WB45N_ADDRESS:/etc/summit/profiles.conf
-sshpass -psummit $SCP $WS_DIR/buildroot/laird-devel/scripts/autosecurity.sh root@$WB45N_ADDRESS:/bin/
-sshpass -psummit $SSH root@$WB45N_ADDRESS <<EOF
-wireless start
-chmod a+x /bin/autosecurity.sh
-autosecurity.sh
-EOF
