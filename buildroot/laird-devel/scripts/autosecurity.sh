@@ -642,6 +642,12 @@ for COUNT in 19
 	
 	sdc_cli profile Default activate > /dev/null			
 }
+run_test() {
+	echo "Starting Test: $1"
+	"$1"
+	echo "Finished Test: $1"
+	echo
+}
 
 
 echo "Radio Mode:$RMODE" | tee -a results.txt
@@ -656,35 +662,35 @@ if [ "$RadioEnable" == "1" ]
 fi
 
 
-OPENWEPTEST
-SHAREDWEPTEST
-PSKTEST
-LEAPTEST
-FASTTEST
-MSCHAPTEST
-GTCTEST
-EAPTLSTEST
-PEAPTLSTEST
-EAPTTLSTEST
+run_test OPENWEPTEST
+run_test SHAREDWEPTEST
+run_test PSKTEST
+run_test LEAPTEST
+run_test FASTTEST
+run_test MSCHAPTEST
+run_test GTCTEST
+run_test EAPTLSTEST
+run_test PEAPTLSTEST
+run_test EAPTTLSTEST
 
 if [ `sdc_cli global show | grep CCX | awk -F' ' '{ print $3 }'` == "off" ]
 then
 	echo "CCX features are off, not testing..."
 else
-	CCKMTKIPFASTTEST
-	CCKMTKIPLEAPTEST
-	CCKMTKIPMSCHAPTEST
-	CCKMTKIPGTCTEST
-	CCKMTKIPEAPTLSTEST
-	CCKMTKIPPEAPTLSTEST
-	CCKMTKIPEAPTTLSTEST
-	CCKMAESFASTTEST
-	CCKMAESLEAPTEST
-	CCKMAESMSCHAPTEST
-	CCKMAESGTCTEST
-	CCKMAESEAPTLSTEST
-	CCKMAESPEAPTLSTEST
-	CCKMAESEAPTTLSTEST
+	run_test CCKMTKIPFASTTEST
+	run_test CCKMTKIPLEAPTEST
+	run_test CCKMTKIPMSCHAPTEST
+	run_test CCKMTKIPGTCTEST
+	run_test CCKMTKIPEAPTLSTEST
+	run_test CCKMTKIPPEAPTLSTEST
+	run_test CCKMTKIPEAPTTLSTEST
+	run_test CCKMAESFASTTEST
+	run_test CCKMAESLEAPTEST
+	run_test CCKMAESMSCHAPTEST
+	run_test CCKMAESGTCTEST
+	run_test CCKMAESEAPTLSTEST
+	run_test CCKMAESPEAPTLSTEST
+	run_test CCKMAESEAPTTLSTEST
 fi
 
 exit 0	
