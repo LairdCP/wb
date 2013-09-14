@@ -7,7 +7,7 @@ BRATE="0" 		#0-Auto,1,2,5.5,6,9,11,12,18,24,36,48,54
 PSAVE=off 		#off/fast/max
 TPOWER="0" 		#0-Max, 1,5,10,20,30,50
 RadioEnable="1" #0-off 1-on; this will enable the radio after config is done
-alias ip="ifconfig wlan0 | grep addr: |  awk '{ print $2 }' | cut -c21-32"
+alias ip="ifconfig wlan0 | grep 'inet addr:' | awk -F: '{print $2}' | awk '{print $1}'"
 alias link='echo `iw dev wlan0 link`'
 
 IPCHECK(){			
