@@ -43,11 +43,12 @@ define SDCSDK_INSTALL_STAGING_CMDS
     cd  $(STAGING_DIR)/usr/lib/ && ln -s liblrd_platspec.so.1 liblrd_platspec.so
 	cd  $(STAGING_DIR)/usr/lib/ && ln -s libsdc_sdk.so.1.0 libsdc_sdk.so.1
     cd  $(STAGING_DIR)/usr/lib/ && ln -s libsdc_sdk.so.1 libsdc_sdk.so
-	$(INSTALL) -D -m 0755 $(@D)/include/sdc_sdk.h \
-                          $(@D)/include/sdc_events.h \
-						  $(@D)/include/lrd_platspec.h \
-                          $(@D)/include/config_strings.h \
-                          $(STAGING_DIR)/usr/include/
+	$(INSTALL) -D -m 0755 $(@D)/src/sdc_sdk.h \
+              $(@D)/src/sdc_events.h \
+			  $(@D)/src/linux/include/lrd_platspec.h \
+			  $(@D)/src/linux/include/linux_perm_stor.h \
+			  $(@D)/src/config_strings.h \
+              $(STAGING_DIR)/usr/include/
 endef
 
 define SDCSDK_INSTALL_TARGET_CMDS
