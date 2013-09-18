@@ -16,6 +16,7 @@ endef
 define MSD45N_BINARIES_INSTALL_TARGET_CMDS
     mkdir -p $(TARGET_DIR)/usr/bin
     $(INSTALL) -D -m 755 $(@D)/usr/bin/sdc_cli $(TARGET_DIR)/usr/bin/sdc_cli
+	$(INSTALL) -D -m 755 $(@D)/usr/sbin/smu_cli $(TARGET_DIR)/usr/sbin/smu_cli
     $(INSTALL) -D -m 755 $(@D)/usr/bin/sdcsupp $(TARGET_DIR)/usr/bin/sdcsupp
 	$(INSTALL) -D -m 755 $(@D)/usr/bin/athtestcmd $(TARGET_DIR)/usr/bin/athtestcmd
     mkdir -p $(TARGET_DIR)/usr/lib

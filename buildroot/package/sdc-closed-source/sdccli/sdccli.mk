@@ -27,10 +27,12 @@ endef
 
 define SDCCLI_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 755 $(@D)/bin/sdc_cli $(TARGET_DIR)/usr/bin/sdc_cli
+	$(INSTALL) -D -m 755 $(@D)/bin/smu_cli $(TARGET_DIR)/usr/sbin/smu_cli
 endef
 
 define SDCCLI_UNINSTALL_TARGET_CMDS
 	rm -f $(TARGET_DIR)/usr/bin/sdc_cli
+	rm -f $(TARGET_DIR)/usr/sbin/smu_cli
 endef
 
 $(eval $(generic-package))
