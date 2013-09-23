@@ -34,7 +34,7 @@ IPCHECK(){
 		echo "$TEST: Wfa$COUNT did not recieve a IP address"
 		exit 1
 	else
-		echo "Recieved IP address:`ip`"
+		echo "Received IP address:`ip`"
 		echo "Downloading the test file" 
 		wget --bind-address=10.1.44.171 -O /tmp/test.file      http://10.1.44.227/scratch/test.file
 		wget --bind-address=10.1.44.171 -O /tmp/test.file.sha1 http://10.1.44.227/scratch/test.file.sha1
