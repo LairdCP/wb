@@ -1,3 +1,5 @@
-menu "Carefusion"
-source "board/sdc/customers/carefusion/ncm-package/Config.in"
-endmenu
+config BR2_PACKAGE_NCM
+	bool "NCM"
+	help
+	  NCM
+
