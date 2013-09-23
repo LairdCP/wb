@@ -1,1 +1,1 @@
-source "board/sdc/customers/carefusion/Config.in"
+source "package/ncm/Config.in"
