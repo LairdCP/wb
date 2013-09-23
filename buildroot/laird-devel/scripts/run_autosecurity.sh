@@ -14,5 +14,5 @@ sshpass -psummit $SCP buildroot/laird-devel/scripts/autosecurity.sh root@$WB45N_
 sshpass -psummit $SSH root@$WB45N_ADDRESS <<EOF
 ifrc wlan0 start
 chmod a+x /bin/autosecurity.sh
-autosecurity.sh
+/bin/autosecurity.sh
 EOF
