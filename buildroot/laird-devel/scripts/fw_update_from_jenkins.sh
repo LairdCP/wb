@@ -13,7 +13,7 @@
 : ${PUBLISH_BASE_URL:=http://10.1.44.227/scratch/autotest}
 
 # per wb45n board variables
-: ${WB45N_ADDRESS:=10.1.44.161}
+: ${BOARD_IP_ADDRESS:=10.1.44.161}
 
 # buildroot target name
 : ${BUILDROOT_TARGET_NAME:=wb45n_devel}
@@ -49,19 +49,19 @@ done
 cat fw.txt
 
 echo "Check that u-boot has: jenkins_update=yes"
-if [ "`sshpass -psummit $SSH root@$WB45N_ADDRESS fw_printenv jenkins_update`" != 'jenkins_update=yes' ]; then
+if [ "`sshpass -psummit $SSH root@$BOARD_IP_ADDRESS fw_printenv jenkins_update`" != 'jenkins_update=yes' ]; then
     echo "ERROR: u-boot var jenkins_update doesnt exist or doesnt contain yes"
     exit 1
 fi
 
 echo "Start the upgrade process"
-sshpass -psummit $SSH root@$WB45N_ADDRESS fw_update --url $PUBLISH_BASE_URL/$JENKINS_JOB_NAME/$JENKINS_BUILD_NUMBER/fw.txt
+sshpass -psummit $SSH root@$BOARD_IP_ADDRESS fw_update --url $PUBLISH_BASE_URL/$JENKINS_JOB_NAME/$JENKINS_BUILD_NUMBER/fw.txt
 
 echo "Wait 60 seconds for the reboot"
 sleep 60
 
 echo "Check that the upgrade worked"
-rel=`sshpass -psummit $SSH root@$WB45N_ADDRESS cat /etc/summit-release`
+rel=`sshpass -psummit $SSH root@$BOARD_IP_ADDRESS cat /etc/summit-release`
 echo "/etc/summit-release=$rel"
 if [ "$rel" = "Laird Linux jenkins-${JENKINS_JOB_NAME}-${JENKINS_BUILD_NUMBER}" ]; then
     echo "Upgrade worked."
