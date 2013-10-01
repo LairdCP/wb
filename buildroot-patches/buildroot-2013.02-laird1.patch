@@ -136,6 +136,50 @@ diff -Naur old/package/busybox/busybox-networking-ifplugd-iface-err.patch new/pa
 +;
 +; Allow script notification of a disappeared iface, so can take action.
 +;
+diff -Naur old/package/busybox/busybox-networking-ifplugd-nl-buf8k.patch new/package/busybox/busybox-networking-ifplugd-nl-buf8k.patch
+--- old/package/busybox/busybox-networking-ifplugd-nl-buf8k.patch	1969-12-31 18:00:00.000000000 -0600
++++ new/package/busybox/busybox-networking-ifplugd-nl-buf8k.patch	2013-09-27 13:51:27.726892193 -0500
+@@ -0,0 +1,40 @@
++--- busybox-1.21.1/networking/ifplugd.c	2013-06-29 09:58:06.000000000 -0500
+++++ busybox-1.21.1/networking/ifplugd.c	2013-09-27 12:37:11.000000000 -0500
++@@ -451,17 +451,25 @@
++ static NOINLINE int check_existence_through_netlink(void)
++ {
++ 	int iface_len;
++-	char replybuf[1024];
+++	/*
+++	 * Messages in/aft linux-3.8 can exceed 1K buffer size, so increased to 8K.
+++	 * netlink.h: "limit to 8K to avoid MSG_TRUNC when PAGE_SIZE is very large".
+++	 *            int BUF_SIZE = MIN(sysconf(_SC_PAGESIZE), 8192);
+++	 * Note:
+++	 * No need to free replybuf on recv error.
+++	 */
+++	enum { BUF_SIZE = 8 * 1024 };
+++	char *replybuf = xmalloc(BUF_SIZE);
++ 
++ 	iface_len = strlen(G.iface);
++ 	while (1) {
++ 		struct nlmsghdr *mhdr;
++ 		ssize_t bytes;
++ 
++-		bytes = recv(netlink_fd, &replybuf, sizeof(replybuf), MSG_DONTWAIT);
+++		bytes = recv(netlink_fd, replybuf, BUF_SIZE, MSG_DONTWAIT);
++ 		if (bytes < 0) {
++ 			if (errno == EAGAIN)
++-				return G.iface_exists;
+++				goto ret;
++ 			if (errno == EINTR)
++ 				continue;
++ 
++@@ -507,6 +515,8 @@
++ 		}
++ 	}
++ 
+++ ret:
+++	free(replybuf);
++ 	return G.iface_exists;
++ }
++ 
 diff -Naur old/package/Config.in new/package/Config.in
 --- old/package/Config.in	2013-04-22 23:49:35.121440173 +0100
 +++ new/package/Config.in	2013-04-22 21:36:40.000000000 +0100
@@ -353,8 +397,8 @@ diff -Naur old/package/openssh/openssh.mk new/package/openssh/openssh.mk
  OPENSSH_POST_INSTALL_TARGET_HOOKS += OPENSSH_INSTALL_INITSCRIPT
 diff -Naur old/package/openssh/S50sshd new/package/openssh/S50sshd
 --- old/package/openssh/S50sshd	2013-04-22 23:49:34.941440166 +0100
-+++ new/package/openssh/S50sshd	2013-05-09 10:42:23.153760797 -0500
-@@ -1,72 +1,76 @@
++++ new/package/openssh/S50sshd	2013-09-17 07:07:08.000000000 -0500
+@@ -1,72 +1,95 @@
  #!/bin/sh
 -#
 -# sshd        Starts sshd.
@@ -399,41 +443,57 @@ diff -Naur old/package/openssh/S50sshd new/package/openssh/S50sshd
 +  echo "Checking sshd configuration..."
 +  
 +  # Make sure the ssh-keygen progam exists
-+  [ -f /usr/bin/ssh-keygen ] || { echo "  ...missing ssh-keygen"; exit 1; }
++  [ -x /usr/bin/ssh-keygen ] || { echo "  ...missing ssh-keygen"; exit 1; }
 +
 +  # Check that the sshd_config file exists
 +  [ -f /etc/ssh/sshd_config ] || { echo "  ...missing sshd_config"; exit 1; }
 +
 +  # See if need to generate the SSH1 RSA key
-+  if [ ! -f /etc/ssh/ssh_host_key ] \
++  if [ ! -s /etc/ssh/ssh_host_key ] \
 +  && grep -q "^HostKey.*host_key" /etc/ssh/sshd_config
 +  then
 +    echo Generating RSA Key...
-+    /usr/bin/ssh-keygen -t rsa1 -f /etc/ssh/ssh_host_key -C '' -N ''
++    /usr/bin/ssh-keygen -t rsa1 -f /etc/ssh/ssh_host_key~ -C '' -N '' \
++    && {
++      mv -f /etc/ssh/ssh_host_key~.pub /etc/ssh/ssh_host_key.pub
++      mv -f /etc/ssh/ssh_host_key~ /etc/ssh/ssh_host_key
++    }
 +  fi
 +
 +  # See if need to generate the SSH2 RSA key
-+  if [ ! -f /etc/ssh/ssh_host_rsa_key ] \
++  if [ ! -s /etc/ssh/ssh_host_rsa_key ] \
 +  && grep -q "^HostKey.*host_rsa_key" /etc/ssh/sshd_config
 +  then
 +    echo Generating RSA Key...
-+    /usr/bin/ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -C '' -N ''
++    /usr/bin/ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key~ -C '' -N '' \
++    && {
++      mv -f /etc/ssh/ssh_host_rsa_key~.pub /etc/ssh/ssh_host_rsa_key.pub
++      mv -f /etc/ssh/ssh_host_rsa_key~ /etc/ssh/ssh_host_rsa_key
++    }
 +  fi
 +
 +  # See if need to generate the SSH2 DSA key
-+  if [ ! -f /etc/ssh/ssh_host_dsa_key ] \
++  if [ ! -s /etc/ssh/ssh_host_dsa_key ] \
 +  && grep -q "^HostKey.*host_dsa_key" /etc/ssh/sshd_config
 +  then
 +    echo Generating DSA Key... \(may take awhile\)
-+    /usr/bin/ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key -C '' -N ''
++    /usr/bin/ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key~ -C '' -N '' \
++    && {
++      mv -f /etc/ssh/ssh_host_dsa_key~.pub /etc/ssh/ssh_host_dsa_key.pub
++      mv -f /etc/ssh/ssh_host_dsa_key~ /etc/ssh/ssh_host_dsa_key
++    }
 +  fi
 +
 +  # See if need to generate the SSH2 ECDSA key
-+  if [ ! -f /etc/ssh/ssh_host_ecdsa_key ] \
++  if [ ! -s /etc/ssh/ssh_host_ecdsa_key ] \
 +  && grep -q "^HostKey.*host_ecdsa_key" /etc/ssh/sshd_config
 +  then
 +    echo Generating ECDSA Key... \(may take awhile\)
-+    /usr/bin/ssh-keygen -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -C '' -N ''
++    /usr/bin/ssh-keygen -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key~ -C '' -N '' \
++    && {
++      mv -f /etc/ssh/ssh_host_ecdsa_key~.pub /etc/ssh/ssh_host_ecdsa_key.pub
++      mv -f /etc/ssh/ssh_host_ecdsa_key~ /etc/ssh/ssh_host_ecdsa_key
++    }
 +  fi
 +}                
  
@@ -461,6 +521,9 @@ diff -Naur old/package/openssh/S50sshd new/package/openssh/S50sshd
 -	;;
 +  check)
 +    # inetd pre-check support
++    # Ror each enabled key type in config, the respective keyfile is checked to
++    # exist and be greater than zero size. The key pair are regenerated w/temp
++    # names and upon completion, renamed to respective names.
 +    check_configuration
 +    ;;
    stop)

@@ -1,4 +1,4 @@
-menu "Laird (SDC) Properties"
+menu "Laird"
 
     choice
         prompt "Board"

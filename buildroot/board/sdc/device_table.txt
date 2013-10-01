@@ -12,5 +12,6 @@
 /bin/busybox				f	4755	0	0	-	-	-	-	-
 /etc/shadow				f	600	0	0	-	-	-	-	-
 /etc/passwd				f	644	0	0	-	-	-	-	-
+/root					d	0700	0	0	-	-	-
 /home/default				d	2755	1000	1000	-	-	-	-	-
 /home/summit				d	2755	1001	1001	-	-	-	-	-

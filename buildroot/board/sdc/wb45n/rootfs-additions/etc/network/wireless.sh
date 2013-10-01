@@ -33,9 +33,10 @@ wifi_config()
 
   # check global profile:  fips-mode <off|on>
   fm=$( ${SDC_CLI:-:} global show fips-mode 2>/dev/null )
+  fm=${fm##*: }
   
   # cmdline may override, otherwise not-enabled
-  case "${fm:0:6}" in
+  case ${fm:0:6} in
     enable|yes|on|-F) fips=fips; WIFI_FIPS=-F;;
     disabl|no|off) fips=; WIFI_FIPS=;;
   esac

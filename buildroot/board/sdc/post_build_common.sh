@@ -18,10 +18,10 @@ set -x -e
 # disable 3.8* ipv6 module to kernel space corruption - temporary
 # pv6-/-netlink conflict
 # bluetooth init conflict
-for p in $TARGETDIR/lib/modules/3.8*/kernel/net/ipv6
-do
-  [ -f $p/ipv6.ko ] && ( cd $p && mv -- ipv6.ko -ipv6.ko )
-done
+#for p in $TARGETDIR/lib/modules/3.8*/kernel/net/ipv6
+#do
+#  [ -f $p/ipv6.ko ] && ( cd $p && mv -- ipv6.ko -ipv6.ko )
+#done
 
 # remove default ssh init file
 # real version is in init.d/opt and works w/ inetd or standalone
@@ -33,6 +33,14 @@ rm -f $TARGETDIR/etc/init.d/S50lighttpd
 # remove bash cruft
 rm -fr $TARGETDIR/etc/bash*
 rm -f $TARGETDIR/root/.bash*
+rm -f $TARGETDIR/sbin/rtpr
+rm -f $TARGETDIR/usr/share/getopt/getopt-parse.bash
+
+# remove perl cruft
+rm -f $TARGETDIR/etc/ssl/misc/tsget
+rm -f $TARGETDIR/etc/ssl/misc/CA.pl
+rm -f $TARGETDIR/usr/bin/pcf2vpnc
+rm -f $TARGETDIR/usr/bin/chkdupexe
 
 # remove debian cruft
 rm -fr $TARGETDIR/etc/network/if-*
@@ -45,7 +53,7 @@ rm -f $TARGETDIR/etc/init.d/rcK
 
 # Copy the rootfs-additions-common in place first.
 # If necessary, these can be overwritten by the product specific rootfs-additions.
-tar c --exclude=.svn -C board/sdc/rootfs-additions-common/ . | tar x -C $TARGETDIR/
+tar c --exclude=.svn --exclude=.empty -C board/sdc/rootfs-additions-common/ . | tar x -C $TARGETDIR/
 
 # install libnl*.so.3 links
 ( cd "$TARGETDIR/usr/lib" \

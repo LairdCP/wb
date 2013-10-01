@@ -3,18 +3,26 @@
 
 #WIFI_MACADDR=/etc/summit/wifi_interface
 
+bt_awaitinterface() {
+  # arg1 is timeout (10*mSec) to await availability of ahb_dev: hci0
+  ahb_dev='ahb.0/600000.ohci/usb1/1-2/1-2:1.0/bluetooth'
+  let x=0
+  while [ $x -lt $1 ]
+  do
+    grep -qs btusb /sys/devices/$ahb_dev/hci0/device/uevent \
+    && grep -qs live /sys/module/bnep/initstate \
+    && break
+    ##
+    usleep 10000 && let x++
+  done
+  let wx=10*x && echo "  waited ${wx}ms for bt"
+  [ $x -lt $1 ] && return 0 || return 1
+}
 
 bt_start() {
   echo "Enabling Bluetooth..."
 
-  # load BT kernel modules
-  modprobe ohci-hcd
-  modprobe btusb
-  modprobe hidp
-  modprobe rfcomm
-  modprobe bnep
-
-  ### developmental/testing...
+  # kernel module support for bt:
    # bnep
    # rfcomm
    # btusb
@@ -23,7 +31,24 @@ bt_start() {
    # hidp
    #  hid - hidp
    #
+  # load BT kernel modules
+  modprobe ohci-hcd
+  modprobe btusb
+  modprobe hidp
+  modprobe rfcomm
+  modprobe bnep
+
+  # Sleep is necessary so that above modules init and create the device
+  #   Without it we'll get the error "Can't init device hci0: Connection timed out (110)"
+  #   Bug #4520
+  #sleep 2
   
+  # wait up to 2s (200*10ms)
+  # only minimally checking for hci0 to exist
+  # bluez/tools/hciconfig has other timed checks
+  bt_awaitinterface 200
+  
+  # Now configure the bt
   hciconfig hci0 reset
   
   # get BT config values
