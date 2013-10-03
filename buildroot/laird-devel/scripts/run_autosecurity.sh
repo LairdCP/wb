@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # per wb45n board variables
-: ${BOARD_IP_ADDRESS:=10.1.44.161}
+: ${BOARD_IP_ADDRESS:=10.1.40.221}
 
 SSH="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 SCP="scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
