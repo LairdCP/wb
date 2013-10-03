@@ -36,8 +36,8 @@ IPCHECK(){
 	else
 		echo "Received IP address:`ip`"
 		echo "Downloading the test file" 
-		wget --bind-address=10.1.44.171 -O /tmp/test.file      http://10.1.44.227/scratch/test.file
-		wget --bind-address=10.1.44.171 -O /tmp/test.file.sha1 http://10.1.44.227/scratch/test.file.sha1
+		wget --bind-address=10.1.44.171 -O /tmp/test.file      http://10.1.40.199/scratch/test.file
+		wget --bind-address=10.1.44.171 -O /tmp/test.file.sha1 http://10.1.40.199/scratch/test.file.sha1
 		(cd /tmp && sha1sum test.file > /tmp/test.file.sha1_)
 		rm /tmp/test.file
 		diff /tmp/test.file.sha1 /tmp/test.file.sha1_ || exit 1
