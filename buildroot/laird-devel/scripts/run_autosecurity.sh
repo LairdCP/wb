@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -x
+
 # per wb45n board variables
 : ${BOARD_IP_ADDRESS:=10.1.40.221}
 
