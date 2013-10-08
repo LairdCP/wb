@@ -1,7 +1,5 @@
 #PROFILE VARIABLES
 
-: ${BIND_IP_ADDRESS:=10.1.44.171}
-
 set -e -x
 
 RMODE=ABG 		#B,BG,G,A,ABG,BGA
@@ -38,8 +36,8 @@ IPCHECK(){
 	else
 		echo "Received IP address:`getip`"
 		echo "Downloading the test file" 
-		wget --bind-address=$BIND_IP_ADDRESS -O /tmp/test.file      http://10.1.40.199/scratch/test.file
-		wget --bind-address=$BIND_IP_ADDRESS -O /tmp/test.file.sha1 http://10.1.40.199/scratch/test.file.sha1
+		wget --bind-address=`getip` -O /tmp/test.file      http://10.1.40.199/scratch/test.file
+		wget --bind-address=`getip` -O /tmp/test.file.sha1 http://10.1.40.199/scratch/test.file.sha1
 		(cd /tmp && sha1sum test.file > /tmp/test.file.sha1_)
 		rm /tmp/test.file
 		diff /tmp/test.file.sha1 /tmp/test.file.sha1_ || exit 1
