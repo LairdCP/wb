@@ -6,7 +6,7 @@ LAIRD_DL_DIR := archive
 ifdef BUILDROOT_DL_DIR
 LAIRD_DL_DIR := $(BUILDROOT_DL_DIR)
 LAIRD_ARCHIVES := archive/AT91Bootstrap-v3.4.4.tar.xz \
-                  archive/msd45n-laird_fips-3.4.0.6.tar.bz2 \
+                  archive/msd45n-laird_fips-3.4.0.8.tar.bz2 \
                   archive/openssl-fips-2.0.5.tar.gz
 endif
 
@@ -83,7 +83,8 @@ cleanall:
                     -exec rm -rf "{}" ";"
 	find buildroot/package buildroot/board  -mindepth 1 -maxdepth 1 \
                 -not -name sdc -not -name sdc-closed-source -not -name sdc-devel \
-                -not -name '.svn' -not -name .git \
+                -not -name ncm \
+		-not -name '.svn' -not -name .git \
                 -exec rm -rf "{}" ";"
 	rm -f unpack.stamp
 

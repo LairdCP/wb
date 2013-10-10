@@ -26,6 +26,6 @@ menu "Laird"
     menu "Customers"
         source "board/sdc/customers/Config.in"
     endmenu
-
+	
 endmenu
 

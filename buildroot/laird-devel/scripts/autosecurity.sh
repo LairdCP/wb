@@ -34,7 +34,7 @@ IPCHECK(){
 		echo "$TEST: Wfa$COUNT did not recieve a IP address"
 		exit 1
 	else
-		echo "Recieved IP address:`ip`"
+		echo "Received IP address:`ip`"
 		echo "Downloading the test file" 
 		wget --bind-address=10.1.44.171 -O /tmp/test.file      http://10.1.44.227/scratch/test.file
 		wget --bind-address=10.1.44.171 -O /tmp/test.file.sha1 http://10.1.44.227/scratch/test.file.sha1
@@ -207,9 +207,9 @@ for COUNT in 4 8 10 12 14
 		sdc_cli profile wfa$COUNT set txpower $TPOWER > /dev/null
 		sdc_cli profile wfa$COUNT set eaptype eap-tls > /dev/null
 		sdc_cli profile wfa$COUNT set user user1 > /dev/null
-		sdc_cli profile wfa$COUNT set usercert_password user1 > /dev/null
 		sdc_cli profile wfa$COUNT set usercert user1.pfx > /dev/null
 		sdc_cli profile wfa$COUNT set cacert AkronCA.cer > /dev/null
+		sdc_cli profile wfa$COUNT set usercert_password user1 > /dev/null
 		sdc_cli profile wfa$COUNT activate > /dev/null
 		if [ "$RadioEnable" == "1" ]
 			then
@@ -231,9 +231,9 @@ for COUNT in 4 8 10 12 14
 		sdc_cli profile wfa$COUNT set txpower $TPOWER > /dev/null
 		sdc_cli profile wfa$COUNT set eaptype peap-tls > /dev/null
 		sdc_cli profile wfa$COUNT set user user1 > /dev/null
-		sdc_cli profile wfa$COUNT set usercert_password user1 > /dev/null
 		sdc_cli profile wfa$COUNT set usercert user1.pfx > /dev/null
 		sdc_cli profile wfa$COUNT set cacert AkronCA.cer > /dev/null
+		sdc_cli profile wfa$COUNT set usercert_password user1 > /dev/null
 		sdc_cli profile wfa$COUNT activate > /dev/null
 		if [ "$RadioEnable" == "1" ]
 			then
@@ -387,9 +387,9 @@ for COUNT in 8
 		sdc_cli profile wfa$COUNT set weptype cckm-tkip > /dev/null
 		sdc_cli profile wfa$COUNT set eaptype eap-tls > /dev/null
 		sdc_cli profile wfa$COUNT set user user1 > /dev/null
-		sdc_cli profile wfa$COUNT set usercert_password user1 > /dev/null
 		sdc_cli profile wfa$COUNT set usercert user1.pfx > /dev/null
 		sdc_cli profile wfa$COUNT set cacert AkronCA.cer > /dev/null
+		sdc_cli profile wfa$COUNT set usercert_password user1 > /dev/null
 		sdc_cli profile wfa$COUNT activate > /dev/null
 		if [ "$RadioEnable" == "1" ]
 			then
@@ -414,9 +414,9 @@ for COUNT in 8
 		sdc_cli profile wfa$COUNT set weptype cckm-tkip > /dev/null
 		sdc_cli profile wfa$COUNT set eaptype peap-tls > /dev/null
 		sdc_cli profile wfa$COUNT set user user1 > /dev/null
-		sdc_cli profile wfa$COUNT set usercert_password user1 > /dev/null
 		sdc_cli profile wfa$COUNT set usercert user1.pfx > /dev/null
 		sdc_cli profile wfa$COUNT set cacert AkronCA.cer > /dev/null
+		sdc_cli profile wfa$COUNT set usercert_password user1 > /dev/null
 		sdc_cli profile wfa$COUNT activate > /dev/null
 		if [ "$RadioEnable" == "1" ]
 			then
@@ -574,9 +574,9 @@ for COUNT in 10
 		sdc_cli profile wfa$COUNT set weptype cckm-aes > /dev/null
 		sdc_cli profile wfa$COUNT set eaptype eap-tls > /dev/null
 		sdc_cli profile wfa$COUNT set user user1 > /dev/null
-		sdc_cli profile wfa$COUNT set usercert_password user1 > /dev/null
 		sdc_cli profile wfa$COUNT set usercert user1.pfx > /dev/null
 		sdc_cli profile wfa$COUNT set cacert AkronCA.cer > /dev/null
+		sdc_cli profile wfa$COUNT set usercert_password user1 > /dev/null
 		sdc_cli profile wfa$COUNT activate > /dev/null
 		if [ "$RadioEnable" == "1" ]
 			then
@@ -601,9 +601,9 @@ for COUNT in 10
 		sdc_cli profile wfa$COUNT set weptype cckm-aes > /dev/null
 		sdc_cli profile wfa$COUNT set eaptype peap-tls > /dev/null
 		sdc_cli profile wfa$COUNT set user user1 > /dev/null
-		sdc_cli profile wfa$COUNT set usercert_password user1 > /dev/null
 		sdc_cli profile wfa$COUNT set usercert user1.pfx > /dev/null
 		sdc_cli profile wfa$COUNT set cacert AkronCA.cer > /dev/null
+		sdc_cli profile wfa$COUNT set usercert_password user1 > /dev/null
 		sdc_cli profile wfa$COUNT activate > /dev/null
 		if [ "$RadioEnable" == "1" ]
 			then
