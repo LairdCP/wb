@@ -94,7 +94,7 @@ legal-info-wb45n:
 legal-info-wb40n:
 	$(MAKE) -C buildroot O=output/wb40n legal-info	
 
-legal-info: legal-info-wb40n: legal-info-wb45n:
+legal-info: legal-info-wb40n legal-info-wb45n
 	
 .PHONY: default all unpack clean cleanall clean-wb40n clean-wb45n wb40n wb45n \
         source source-wb40n source-wb45n clean-sdc-pkg clean-wb40n-sdc-pkg clean-wb45n-sdc-pkg welch_allyn carefusion
