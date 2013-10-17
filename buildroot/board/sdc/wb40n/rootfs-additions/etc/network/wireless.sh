@@ -31,14 +31,12 @@ wifi_config()
   [ ! -s "$WIFI_PROFILES" -a -x "$SDC_CLI" ] \
   && { msg re-generating $WIFI_PROFILES; rm -f $WIFI_PROFILES; $SDC_CLI quit; }
 
-  # determine firmware to use; assume non-ccx
+  # determine firmware to use; assume (off) non-ccx
   ccx=$( ${SDC_CLI:-:} global show ccx-features )
-  if [ "${ccx##*: }" == "on" ]
-  then
-    WIFI_FW=$WIFI_FWPATH/fw-ccx
-  else
-    WIFI_FW=$WIFI_FWPATH/fw
-  fi
+  case ${ccx##*: } in
+    optimized|full|on) WIFI_FW=$WIFI_FWPATH/fw-ccx ;;
+    off|*) WIFI_FW=$WIFI_FWPATH/fw ;;
+  esac
 
   # set method of loading firmware and nvram
   if [ "${WIFI_USE_DHD_TO_LOAD_FW:0:1}" != "y" ]
@@ -55,31 +53,6 @@ msg()
   [ -n "$rcS_" ] && echo "$@" >>$rcS_log || echo "$@"
 }
 
-wifi_waitforlink()
-{
-  # arg1 is timeout (Sec) to obtain association/link
-  { set +x; } 2>/dev/null
-  msg -en "checking for association ($1s)\n  "
-  let cn=0
-  while [ $cn -lt $1 ]
-  do
-    { read -r link </sys/class/net/$WIFI_DEV/wireless/link; } 2>/dev/null
-    let $link+0 && break || sleep 1
-    cn_='\033[1K\r'
-    let cn+=1 && msg -en .
-    let sn=$cn%11
-    if [ $sn -eq 0 ]
-    then
-      let pid=$( grep -s ^ $supp_sd/*.pid )+0 && [ -d /proc/$pid ] \
-      || { msg "supplicant not running, aborted"; return 1; }
-    fi
-  done
-  #
-  [ $cn -lt $1 ] \
-  && { msg -e "${cn_}  ...associated:  time_${cn}s  link_${link##* }"; return 0; } \
-  || { msg -e "${cn_}  ...failed to associate in ${cn}s"; return 1; }
-}
-
 wifi_awaitinterface()
 {
   # arg1 is timeout (10*mSec) to await availability
@@ -89,7 +62,6 @@ wifi_awaitinterface()
     grep -q "${WIFI_DEV:-xx}" /proc/net/dev && break
     $usleep 10000 && { let x+=1; msg -en .; }
   done
-  #[ $x -gt 0 ] && msg
   [ $x -lt $1 ] && return 0 || return 1
 }
 
@@ -113,7 +85,7 @@ wifi_start()
 {
   if grep -q "${module/.ko/}" /proc/modules
   then
-    wifi_queryinterface
+    wifi_queryinterface || exit 1
   else
     ## check for 'slot_b=' setting in kernel args
     grep -o 'slot_b=.' /proc/cmdline \
@@ -211,6 +183,7 @@ wifi_stop()
       msg -en "supplicant terminating"
       while [ -d /proc/$pid ] && let n--; do $usleep 50000; msg -en .; done; msg
     fi
+    [ -n "${1}" -a -z "${1/*supp*/}" ] && return $?
 
     ## down the interface
     # This step avoids occasional problems when the driver is unloaded
@@ -240,29 +213,26 @@ case $1 in
 esac
 #[ -z "${WIFI_DEBUG:1}" ] && WIFI_DEBUG= || echo 6 >/proc/sys/kernel/printk
 
-# optionally, wait on this script for a link
-[ "$2" == "wait" ] && wfl=true || wfl=false
-
 supp_sd=/tmp/wpa_supplicant
 module=${WIFI_MODULE##*/}
 usleep='busybox usleep'
 
 # command
 case $1 in
-  
+
   stop|down)
     wifi_queryinterface
-    echo \ \ Stopping wireless $WIFI_DEV
-    wifi_stop
+    echo \ \ Stopping wireless $WIFI_DEV $2
+    wifi_stop $2
     ;;
 
   start|up)
     echo \ \ Starting wireless
-    wifi_config && wifi_start && $wfl && wifi_waitforlink 60
+    wifi_config && wifi_start $2
     ;;
 
   restart)
-    $0 stop && exec $0 $WIFI_DEBUG start $2
+    $0 stop $2 && exec $0 $WIFI_DEBUG start $2
     ;;
 
   ''|status)
@@ -273,6 +243,7 @@ case $1 in
 
     echo -e "\nProcesses related for $WIFI_DRIVER and supplicant:"
     top -bn1 \
+    |sed 's/\(^....[^ ]\ \+[^ ]\+\ \)\+[^ ]\+\ \+\(.*\)/\1\2/' \
     |sed -n '/sed/d;4H;/'"${SDC_SUPP##*/}"'/H;/'"${module%%_*}"'/{H;x;p;}' \
     |uniq |grep . || echo "  ..."
 
@@ -286,14 +257,13 @@ case $1 in
     fi
     echo
     ;;
-    
+
   \?|-h|--help)
     echo "$0"
     echo "  ...stop/start/restart the '$WIFI_PREFIX#' interface"
     echo "Manages the '$WIFI_DRIVER' wireless device driver: $module"
     echo
     echo "AP association is governed by the 'sdc_cli' and an active profile."
-    echo "External calls can wait on association, by adding option 'wait'."
     echo
     [ "settings" == "$2" ] && grep "^WIFI_[A-Z]*=" $0 && echo
     echo "Flags:  (passed to supplicant)"
@@ -301,7 +271,7 @@ case $1 in
     echo "  -d  debug verbosity (-dd even more)"
     echo
     echo "Usage:"
-    echo "# ${0##*/} [-tdddd] {stop|start|restart|status} [wait]"
+    echo "# ${0##*/} [-tdddd] {stop|start|restart|status} [supp]"
     ;;
 
   *)

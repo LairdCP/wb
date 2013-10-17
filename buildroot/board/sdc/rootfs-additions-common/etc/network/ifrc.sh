@@ -41,7 +41,7 @@ usage() {
 	Method:
 	  dhcp [<param=value> ...]
 	     - employ client to get/renew lease, info stored in leases file
-	       address=x.x.x.x   - request an (ip) address from dhcp server
+	       requestip=x.x.x.x   - request an address (rip) from dhcp server
 	       timeout=nn   - seconds to allow client to try/await response
 	       $mii_speed
 
@@ -77,7 +77,7 @@ msg() {
 }
 
 # internals
-ifrc_Version=20130717
+ifrc_Version=20130919
 ifrc_Disable=/etc/default/ifrc.disable
 ifrc_Script=/etc/network/ifrc.sh
 ifrc_Lfp=/var/log/ifrc
@@ -881,7 +881,7 @@ ifrc_validate_dhcp_method_params() {
     echo $x |grep -q "[iatpfc][a-z]*=[0-9].*" \
     || { msg2 "ignoring invalid extra parameter: $x"; continue; }
     case $x in
-      ip=*|address=*) ## specify ip to request from server
+      rip=*|requestip=*) ## specify ip to request from server (if supported)
         rip=${x##*=}
         ;;
       to=*|timeout=*) ## specify a minimum timeout of 4s
