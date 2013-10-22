@@ -9,7 +9,7 @@ set -x -e
 
 # cleanup
 rm -f  -- $TARGETDIR/lib64 $TARGETDIR/usr/lib64
-rm -rf -- $TARGETDIR/var $TARGETDIR/etc
+rm -rf -- $TARGETDIR/var
 rm -rf -- $TARGETDIR/usr/share
 rm -rf -- $TARGETDIR/usr/sbin/nl* $TARGETDIR/usr/sbin/genl*
 rm -f  -- $TARGETDIR/sbin/regdbdump
@@ -27,6 +27,11 @@ rm -f  -- $TARGETDIR/lib/libcrypt[.-]*so*
 rm -f  -- $TARGETDIR/lib/librt[.-]*so*
 rm -f  -- $TARGETDIR/lib/libutil[.-]*so*
 rm -f  -- $TARGETDIR/lib/libgcc_s[.-]*so*
+
+# cleanup all of /etc except for the summit directory
+find $TARGETDIR/etc -mindepth 1 -maxdepth 1 \
+                    -not -name summit \
+                    -exec rm -rf "{}" ";"
 
 # create missing symbolic link
 # TODO: shouldn't have to do this here, temporary workaround
