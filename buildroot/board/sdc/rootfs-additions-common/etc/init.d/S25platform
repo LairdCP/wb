@@ -17,14 +17,14 @@ do_platform_bootfile_option() {
 	## $1 - sourced by dhcp configuration script
 	## if fw_update not-running and bootfile-flag then begin remote update
 	## requested bootfile option should contain url-to-firmware-md5sums-ls
-	if [ -n "$bootfile" ]
+	if [ -n "\$bootfile" ]
 	then
 	  if ps |grep -q -v "[ ].*update" \
 	  && [ -f /tmp/bootfile_ ]
 	  then
 	    rm -f /tmp/bootfile_
 	    fw_update -- 2>/dev/null \
-	    && ( fw_update --url $bootfile 2>&1 \
+	    && ( fw_update --url \$bootfile 2>&1 \
 	        |tee /var/log/update.log >/dev/console )&
 	  fi
 	fi
@@ -36,15 +36,13 @@ do_platform_update_notify() {
   cat >$1<<-	\
 	platform_update_notify
 	## $1 - wait for network, then notify server of status
+	let tries=3
 	while sleep 7
 	do
 	  if ifconfig eth0 2>/dev/null |grep -q "inet addr:[1-9]"
 	  then
-	    if fw_update -- 2>/dev/null \
-	    && fw_update --ns $2 update_success 
-	    then
-	      break
-	    fi
+	    fw_update --ns $2 update_success && break
+	    let --tries || break
 	  fi
 	done
 	rm -f $1
