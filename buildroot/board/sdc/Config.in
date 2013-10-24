@@ -18,14 +18,6 @@ menu "Laird"
     menu "Packages"
         source "package/sdc/Config.in"
     endmenu
-
-    menu "Packages (Closed Source)"
-        source "package/sdc-closed-source/Config.in"
-    endmenu
-
-    menu "Customers"
-        source "board/sdc/customers/Config.in"
-    endmenu
 	
 endmenu
 
