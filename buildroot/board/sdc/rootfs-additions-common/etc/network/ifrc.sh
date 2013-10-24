@@ -77,7 +77,7 @@ msg() {
 }
 
 # internals
-ifrc_Version=20130919
+ifrc_Version=20130922
 ifrc_Disable=/etc/default/ifrc.disable
 ifrc_Script=/etc/network/ifrc.sh
 ifrc_Lfp=/var/log/ifrc
@@ -280,15 +280,6 @@ make_dhcp_renew_request() {
   done
   msg1 \\\tfailed...
   return 1
-}
-
-store_ap_info() {
-  ap=$( iw dev $dev link \
-      |sed -n 's/.* \(..:..:..:..:..:..\) .*/\1/p;s/.*SSID: \(.*\)/\1/p' \
-      |tr '\n' ' ' )
-
-  [ -n "$ap" ] \
-  && sed "1s/^.*/\tap: ${ap}/" -i ${ifrc_Lfp}/$dev
 }
 
 # 
@@ -522,21 +513,10 @@ then
         IFRC_ACTION=xxx
       fi
     else
-      if [ "${IFRC_METHOD%% *}" == "dhcp" ]
-      then
-        # retain-inactive-ipaddr is for loss of link behavior when..;
-        # no, then flush and attempt renew/request later
-        # yes, then keep everything as is, even though invalid
-        # auto, then flush and restore before renew/request
-        if [ "${RETAIN_INACTIVE_IPADDR:-no}" != "yes" ]
-        then
-          msg1 deconfigure iface for dhcp method - still active
-          #( interface=$dev /etc/dhcp/udhcpc.script deconfig )
-          
-          ifconfig $dev 0.0.0.0 2>/dev/null
-        fi
-        IFRC_ACTION=xxx
-      fi
+      # by default the ip-cfg is not retained on a down event
+      [ -n "$rc" ] || ifconfig $dev 0.0.0.0 2>/dev/null
+      # ignore the down event via ifnl - so as not to fully deconfigure
+      IFRC_ACTION=xxx
     fi
   fi
   
@@ -548,7 +528,6 @@ then
       # check if dhcp client is running
      #signal_dhcp_client CONT && IFRC_ACTION=...
       signal_dhcp_client ZERO && IFRC_ACTION=...
-      store_ap_info      
     fi
   fi
 
@@ -910,7 +889,6 @@ check_link() {
     && grep -qs up /sys/class/net/${dev}/operstate \
     || { msg "  ...not associated, deferring"; exit 0; }
   fi
-  store_ap_info
 
   # need a link beat in order for dhcp to work
   # so try waiting up to 30s, and then double check

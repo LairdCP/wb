@@ -7,14 +7,17 @@ BRATE="0" 		#0-Auto,1,2,5.5,6,9,11,12,18,24,36,48,54
 PSAVE=off 		#off/fast/max
 TPOWER="0" 		#0-Max, 1,5,10,20,30,50
 RadioEnable="1" #0-off 1-on; this will enable the radio after config is done
-alias ip="ifconfig wlan0 | grep 'inet addr:' | awk -F: '{print $2}' | awk '{print $1}'"
 alias link='echo `iw dev wlan0 link`'
+
+get_wlan0_ip() {
+    ifconfig wlan0 | grep 'inet addr:' | awk -F: '{print $2}' | awk '{print $1}' | sed -e 's/^ *//g' -e 's/ *$//g'
+}
 
 IPCHECK(){			
 	BLANK=
-	ADDR=
+	ADDR=`get_wlan0_ip`
 	WAIT=1
-	while [ `ip | wc -c` -lt 7 ]
+	while [ -z $ADDR ]
 	do
 		echo -en "Waiting on IP address($WAIT Seconds) \n"
 		WAIT=`expr $WAIT + 1`
@@ -24,20 +27,17 @@ IPCHECK(){
 			echo "DHCP timeout reached for wfa$COUNT 	"
 			exit 1
 		fi
+        ADDR=`get_wlan0_ip`
 	done
 	if [ `link | wc -c` -lt 16 ]
 		then
 		echo "$TEST: Wfa$COUNT is not connected to an AP"
 		exit 1
-	elif [ `ip | wc -c` -lt 7 ]
-		then
-		echo "$TEST: Wfa$COUNT did not recieve a IP address"
-		exit 1
 	else
-		echo "Received IP address:`ip`"
+		echo "Received IP address:$ADDR"
 		echo "Downloading the test file" 
-		wget --bind-address=10.1.44.171 -O /tmp/test.file      http://10.1.44.227/scratch/test.file
-		wget --bind-address=10.1.44.171 -O /tmp/test.file.sha1 http://10.1.44.227/scratch/test.file.sha1
+		wget --bind-address=$ADDR -O /tmp/test.file      http://10.1.40.199/scratch/test.file
+		wget --bind-address=$ADDR -O /tmp/test.file.sha1 http://10.1.40.199/scratch/test.file.sha1
 		(cd /tmp && sha1sum test.file > /tmp/test.file.sha1_)
 		rm /tmp/test.file
 		diff /tmp/test.file.sha1 /tmp/test.file.sha1_ || exit 1

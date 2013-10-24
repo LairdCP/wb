@@ -10,10 +10,10 @@
 
 # per host system variables
 : ${PUBLISH_DIR:=/var/www/scratch/autotest}
-: ${PUBLISH_BASE_URL:=http://10.1.44.227/scratch/autotest}
+: ${PUBLISH_BASE_URL:=http://10.1.40.199/scratch/autotest}
 
 # per wb45n board variables
-: ${BOARD_IP_ADDRESS:=10.1.44.161}
+: ${BOARD_IP_ADDRESS:=10.1.40.221}
 
 # buildroot target name
 : ${BUILDROOT_TARGET_NAME:=wb45n_devel}

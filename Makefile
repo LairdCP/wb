@@ -6,7 +6,8 @@ LAIRD_DL_DIR := archive
 ifdef BUILDROOT_DL_DIR
 LAIRD_DL_DIR := $(BUILDROOT_DL_DIR)
 LAIRD_ARCHIVES := archive/AT91Bootstrap-v3.4.4.tar.xz \
-                  archive/msd45n-laird_fips-3.4.0.8.tar.bz2 \
+                  archive/msd45n-laird_fips-3.4.1.1.tar.bz2 \
+				  archive/msd40n-laird-3.4.1.1.tar.bz2 \
                   archive/openssl-fips-2.0.5.tar.gz
 endif
 
@@ -88,7 +89,15 @@ cleanall:
 		-not -name '.svn' -not -name .git \
                 -exec rm -rf "{}" ";"
 	rm -f unpack.stamp
+	
+legal-info-wb45n:
+	$(MAKE) -C buildroot O=output/wb45n legal-info
 
+legal-info-wb40n:
+	$(MAKE) -C buildroot O=output/wb40n legal-info	
+
+legal-info: legal-info-wb40n legal-info-wb45n
+	
 .PHONY: default all unpack clean cleanall clean-wb40n clean-wb45n wb40n wb45n \
         source source-wb40n source-wb45n clean-sdc-pkg clean-wb40n-sdc-pkg clean-wb45n-sdc-pkg welch_allyn carefusion
 .NOTPARALLEL:
