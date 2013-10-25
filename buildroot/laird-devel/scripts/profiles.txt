@@ -1,0 +1,108 @@
+profile ccopen add
+profile ccopen set ssid ccopen
+profile ccopen set mode ABG
+profile wfa2 add
+profile wfa2 set ssid wfa2 
+profile wfa2 set weptype on
+profile wfa2 set mode ABG
+profile wfa2 set wep 12345 2
+profile wfa3 add
+profile wfa3 set ssid wfa3 
+profile wfa3 set weptype on
+profile wfa3 set mode ABG
+profile wfa3 set wep 1234567890123 2
+profile wfa4 add
+profile wfa4 set ssid wfa4
+profile wfa4 set weptype auto
+profile wfa4 set eaptype leap
+profile wfa4 set mode ABG
+profile wfa4 set user user1
+profile wfa4 set password user1
+profile wfa7 add
+profile wfa7 set ssid wfa7
+profile wfa7 set weptype wpa_psk
+profile wfa7 set mode ABG
+profile wfa7 set psk arkansas
+profile wfa8 add
+profile wfa8 set ssid wfa8
+profile wfa8 set weptype wpa-tkip
+profile wfa8 set eaptype leap
+profile wfa8 set mode ABG
+profile wfa8 set user user1
+profile wfa8 set password user1
+profile wfa9 add
+profile wfa9 set ssid wfa9
+profile wfa9 set weptype wpa2-psk-aes
+profile wfa9 set mode ABG
+profile wfa9 set psk arkansas 
+profile wfa10 add
+profile wfa10 set ssid wfa10
+profile wfa10 set weptype wpa2-aes
+profile wfa10 set eaptype leap
+profile wfa10 set mode ABG
+profile wfa10 set user user1
+profile wfa10 set password user1
+profile wfa11 add
+profile wfa11 set ssid wfa11
+profile wfa11 set weptype wpa-psk-aes
+profile wfa11 set mode ABG
+profile wfa11 set psk arkansas 
+profile wfa12 add
+profile wfa12 set ssid wfa12
+profile wfa12 set weptype wpa-aes
+profile wfa12 set eaptype leap
+profile wfa12 set mode ABG
+profile wfa12 set user user1
+profile wfa12 set password user1
+profile wfa13 add
+profile wfa13 set ssid wfa13
+profile wfa13 set weptype wpa2-psk-tkip
+profile wfa13 set mode ABG
+profile wfa13 set psk arkansas 
+profile wfa14 add
+profile wfa14 set ssid wfa14
+profile wfa14 set weptype wpa2-tkip
+profile wfa14 set eaptype leap
+profile wfa14 set mode ABG
+profile wfa14 set user user1
+profile wfa14 set password user1
+profile wfa15 add
+profile wfa15 set ssid wfa15
+profile wfa15 set weptype wpa-aes
+profile wfa15 set eaptype eap-ttls
+profile wfa15 set mode ABG
+profile wfa15 set user user1                                            
+profile wfa15 set password user1                                        
+profile wfa15 set cacert
+profile wfa16 add
+profile wfa16 set ssid wfa16
+profile wfa16 set weptype wpa2-tkip
+profile wfa16 set eaptype eap-ttls
+profile wfa16 set mode ABG
+profile wfa16 set user user1                                            
+profile wfa16 set password user1                                        
+profile wfa16 set cacert
+profile wfa17 add
+profile wfa17 set ssid wfa17
+profile wfa17 set weptype auto
+profile wfa17 set eaptype eap-ttls
+profile wfa17 set mode ABG
+profile wfa17 set user user1                                            
+profile wfa17 set password user1                                        
+profile wfa17 set cacert AkronCA.cer
+profile wfa18 add
+profile wfa18 set ssid wfa18
+profile wfa18 set weptype wpa-tkip 
+profile wfa18 set eaptype eap-ttls
+profile wfa18 set mode ABG
+profile wfa18 set user user1                                            
+profile wfa18 set password user1                                        
+profile wfa18 set cacert AkronCA.cer
+profile wfa19 add
+profile wfa19 set ssid wfa19
+profile wfa19 set weptype wpa2-aes 
+profile wfa19 set eaptype eap-ttls
+profile wfa19 set mode ABG
+profile wfa19 set user user1                                            
+profile wfa19 set password user1                                        
+profile wfa19 set cacert AkronCA.cer
