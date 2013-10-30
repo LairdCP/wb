@@ -6,7 +6,7 @@ LAIRD_DL_DIR := archive
 ifdef BUILDROOT_DL_DIR
 LAIRD_DL_DIR := $(BUILDROOT_DL_DIR)
 LAIRD_ARCHIVES := archive/AT91Bootstrap-v3.4.4.tar.xz \
-				  archive/msd40n-laird-3.4.1.1.tar.bz2 \
+				  archive/msd40n-laird-3.4.1.2.tar.bz2 \
                   archive/openssl-fips-2.0.5.tar.gz
 endif
 
