@@ -77,7 +77,7 @@ iface br0 inet manual
 
 
 ## USB
-#auto usb0
+auto usb0
 iface usb0 inet manual
 #iface usb0 inet static
   address 192.168.3.1

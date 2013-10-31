@@ -1,13 +1,16 @@
 #!/bin/sh
-# usbhost - go to host mode, so can handle usb disks
+# usbhost - go to host mode, so can handle USB Flash Device
 
 
 case $1 in
 
   stop)
+    echo -e "Disabling USB host support"
+    grep -q ^g_ether /proc/modules && modprobe -r usb-storage ohci-hcd
     ;;
 
   start)
+    echo -e "Enabling USB host support"
     modprobe ohci-hcd
     modprobe usb-storage
     ;;
