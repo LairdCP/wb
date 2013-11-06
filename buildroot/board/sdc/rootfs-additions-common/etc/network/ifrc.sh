@@ -77,7 +77,7 @@ msg() {
 }
 
 # internals
-ifrc_Version=20130925
+ifrc_Version=20130926
 ifrc_Disable=/etc/default/ifrc.disable
 ifrc_Script=/etc/network/ifrc.sh
 ifrc_Lfp=/var/log/ifrc
@@ -436,8 +436,9 @@ then
                   $eni 2>/dev/null )
     #
     msg3 $IFRC_SCRIPT
-    eval $IFRC_SCRIPT
   fi
+  eval $IFRC_SCRIPT
+  make_() { ( eval $1; x=$?; [ ${1:0:1} == / ] && echo \ \ ${1##*/}: $x ); }
 fi
 test -n "$dev" || exit 1
 
@@ -644,9 +645,8 @@ case $IFRC_ACTION in
     ##
     if [ -n "$pre_dcfg_do" ]
     then
-      msg "  [pre-dcfg-do $pre_dcfg_do]"
-      ( { sh $pre_dcfg_do; echo ${pre_dcfg_do##*/}:$?; } |tee -a $ifrc_Log )&
-              pre_dcfg_do=
+      msg1 "  pre-dcfg-do( $pre_dcfg_do )"
+      make_ "$pre_dcfg_do" |tee -a $ifrc_Log & pre_dcfg_do=
     fi
     rm -fv ${ifrc_Lfp}/$dev.lock
     msg1 "deconfiguring $dev"
@@ -662,9 +662,8 @@ case $IFRC_ACTION in
     ##
     if [ -n "$post_dcfg_do" ]
     then
-      msg "  [post-dcfg-do $post_dcfg_do]"
-      ( { sh $post_dcfg_do; echo ${post_dcfg_do##*/}:$?; } |tee -a $ifrc_Log )&
-              post_dcfg_do=
+      msg1 "  post-dcfg-do( $post_dcfg_do )"
+      make_ "$post_dcfg_do" |tee -a $ifrc_Log & post_dcfg_do=
     fi
     exit 0
     ;;
@@ -1015,9 +1014,8 @@ await_timeout_for_dhcp() {
 
 if [ -n "$pre_cfg_do" ]
 then
-  msg "  [pre-cfg-do $pre_cfg_do]"
-  ( { sh $pre_cfg_do; echo ${pre_cfg_do##*/}:$?; } |tee -a $ifrc_Log )&
-          pre_cfg_do=
+  msg1 "  pre-cfg-do( $pre_cfg_do )"
+  make_ "$pre_cfg_do" |tee -a $ifrc_Log & pre_cfg_do=
 fi
 #
 # The interface exists and is ready to be configured.
@@ -1113,14 +1111,12 @@ case ${IFRC_METHOD%% *} in
     ;;
 esac
 #
-# Only can get to this point if we successfully (re-)up'd the interface,
-# and it should now be packet-ready.
+# Only can get to this point if we successfully (re-)configured the interface.
 # If using dhcp, then must employ a timeout, to be certain.
 #
 if [ -n "$post_cfg_do" ]
 then
-  msg "  [post-cfg-do $post_cfg_do]"
-  ( { sh $post_cfg_do; echo ${post_cfg_do##*/}:$?; } |tee -a $ifrc_Log )&
-          post_cfg_do=
+  msg1 "  post-cfg-do( $post_cfg_do )"
+  make_ "$post_cfg_do" |tee -a $ifrc_Log & post_cfg_do=
 fi
 exit 0 
