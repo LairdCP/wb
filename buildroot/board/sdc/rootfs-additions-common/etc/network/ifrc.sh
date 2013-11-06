@@ -66,8 +66,14 @@ usage() {
 msg() {
   if [ "$1" == "@." ] && shift
   then
-    # to console w/'@.' prefix in monitor-mode
-    [ -n "$mm" ] && echo -e "$@" >/dev/console
+    # to controlling tty w/'@.' prefix in monitor-mode
+    if [ -n "$mm" ]
+    then
+      tty >/dev/null 2>&1 && tty >$ifrc_Lfp/tty
+      echo -e "$@" >`cat $ifrc_Lfp/tty || echo -n "/dev/console"`
+      logger -tifrc \
+        "$IFRC_STATUS $IFRC_DEVICE ${IFRC_ACTION:-??} m:${IFRC_METHOD%% *}"
+    fi
   else
     # to stdout while not quiet-mode
     [ -z "$qm" ] && echo -e "$@" || :
@@ -77,7 +83,7 @@ msg() {
 }
 
 # internals
-ifrc_Version=20130926
+ifrc_Version=20130927
 ifrc_Disable=/etc/default/ifrc.disable
 ifrc_Script=/etc/network/ifrc.sh
 ifrc_Lfp=/var/log/ifrc
@@ -116,7 +122,9 @@ parse_flag() {
       usage
       ;;
     --|--version) ## just report version
-      msg ${ifrc_Script##*/} $ifrc_Version
+      msg ${ifrc_Script##*/} v$ifrc_Version - \
+       md5:`md5sum < $ifrc_Script` \
+        len:`wc -c < $ifrc_Script`
       exit 0
       ;;
     -n) ## do not use a log file
@@ -158,7 +166,7 @@ export ifrc_Settings=fls=\"$fls\"\ mm=$mm\ vm=$vm\ qm=$qm
 
 # set ifnl_s when called via netlink daemon
 ifnl_s=${IFPLUGD_PREVIOUS}-\>${IFPLUGD_CURRENT}
-ifnl_s=${ifnl_s//error/xx}
+ifnl_s=${ifnl_s//error/ee}
 ifnl_s=${ifnl_s//down/dn}
 [ "$ifnl_s" == "->" ] && ifnl_s=
 
@@ -216,13 +224,9 @@ show_interface_config_and_status() {
   && [ -d /sys/class/net/$dev/wireless ]
   then
     echo -e "\nWiFi:"
-    #iwconfig 2>/dev/null
     iw dev $dev link 2>/dev/null \
       |sed 's/^Connec/Associa/;s/t connec.*/t associated (on '$dev')/' \
-      |sed '/[RT]X:/d;/^$/,$d;s/^\t/              /'
-    #
-    # too slow
-    #sdc_cli profile list |sed -n 's/\(.*\) ACTIVE/WiFi profile: \1/p'
+      |sed '/[RT]X:/d;/^$/,$d;s/^\t/        /'
   fi
   return 0
 }
@@ -231,7 +235,7 @@ ifrc_stop_netlink_daemon() {
   prg="ifplug[d]"
   # find all ifplug* instances for this interface  
   for pid in \
-  $( ps ax |sed -n "/${dev}/s/^[ ]*\([0-9]*\).*[\/ ]\(${prg}\)[ -].*/\1_\2 /p" )
+  $( ps ax |sed -n "/${dev}/s/^[ ]*\([0-9]*\).*[\/ ]\(${prg}\) -.*/\1_\2 /p" )
   do
     kill ${pid%%_*} \
     && msg1 @. "`printf \"% 7d %s <-sigterm\" ${pid%%_*} ${pid##*_}`"
@@ -294,7 +298,7 @@ case $1 in
 
   log|logs) ## ifrc files
     f=${3/[a-z][a-z]*/-}
-    if [ "$2" == "show" -a "$f" == - ] 
+    if [ "${2:0:4}" == "show" -a "$f" == - ] 
     then
       less -Em~ ${ifrc_Lfp}/$3 2>/dev/null
     elif [ "${2:0:4}" == "clea" -a "$f" == - ]
@@ -304,7 +308,7 @@ case $1 in
       done
       let c && echo ...removed from $ifrc_Lfp
     else
-      ls -l ${ifrc_Lfp}/ 2>/dev/null |sed '/.otal/d'
+      for x in $ifrc_Lfp/*; do [ -f $x ] && printf "% 8d %s\n" `wc -c $x`; done
     fi
     exit $?
     ;;
@@ -340,7 +344,7 @@ case $1 in
     if vi ${ifrc_Lfp}/${eni##*/}~ -c /^${2:+"iface $2.*"}$ \
     && ! cmp -s ${ifrc_Lfp}/${eni##*/}~ $eni
     then
-      let $( ls -s ${ifrc_Lfp}/${eni##*/}~ |sed 's/\ *\([0-9]\+\).*/\1/' )+0 \
+      [ -s ${ifrc_Lfp}/${eni##*/}~ ] \
       && mv -f ${ifrc_Lfp}/${eni##*/}~ $eni \
       || echo "unable to copy edited $eni into place"
     fi
@@ -446,13 +450,13 @@ test -n "$dev" || exit 1
 if [ "$ifrc_Log" != "/dev/null" ]
 then
   ifrc_Log=${dev:+${ifrc_Lfp}/$dev}
-  let sz=$( ls -s $ifrc_Log 2>/dev/null |sed 's/\ *\([0-9]\+\).*/\1/' )+0
-  test $sz -le 100 || ifrc_Log=/dev/null
+  let sz=$( { wc -c < $ifrc_Log""; } 2>/dev/null )+0
+  test $sz -le 102400 || ifrc_Log=/dev/null
 fi
 
 # begin a new timestamp log entry for the dev operations that follow 
 read -rs us is </proc/uptime
-printf "\n% 13.2f __${ifrc_Cmd}  $ifrc_Via" $us >>$ifrc_Log
+printf "\n% 13.2f __${ifrc_Cmd}  $ifrc_Via\n" $us >>$ifrc_Log
 msg3 -e "env:\n`env |sed -n 's/^IF[A-Z]*_.*/  &/p' |grep . || echo \ \ ...`"
 
 # external globals - carried per instance and can be used by *-do scripts too 
@@ -500,7 +504,7 @@ then
   ## run via nl daemon, so consume remaining args
   # Currently no defined need for (optional) extra args...
   while [ -n "$ifnl_s" -a -n "$1" ]; do shift; done
-  
+
   ## event rules for '->dn'
   if [ "${IFRC_STATUS##*->}" == "dn" ]
   then
@@ -514,34 +518,31 @@ then
         IFRC_ACTION=dn
       else
         msg1 ignoring dn event for dhcp method - iface is back
-        IFRC_ACTION=xxx
+        IFRC_ACTION=xx
       fi
     else
       # by default the ip-cfg is not retained on a down event
       [ -n "$rc" ] || ifconfig $dev 0.0.0.0 2>/dev/null
       # ignore the down event via ifnl - so as not to fully deconfigure
-      IFRC_ACTION=xxx
+      IFRC_ACTION=xx
     fi
   fi
-  
+
   ## event rules for '->up'
   if [ "${IFRC_STATUS##*->}" == "up" ]
   then
     if [ "${IFRC_METHOD%% *}" == "dhcp" ]
     then
       # check if dhcp client is running
-     #signal_dhcp_client CONT && IFRC_ACTION=...
-      signal_dhcp_client ZERO && IFRC_ACTION=...
+      signal_dhcp_client ZERO && IFRC_ACTION=..
     fi
   fi
 
-  ##
-  ## additional rules can handle other condition/states here...
-  ##
+  ## event rules for additional condition/states...
 fi
 
-
-msg @. ifrc_s/d/a/m/s: "$IFRC_STATUS" $IFRC_DEVICE ${IFRC_ACTION:-.} m:${IFRC_METHOD%% *} s:$IFRC_SCRIPT
+msg @. ifrc_s/d/a/m: "$IFRC_STATUS" $IFRC_DEVICE ${IFRC_ACTION:---} \
+                     ${IFRC_METHOD%% *} s\{$IFRC_SCRIPT\}
 
 #
 # Do not really 'down' or 'up' an interface here with: 'ifconfig <dev> down/up'
@@ -694,7 +695,7 @@ case $IFRC_ACTION in
       # the generic phy driver is present when phy-hw is otherwise unsupported
       if grep -s Generic /sys/class/net/$dev/*/uevent >/dev/stderr
       then
-        msg "warning: unknown '$dev' iface-phy-hw ...using generic phy driver"
+        msg "Warning: unknown '$dev' iface-phy-hw ...using generic phy driver"
         [ -z "$mii" ] && exit 1 || $mii $dev |grep -B12 fault && exit 2
       fi
     fi
@@ -714,7 +715,7 @@ case $IFRC_ACTION in
     ## operations continue below...
     ;;
 
-  \.\.\.) ## try signaling the dhcp client
+  \.\.) ## try signaling the dhcp client
     if [ ! -f ${ifrc_Lfp}/$dev.lock ]
     then
       touch ${ifrc_Lfp}/$dev.lock
@@ -736,7 +737,7 @@ case $IFRC_ACTION in
     exit 0
     ;;
     
-  ''|xx*|\.*) ## no.. action
+  ''|ee|xx|\.*) ## no.. action
     exit 0
     ;;
 
