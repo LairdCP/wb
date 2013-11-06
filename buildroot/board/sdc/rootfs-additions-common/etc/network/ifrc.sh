@@ -83,7 +83,7 @@ msg() {
 }
 
 # internals
-ifrc_Version=20130927
+ifrc_Version=20130928
 ifrc_Disable=/etc/default/ifrc.disable
 ifrc_Script=/etc/network/ifrc.sh
 ifrc_Lfp=/var/log/ifrc
@@ -199,9 +199,9 @@ gipa() {
 sleuth_wl() {
   # try to find kernel-resident (wireless) interface: wl
   # in this case, it is not certain what the name is ahead of time
-  for x in /sys/class/net/*/wireless
+  for x in /sys/class/net/*/phy80211
   do
-    x=${x##*/sys/class/net/}; x=${x%%/*}; [ "$x" != \* ] && { echo $x; break; }
+    x=${x##*net/}; x=${x%%/*}; [ "$x" != \* ] && { echo $x; break; }
   done
 }
 
@@ -220,8 +220,7 @@ show_interface_config_and_status() {
   test -z "$dev" && dev=$( sleuth_wl )
   #
   # include association info for wireless dev
-  if [ -n "$dev" ] \
-  && [ -d /sys/class/net/$dev/wireless ]
+  if [ -d /sys/class/net/$dev/phy80211 ]
   then
     echo -e "\nWiFi:"
     iw dev $dev link 2>/dev/null \
@@ -689,7 +688,7 @@ case $IFRC_ACTION in
     
     if [ "$dev" != "lo" ] \
     && [ "$devalias" != "wl" ] \
-    && [ ! -d /sys/class/net/$dev/wireless ]
+    && [ ! -d /sys/class/net/$dev/phy80211 ]
     then
       # ethernet wired phy-hw is external; so try to determine if really there
       # the generic phy driver is present when phy-hw is otherwise unsupported
@@ -886,7 +885,7 @@ ifrc_validate_dhcp_method_params() {
 
 check_link() {
   # check if associated when using wireless
-  if [ -d /sys/class/net/$dev/wireless ]
+  if [ -d /sys/class/net/$dev/phy80211 ]
   then
     grep -q 1 /sys/class/net/${dev}/carrier \
     && grep -qs up /sys/class/net/${dev}/operstate \
@@ -1029,7 +1028,7 @@ case ${IFRC_METHOD%% *} in
     ifrc_validate_dhcp_method_params
     check_link
     ## allow using a fixed-port-speed-duplex, intended only for wired ports
-    if [ ! -d /sys/class/net/$dev/wireless ] && [ -n "$mii" ]
+    if [ ! -d /sys/class/net/$dev/phy80211 ] && [ -n "$mii" ]
     then
       [ -n "$fpsd" ] \
       && $mii -F $fpsd $dev 2>&1 |grep "[vb]a[ls][ue]" 
