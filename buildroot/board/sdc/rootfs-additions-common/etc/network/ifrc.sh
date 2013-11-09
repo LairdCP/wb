@@ -10,8 +10,8 @@ usage() {
   && { echo -e "${2:+  $2\n}${3:+\nUsage:\n# $3\n}#"; rv=1; pause 2; }
   cat <<-	\
 	usage-info-block
-	$( echo -e "\t\t\t\t\t\t\t  (interface-run-config)\r\c"; \
-	                                 ls -l $0 |grep -o "$0.*" )
+	$( echo -e "\t\t\t\t\t\t(interface-run-config v$ifrc_Version)\r \c"; \
+	                                              ls -l $0 |grep -o "$0.*" )
 	Configure and/or show network interfaces.
 	Use settings in '/etc/network/interfaces', or from the command-line.
 	Works with a netlink daemon to maintain dhcp/static methods on-the-fly.
@@ -26,12 +26,12 @@ usage() {
 	     ( Note:  ifrc may be disabled with:  /etc/default/ifrc.disable )
   
 	Interface:
-	  must be kernel-resident of course
+	  name must be kernel-resident, or will try to start
 	  can be an alias (such as 'wl' for wireless, see /e/n/i file)
 
 	Action:
 	  stop|start|restart   - act on phy-init/driver (up or down the hw-phy)
-	  auto|noauto   - set or unset auto-starting an interface (for init/rcS)
+	  noauto|auto   - unset or set auto-starting an interface (for init/rcS)
 	  status   - check an interface and report its ip-address, with exit code
 	  up|dn   - up or down the interface configuration (use '...' to renew)
 	  logs   - manage related files: (clean|show [<iface>])
@@ -83,7 +83,7 @@ msg() {
 }
 
 # internals
-ifrc_Version=20130928
+ifrc_Version=20130929
 ifrc_Disable=/etc/default/ifrc.disable
 ifrc_Script=/etc/network/ifrc.sh
 ifrc_Lfp=/var/log/ifrc
@@ -104,7 +104,7 @@ nis=/etc/init.d/S??network*
 
 # /e/n/i should exist...
 eni=/etc/network/interfaces
-[ -f $eni ] || touch $eni
+[ -f $eni ] || echo "# $eni" >$eni
 
 # check mii (optional)
 mii=/usr/sbin/mii-diag
@@ -118,7 +118,7 @@ fi
 
 parse_flag() {
   case $1 in
-    \?|-h|--help|--usage) ## show usage
+    -h|--help|--usage) ## show usage
       usage
       ;;
     --|--version) ## just report version
@@ -191,9 +191,9 @@ pause() {
 }
 
 gipa() {
-# ip addr show $1 2>/dev/null \
-  ifconfig $1 2>/dev/null \
-    |sed -n '/inet/s/.*[: ]\([0-9.]*[0-9]\)[\/ 0-9]*[Bb].*/\1/p' |grep .
+# ip=`ip addr show $1 2>/dev/null \
+  ip=`ifconfig $1 2>/dev/null \
+     |grep -o '[0-9]*\.[0-9]*\.[0-9]*\.[0-9/]* *'` && echo ${ip%% *}
 }
 
 sleuth_wl() {
@@ -419,9 +419,9 @@ then
   fi
   test -n "$devalias" || exit 1
   ## devalias now is set, and used to further process settings from /e/n/i
-  #
+
   # check for ifrc-flags if none specified on cli - cummulative
-  test -z "$ifrc_Settings" \
+  test -z "${fls//-v /}" \
   && flags=$( sed -n "/^iface $devalias/,/^$/\
                       s/^[ \t]\+[^#]ifrc-flags \(.*\)/\1/p" $eni 2>/dev/null )
   #
@@ -542,7 +542,6 @@ fi
 
 msg @. ifrc_s/d/a/m: "$IFRC_STATUS" $IFRC_DEVICE ${IFRC_ACTION:---} \
                      ${IFRC_METHOD%% *} s\{$IFRC_SCRIPT\}
-
 #
 # Do not really 'down' or 'up' an interface here with: 'ifconfig <dev> down/up'
 # We leave that to the driver init-scripts instead, so they handle stop/start.
@@ -600,33 +599,16 @@ case $IFRC_ACTION in
     exit 0
     ;;
 
-  noauto) ## unset auto-starting for an iface
+  noauto|auto) ## unset or set auto-starting for an iface
+    auto=${IFRC_ACTION/no/#}
     if grep -q "auto $devalias$" $eni
     then
-      sed "s/^auto $devalias$/#auto $devalias/" -i $eni
+      sed "/^[#]*auto $devalias$/s/^.*/$auto $devalias/" -i $eni
     else
       if grep -q "^iface $devalias inet" $eni
       then
-        # insert the noauto just above stanza iface
-        sed "/^iface $devalias inet/i#auto $devalias" -i $eni
-      else
-        echo "stanza for $devalias not found in $eni"
-        exit 1
-      fi
-    fi
-    [ -n "${vm:0:1}" ] && echo "/e/n/i: `grep "auto $devalias" $eni`"
-    exit 0
-    ;;
-    
-  auto) ## set auto-starting for an iface
-    if grep -q "auto $devalias$" $eni
-    then
-      sed "s/^#auto $devalias$/auto $devalias/" -i $eni
-    else
-      if grep -q "^iface $devalias inet" $eni
-      then
-        # insert the auto just above stanza iface
-        sed "/^iface $devalias inet/iauto $devalias" -i $eni
+        # insert the noauto|auto just above stanza iface
+        sed "/^iface $devalias inet/i$auto $devalias" -i $eni
       else
         echo "stanza for $devalias not found in $eni"
         exit 1
@@ -714,7 +696,7 @@ case $IFRC_ACTION in
     ## operations continue below...
     ;;
 
-  \.\.) ## try signaling the dhcp client
+  \.\.|\.\.\.) ## refresh/renew - try signaling the dhcp client
     if [ ! -f ${ifrc_Lfp}/$dev.lock ]
     then
       touch ${ifrc_Lfp}/$dev.lock
@@ -736,7 +718,8 @@ case $IFRC_ACTION in
     exit 0
     ;;
     
-  ''|ee|xx|\.*) ## no.. action
+  ''|ee|xx|\.*) ## no action
+    msg2 \ \ ...no action on $dev
     exit 0
     ;;
 
@@ -1000,7 +983,7 @@ await_timeout_for_dhcp() {
     [ "${vm:0:1}" == "." ] && echo -en .
     pause 1
     let to-=1
-    gipa && { to=; break; }
+    gipa $dev && { to=; break; }
   done
   [ "${vm:0:1}" == "." ] && echo
   if [ -n "$to" ]
