@@ -41,12 +41,6 @@ endef
 
 define MSD45N_BINARIES_INSTALL_FIPS_BINARIES
     $(INSTALL) -D -m 755 $(@D)/usr/bin/sdcu $(TARGET_DIR)/usr/bin/sdcu
-    $(LINUX_MAKE_FLAGS) $(MAKE) --no-print-directory -C $(LINUX_DIR) kernelrelease > $(@D)/kernel.release
-    $(INSTALL) -D -m 644 $(@D)/lib/modules/`cat $(@D)/kernel.release`/extra/ath6kl_laird.ko \
-                 $(TARGET_DIR)/lib/modules/`cat $(@D)/kernel.release`/extra/ath6kl_laird.ko
-    $(INSTALL) -D -m 644 $(@D)/lib/modules/`cat $(@D)/kernel.release`/extra/sdc2u.ko \
-                 $(TARGET_DIR)/lib/modules/`cat $(@D)/kernel.release`/extra/sdc2u.ko
-    #$(LINUX_MAKE_FLAGS) $(MAKE) -C $(LINUX_DIR) M=$(@D)/lib/modules/*/extra modules_install
 endef
 
 ifeq ($(MSD45N_BINARIES_COMPANY_PROJECT),laird_fips)
