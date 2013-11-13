@@ -16,6 +16,4 @@ tar c --exclude=.svn --exclude=.empty -C board/sdc/wb45n/rootfs-additions/ . | t
 
 chmod a+x $TARGETDIR/etc/init.d/S??lighttpd
 
-chmod a+x $TARGETDIR/usr/bin/php-cgi
-
 echo "WB45n POST BUILD script: done."
