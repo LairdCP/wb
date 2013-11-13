@@ -48,6 +48,7 @@ define SDCSDK_INSTALL_STAGING_CMDS
 			  $(@D)/src/linux/include/lrd_platspec.h \
 			  $(@D)/src/linux/include/linux_perm_stor.h \
 			  $(@D)/src/config_strings.h \
+			  $(@D)/src/linux/include/lrd_sdk_pil.h \
 			  $(@D)/src/sdc_sdk_private.h \
               $(STAGING_DIR)/usr/include/
 endef
