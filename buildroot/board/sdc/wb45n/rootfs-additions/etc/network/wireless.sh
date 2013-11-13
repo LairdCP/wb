@@ -75,16 +75,16 @@ wifi_queryinterface()
 
 wifi_fips_mode()
 {
-  if [ -f "$WIFI_KMPATH/extra/ath6kl_laird.ko" ] \
-  && [ -f "$WIFI_KMPATH/extra/sdc2u.ko" ] \
+  if [ -f "$WIFI_KMPATH/kernel/drivers/net/wireless/laird_fips/ath6kl_laird.ko" ] \
+  && [ -f "$WIFI_KMPATH/kernel/drivers/net/wireless/laird_fips/sdc2u.ko" ] \
   && : #[ -x "/usr/bin/sdcu" ]
   then
     # note - only 'WPA2 EAP-TLS' is supported
     #msg "enabling FIPS mode"
     msg "configuring for FIPS mode"
     insmod ${WIFI_KMPATH}/${WIFI_MODULE%/*}/ath6kl_core.ko fips_mode=y || return 1
-    insmod ${WIFI_KMPATH}/extra/sdc2u.ko || return 1
-    insmod ${WIFI_KMPATH}/extra/ath6kl_laird.ko || return 1
+    insmod ${WIFI_KMPATH}/kernel/drivers/net/wireless/laird_fips/sdc2u.ko || return 1
+    insmod ${WIFI_KMPATH}/kernel/drivers/net/wireless/laird_fips/ath6kl_laird.ko || return 1
 
     # create device node for user space daemon 
     major=$( sed -n '/sdc2u/s/^[ ]*\([0-9]*\).*/\1/p' /proc/devices )
