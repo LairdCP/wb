@@ -4,11 +4,11 @@
 # if BUILDROOT_DL_DIR is set, archives are downloaded to BUILDROOT_DL_DIR
 LAIRD_DL_DIR := archive
 ifdef BUILDROOT_DL_DIR
-LAIRD_DL_DIR := $(BUILDROOT_DL_DIR)
-LAIRD_ARCHIVES := archive/AT91Bootstrap-v3.4.4.tar.xz \
-                  archive/msd45n-laird_fips-3.4.1.3.tar.bz2 \
-				  archive/msd40n-laird-3.4.1.3.tar.bz2 \
-                  archive/openssl-fips-2.0.5.tar.gz
+LAIRD_DL_DIR            := $(BUILDROOT_DL_DIR)
+LAIRD_ARCHIVES          := archive/AT91Bootstrap-v3.4.4.tar.xz \
+                           archive/openssl-fips-2.0.5.tar.gz
+LAIRD_ARCHIVES_OPTIONAL := archive/msd45n-laird_fips-3.4.1.3.tar.bz2 \
+                           archive/msd40n-laird-3.4.1.3.tar.bz2
 endif
 
 URL   := http://buildroot.uclibc.org/downloads/
@@ -31,6 +31,9 @@ unpack.stamp: $(LAIRD_DL_DIR)/$(ARCHV)
 ifdef BUILDROOT_DL_DIR
 	# copy the Laird archives into the override buildroot directory
 	cp -n $(LAIRD_ARCHIVES) $(BUILDROOT_DL_DIR)/
+	for i in $(LAIRD_ARCHIVES_OPTIONAL); do \
+	    test -f $$i && cp -n $$i $(BUILDROOT_DL_DIR)/ || true; \
+	done
 endif
 	# unpack buildroot, rename the directory to 'buildroot' for easier management
 	tar xf $(LAIRD_DL_DIR)/$(ARCHV) --xform "s/^$(PKG)/buildroot/"
