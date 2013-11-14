@@ -78,11 +78,10 @@ iface br0 inet manual
 
 ## USB
 auto usb0
-iface usb0 inet manual
-#iface usb0 inet static
-  #address 192.168.3.1
-  #broadcast 192.168.3.255
-  #netmask 255.255.255.252
+iface usb0 inet static
+  address 192.168.3.1
+  broadcast 192.168.3.255
+  netmask 255.255.255.252
   ## optionally configure wifi tethering
   #post-cfg-do /etc/network/wifi-nat.conf
   #pre-dcfg-do /etc/network/wifi-nat.conf
