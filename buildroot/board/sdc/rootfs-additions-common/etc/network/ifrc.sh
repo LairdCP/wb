@@ -83,7 +83,7 @@ msg() {
 }
 
 # internals
-ifrc_Version=20130929
+ifrc_Version=20130930
 ifrc_Disable=/etc/default/ifrc.disable
 ifrc_Script=/etc/network/ifrc.sh
 ifrc_Lfp=/var/log/ifrc
@@ -935,7 +935,7 @@ run_udhcpc() {
   # May be signalled or spawned again depending on events/conditions. Flags are: 
   # iface, verbose, request-ip, exit-no-lease/quit-option, exit-release, retry..
   # For retry, send 4-discovers, paused at 2sec, and repeat after 5sec.
-  eval udhcpc -i$dev $vb $rip $nq -R -t4 -T2 -A5 $ropt $vci $xopt $rbf $rs $nv
+  eval udhcpc -i$dev $vb $rip $nq -R -t4 -T2 -A5 -b $ropt $vci $xopt $rbf $rs $nv
   #
   #return $?
 }
