@@ -81,13 +81,13 @@ auto usb0
 iface usb0 inet static
   address 192.168.3.1
   broadcast 192.168.3.255
-  netmask 255.255.255.252
-  ## optionally configure wifi tethering
+  netmask 255.255.255.0
+  ## optional wifi-tethering
   #post-cfg-do /etc/network/wifi-nat.conf
   #pre-dcfg-do /etc/network/wifi-nat.conf
-  ## optionally configure ethernet traffic
-  #post-cfg-do /etc/network/usb-g_ether.conf
-  #pre-dcfg-do /etc/network/usb-g_ether.conf
- 
+  ## optional g_ether-nat
+  post-cfg-do /etc/network/usb-g_ether-nat.conf
+  pre-dcfg-do /etc/network/usb-g_ether-nat.conf
+
 
 
