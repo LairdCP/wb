@@ -2,7 +2,7 @@
 # FirmWare Select Utility for WB40NBT/WB45NBT Linux
 # Jon Hefling, jon.hefling@lairdtech.com, 29-Jun'12
 #
-VERSION=20130309c
+VERSION=20130313
 SELF=${0##*/}
 TM_FILE=/etc/default/$SELF.test
 
@@ -21,15 +21,18 @@ This utility is mainly useful to:
   # $SELF rootfs-b
   Example: to set both kernel-a and rootfs-a
   # $SELF -a
-     
+  
   b.) Copy select files from the alternate rootfs to the current rootfs-a/b
-  Without given arg, files from alternate rootfs are copied, if via rcS. 
+  Without given arg, files from alternate rootfs are copied, if via rcS.
   With 'access' to mount/umount alternate rootfs.
   With 'export' to push from the current to the alternate rootfs.
   With 'import' to pull from alternate to the current rootfs.
-  Usage: --transfer [export|import|access {off}|help]
-  Example: to pull items from previously used rootfs
-  # $SELF --transfer import
+  Note: A list-file may be used, for copying additional items.
+  For more information on usage, try: --transfer help
+  Usage: --transfer [import|export [<path/to/list-file>]]"
+         --transfer [access {off}|help]
+  Example: to pull items from previously used rootfs, using a local list-file
+  # $SELF --transfer import my_list_file
   
   c.) Restore default bootcmd and bootargs via u-boot image
   Without given arg, just restore bootcmd, bootargs and any dependent variables.
@@ -38,7 +41,7 @@ This utility is mainly useful to:
   Usage: --default [...|erase|help]
   Example: to restore bootargs
   # $SELF --default
-
+  
   d.) Set the loglevel value in bootargs
   Without given value, then default value is used.
   Usage: --loglevel=N
@@ -49,16 +52,16 @@ This utility is mainly useful to:
 __End-Of-Usage-Info-Block
 }
 
-# set testmode if the TM_FILE exists                                     
-test -f "$TM_FILE" && tm=echo\ -e || tm=                   
-grep -sq verbose "$TM_FILE" && set -x   
+# set testmode if the TM_FILE exists
+test -f "$TM_FILE" && tm=echo\ -e || tm=
+grep -sq verbose "$TM_FILE" && set -x
 
 # set some commands in testmode so won't do any writes
 cp=$tm\ cp
 reboot=$tm\ reboot
 flash_erase=$tm\ flash_erase
 fw_setenv=$tm\ fw_setenv
-fw_printenv=fw_printenv 
+fw_printenv=fw_printenv
 if ! $fw_printenv >/dev/null
 then
   test -f /etc/fw_env.config || echo "  ...missing: /etc/fw_env.config"
@@ -125,7 +128,7 @@ bootcmd_x() {
 # fi
 
   BC_kia=$( hexify $BC_kia )
-  
+
   if iszero $BC_kia \
   || [ $BC_kia != $KIA -a $BC_kia != $( hexify  $KIA+$KIS ) ]
   then
@@ -137,7 +140,7 @@ bootcmd_x() {
   fi
   return 0
 }
- 
+
 bootargs_x() {
   # parse the rootfs mtd partition number
   BA_mtd=$( $fw_printenv -n bootargs |sed -n 's/.*ubi.mtd=\(.\).*/\1/p' )
@@ -181,13 +184,16 @@ rootfs_x() {
 }
 
 current_configuration() {
-  echo $wb - $( cat /etc/*-release 2>/dev/null )
+  echo $wb - $( sed -n 1p /etc/*-release 2>/dev/null )
   iszero `rootfs_x`-$RIP && ab=a || ab=b
   echo " -> `uname -nr` on rootfs-$ab"
   echo "     ...mismatched kernel: `ls -d /lib/modules/*`" |grep -v `uname -r`
   echo
   grep -qs $ALT_ROOTFS_MOUNT /proc/mounts \
-  && echo -e "$ALT_ROOTFS_MOUNT is accessible\n"
+  && echo -e "$ALT_ROOTFS_MOUNT is accessible:" \
+  && echo \ \ \ alt_rootfs-`alt_rootfs`: \
+          `grep -so -m1 '[^ ]*$' $ALT_ROOTFS_MOUNT/etc/*-release`\\\n
+
   if [ -n "$at91bs$u_boot$rootfs$kernel" ]
   then
     echo -e "updated_%" \
@@ -203,7 +209,7 @@ current_configuration() {
 }
 
 alt_rootfs() {
-  iszero `rootfs_x`-$RIP && let rip=$RIP+1 || let rip=$RIP 
+  iszero `rootfs_x`-$RIP && let rip=$RIP+1 || let rip=$RIP
   #
   # args: <un/mount>
   case $1 in
@@ -218,18 +224,19 @@ alt_rootfs() {
         ubidetach -p /dev/mtd${rip}
         rmdir $ALT_ROOTFS_MOUNT
         rm -f $ALT_ROOTFS_LOCK
-        echo \ \ $ALT_ROOTFS_MOUNT unmounted
+        echo unmounted $ALT_ROOTFS_MOUNT
       fi
       return 0
       ;;
 
-    m*) # try to mount 
+    m*) # try to mount
       if [ -f $ALT_ROOTFS_LOCK ]
       then
-        echo "alt_rootfs-`alt_rootfs` is already attached/mounted"
-        #ubinfo /dev/`cat $ALT_ROOTFS_LOCK`
         mount |grep `cat $ALT_ROOTFS_LOCK` 2>/dev/null
-        echo "  ...try: '--transfer access off'"
+        #ubinfo /dev/`cat $ALT_ROOTFS_LOCK`
+        echo "  ...already attached/mounted  (try: '--transfer access off')"
+        echo \ \ \ alt_rootfs-`alt_rootfs`: \
+             `grep -so -m1 '[^ ]*$' $ALT_ROOTFS_MOUNT/etc/*-release`
         return 0
       fi
       mkdir -p $ALT_ROOTFS_MOUNT
@@ -237,10 +244,14 @@ alt_rootfs() {
       if ubinfo /dev/ubi${n} |grep -q "^Present"
       then
         # expecting to mount volume_0 of newly attached ubi device n
-        mount -t ubifs /dev/ubi${n}_0 $ALT_ROOTFS_MOUNT \
-        && echo mounted /dev/mtd${rip} at $ALT_ROOTFS_MOUNT \
-        && echo ubi${n} >$ALT_ROOTFS_LOCK \
-        && return 0
+        if mount -t ubifs /dev/ubi${n}_0 $ALT_ROOTFS_MOUNT
+        then
+          echo mounted /dev/mtd${rip} at $ALT_ROOTFS_MOUNT
+          echo \ \ \ alt_rootfs-`alt_rootfs`: \
+               `grep -so -m1 '[^ ]*$' $ALT_ROOTFS_MOUNT/etc/*-release`
+          echo ubi${n} >$ALT_ROOTFS_LOCK
+          return 0
+        fi
       fi
       echo unable to mount /dev/mtd${rip}
       ubidetach -p /dev/mtd${rip}
@@ -257,13 +268,20 @@ transfer_system_settings() {
   #
   # args: <source> <target> <path/file>
   cp_dprf() \
-    { tar -c -C $1 ${3#/} |tar -xv -C $2 |sed 's/^/  \//'; }
+    { test -e $1$3 && tar -c -C $1 ${3#/} |tar -xv -C $2 |sed 's/^/ _\//'; }
   #
   cp_dprf $1 $2 /etc/summit/profiles.conf
   cp_dprf $1 $2 /etc/random-seed
   cp_dprf $1 $2 /etc/ssl/certs
   cp_dprf $1 $2 /etc/ssh
   cp_dprf $1 $2 /root/.ssh
+
+  # check for additional targets in a list-file
+  # spaces in the path or file name are not handled
+  tls=${3:-/tmp/alt_rootfs.transfer-list}
+  test -f "$tls" \
+  && for i in `sed '/^[ \t]*#/d' $tls`; do cp_dprf $1 $2 $i; done
+
   alt_rootfs u
   return 0
 }
@@ -279,26 +297,38 @@ case $1 in
           [ "off" != "$3" ] && alt_rootfs m || alt_rootfs u
           ;;
         export|push) # push select files to alternate rootfs
-          transfer_system_settings / $ALT_ROOTFS_MOUNT/
+          transfer_system_settings / $ALT_ROOTFS_MOUNT/ $3
           ;;
         import|pull) # pull select files to current rootfs
-          transfer_system_settings $ALT_ROOTFS_MOUNT/ /
+          transfer_system_settings $ALT_ROOTFS_MOUNT/ / $3
           ;;
         '') # assume 'push/pull' based on rule
           [ -n "$rcS_" ] && transfer_system_settings -v $ALT_ROOTFS_MOUNT/ /
           [ -n "$rootfs" ] && transfer_system_settings -v / $ALT_ROOTFS_MOUNT/
-          let $? && exit_error
+          let $? && { echo \?; exit_error; }
           ;;
-        *) # show relevant usage/help 
+        *) # show relevant usage/help
           echo "This option allows copying standard settings, profiles, certs and keys,"
           echo "  between the two root-filesystems."
           echo
-          echo "Use 'import' to copy from the other filesystem to the current filesystem."
-          echo "Use 'export' to copy from the current filesystem to the other filesystem."
           echo "Use 'access [off]' to just u/mount the other filesystem at $ALT_ROOTFS_MOUNT."
           echo
+          echo "Use 'import' to copy from the other filesystem to the current filesystem."
+          echo "Use 'export' to copy from the current filesystem to the other filesystem."
+          echo "  ...Additional folders/files may be copied (to mirrored locations) by using"
+          echo "  specified 'transfer-list' file, or if '/tmp/alt_rootfs.transfer-list' file"
+          echo "  exists. The format is simply a list of paths, and '#' comments are ignored."
+          echo
+          echo "  Items automatically transferred:"
+          echo "    /etc/summit/profiles.conf"
+          echo "    /etc/random-seed"
+          echo "    /etc/ssl/certs"
+          echo "    /etc/ssh"
+          echo "    /root/.ssh"
+          echo
           echo "Usage:"
-          echo "  $SELF --transfer {import|export|access [off]}"
+          echo "  $SELF --transfer import|export [<path/to/list-file>]"
+          echo "  $SELF --transfer access [off]"
           ;;
       esac
     fi
@@ -314,13 +344,13 @@ case $1 in
     $fw_setenv bootargs $bootargs \
     && echo set loglevel=${loglevel:-4}
     ;;
-    
+
   --default*) ## restore u-boot_env variables '--default help'
     case $2 in
       erase) # set all defaults by erasing u-boot_env
         echo erasing u-boot_env to restore defaults, then will reboot
         $fw_printenv ethaddr 2>/dev/null \
-          |sed 's/.*/warning: this will remove the current &/;s/=/ /'
+          |sed 's/.*/\nWarning: this will remove the current &/;s/=/ /'
         #
         ask -p"  Are you sure? [y/N ..5s]" -t5 -n1 a
         [ "$a" != "y" ] && exit_error aborted
@@ -386,7 +416,7 @@ case $1 in
       name=`cat $mtd/name`
       let size=`cat $mtd/size`
       mtd=${mtd##/sys/class/mtd/mtd}
-      [ $mtd -gt 0 -a $mtd -eq $kip -o $mtd -eq $rip ] && ap='->' || ap='  ' 
+      [ $mtd -gt 0 -a $mtd -eq $kip -o $mtd -eq $rip ] && ap='->' || ap='  '
       printf " %s% 2d:  0x%08x  0x%08x  %s\n" "$ap" $mtd $addr $size "$name"
       let addr+=$size
     done
@@ -423,7 +453,7 @@ case $1 in
       $fw_setenv bootargs $bootargs && echo set rootfs-a
     fi
     ;;
-    
+
   *-b) ## set kernel/rootfs to use '-b' images
     bootcmd_x auto
     if [ "kernel" == "${1:0:6}" ] || [ "-b" == "${1}" ]
@@ -444,7 +474,7 @@ case $1 in
     echo $SELF v$VERSION ${tm:+testmode_active} && exit 0
     ;;
 
-  \?|-h|--help) # quick ref
+  -h|--help) # quick ref
     echo "Quick reference...  (askerisk denotes variations of an option)"
     echo "Options:"
     sed -n 's/\(^  .*[a-z\*-]\)) ## \(.*\)/\1    \2/p' $0
