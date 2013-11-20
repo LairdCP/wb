@@ -1,86 +1,89 @@
 #!/bin/sh
-# enable/disable bluetooth functionality for wb45n
+# bluetooth - init for wb45n
+# Creates or removes the host control interface.
 
-#WIFI_MACADDR=/etc/summit/wifi_interface
-
-bt_awaitinterface() {
-  # arg1 is timeout (10*mSec) to await availability of ahb_dev: hci0
-  ahb_dev='ahb.0/600000.ohci/usb1/1-2/1-2:1.0/bluetooth'
-  let x=0
-  while [ $x -lt $1 ]
+await_interface() {
+  # args: <class/iface> [<milliseconds>]
+  let n=0 w=${2:-0}
+  while : wait increments of 10ms for address
   do
-    grep -qs btusb /sys/devices/$ahb_dev/hci0/device/uevent \
-    && grep -qs live /sys/module/bnep/initstate \
-    && break
-    ##
-    usleep 10000 && let x++
+    { mac=; read -rs mac </sys/class/${1}/address; } 2>/dev/null
+    test "${mac/??:??:??:??:??:??/up}" == "up" && break
+    test $n -lt $w && let n+=10 && usleep 9999 || break
   done
-  let wx=10*x && echo "  waited ${wx}ms for bt"
-  [ $x -lt $1 ] && return 0 || return 1
+  test $n -ge 10 && echo -en "  ...waited ${n}ms${mac:+\n}"
+  test -n "$mac" && rv=0 || rv=1
+  return $rv
 }
 
-bt_start() {
-  echo "Enabling Bluetooth..."
-
-  # kernel module support for bt:
-   # bnep
-   # rfcomm
-   # btusb
-   #  bluetooth - bnep, rfcomm, hidp, btusb
-   # ohci_hcd
-   # hidp
-   #  hid - hidp
-   #
-  # load BT kernel modules
+start() {
+  echo "Enabling Bluetooth"
+  #
+  # loadable kernel module support for wb45:
+  #  ohci-hcd
+  #   bnep
+  #   rfcomm
+  #   hidp
+  #    hid - hidp
+  #   btusb
+  #    bluetooth - bnep, rfcomm, hidp, btusb
+  #
   modprobe ohci-hcd
   modprobe btusb
   modprobe hidp
   modprobe rfcomm
   modprobe bnep
 
-  # Sleep is necessary so that above modules init and create the device
-  #   Without it we'll get the error "Can't init device hci0: Connection timed out (110)"
-  #   Bug #4520
-  #sleep 2
-  
-  # wait up to 2s (200*10ms)
-  # only minimally checking for hci0 to exist
-  # bluez/tools/hciconfig has other timed checks
-  bt_awaitinterface 200
-  
-  # Now configure the bt
-  hciconfig hci0 reset
-  
-  # get BT config values
-#  source /etc/summit/bluetooth.conf
+  # must wait for ohci enumeration, or will get hci init error
+  await_interface bluetooth/hci0 2000 \
+  || { echo "  ...error, host control interface n/a"; return; }
+
+  hciconfig hci0 up
+  rv=$?
 }
 
-bt_stop() {
-  echo "Disabling Bluetooth..."
+stop() {
+  echo "Disabling Bluetooth"
 
-  modprobe -r ohci-hcd btusb hidp rfcomm bnep
+  await_interface bluetooth/hci0 \
+  && hciconfig hci0 down \
+  || echo "  ...already disabled"
+
+  # don't unload ohci-hcd, as other things might be using it
+  modprobe -r btusb hidp rfcomm bnep
+  rv=$?
 }
 
-#trap "" 1 15
-
-case "$1" in
+rv=1
+case $1 in
   stop)
-    bt_stop
+    stop
     ;;
 
   start)
-    bt_start
+    start
     ;;
 
   restart)
-    bt_stop
-    bt_start
+    stop
+    start
+    ;;
+
+  status)
+    echo -n STATUS=
+    if await_interface bluetooth/hci0
+    then
+      echo `hciconfig |sed '/[UD][PO][WN]*/!d;s/ .*//;y/UPDOWNRIG/updownrig/'`
+      echo CLASS=`cat /sys/class/bluetooth/hci0/class`
+      echo NAME=\"`cat /sys/class/bluetooth/hci0/name`\"
+      echo MAC=$mac
+    else
+      echo n/a
+    fi
     ;;
 
   *)
-    echo "Usage: $0 stop|start|restart}"
-    exit 1
+    echo "Usage: $0 stop|start|status|restart}"
     ;;
 esac
-
-exit 0
+exit $rv
