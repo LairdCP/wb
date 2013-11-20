@@ -1,4 +1,7 @@
 #!/bin/sh
+# bridge init-script
+# For exclusive bridge-mode setup only.
+# Note - This script will conflict with other networking setups.
 
 trap "" 1 15
 xc=\\033[1K\\\r

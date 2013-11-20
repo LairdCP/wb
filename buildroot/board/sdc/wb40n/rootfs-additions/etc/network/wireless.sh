@@ -189,7 +189,7 @@ wifi_stop()
     # This step avoids occasional problems when the driver is unloaded
     # while the iface is still being used.
     msg -en "disabling interface  "
-    ifconfig $WIFI_DEV down && { $usleep 100000; msg ...down; } || msg
+    ifconfig $WIFI_DEV down && { $usleep 500000; msg ...down; } || msg
   fi
 
   ## unload bcmsdh module
