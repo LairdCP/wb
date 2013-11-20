@@ -2,6 +2,7 @@
 # /etc/network/ifrc.sh - interface_run_config
 # A run-config/wrapper script to operate on kernel-resident network interfaces.
 # Provides auto-reconfiguration via netlink up/down event support.
+# Copyright (c) 2012 Jon Hefling
 # ksjonh_20120520
 #
 usage() {
@@ -24,11 +25,11 @@ usage() {
 	  -m   monitor ifrc events
 	  -x   run w/o netlink daemon
 	     ( Note:  ifrc may be disabled with:  /etc/default/ifrc.disable )
-  
+	  
 	Interface:
 	  name must be kernel-resident, or will try to start
 	  can be an alias (such as 'wl' for wireless, see /e/n/i file)
-
+	
 	Action:
 	  stop|start|restart   - act on phy-init/driver (up or down the hw-phy)
 	  noauto|auto   - unset or set auto-starting an interface (for init/rcS)
@@ -37,24 +38,24 @@ usage() {
 	  logs   - manage related files: (clean|show [<iface>])
 	  eni   - edit file: /etc/network/interfaces
 	  usage   - view file: /etc/network/networking.README
-
+	
 	Method:
 	  dhcp [<param=value> ...]
 	     - employ client to get/renew lease, info stored in leases file
 	       requestip=x.x.x.x   - request an address (rip) from dhcp server
 	       timeout=nn   - seconds to allow client to try/await response
 	       $mii_speed
-
+	
 	  static [<param=x.x.x.x> ...]
 	     - use settings from /e/n/i file or those given on commandline
 	       params:  address, netmask, broadcast, gateway  (ip,nm,bc,gw)
-
+	
 	  loopback [<param=value>]
 	     - use to set a specific localhost address
 	
 	  manual
 	     - the interface will not be configured
-
+	
 	Usage:
 	# ifrc [flags...] [<interface>] [<action>] [<method> [<param=value> ...]]
 	#
@@ -83,7 +84,7 @@ msg() {
 }
 
 # internals
-ifrc_Version=20130929
+ifrc_Version=20131009
 ifrc_Disable=/etc/default/ifrc.disable
 ifrc_Script=/etc/network/ifrc.sh
 ifrc_Lfp=/var/log/ifrc
@@ -205,6 +206,25 @@ sleuth_wl() {
   done
 }
 
+summarize_interface_status() {
+  if ! ifconfig $dev 2>/dev/null |grep -q " UP "
+  then
+    is=inactive
+  else
+    is=active
+    { read -r x </sys/class/net/$dev/carrier; } 2>/dev/null
+    if ! let x+0
+    then
+      is="$is, no_carrier/cable/link"
+    else
+      [ ! -d /sys/class/net/$dev/phy80211 ] \
+      && is="$is, linked" \
+      || { iw dev $dev link |grep -q Connected && is="$is, associated"; } \
+    fi
+  fi
+  ps ax |grep -q "ifplug[d].*${dev}" && is="...managed, $is" || is="...$is" 
+}
+
 show_interface_config_and_status() {
   ida=$( ifconfig -a |sed -n '/./{H;$!d;};x;/\ UP/!p' \
                      |sed -n 's/\(^[a-z][a-z0-9]*\).*/\1 /p' \
@@ -222,7 +242,7 @@ show_interface_config_and_status() {
   # include association info for wireless dev
   if [ -d /sys/class/net/$dev/phy80211 ]
   then
-    echo -e "\nWiFi:"
+    echo -e "\nWiFi:  `grep -s . /sys/class/net/$dev/operstate`"
     iw dev $dev link 2>/dev/null \
       |sed 's/^Connec/Associa/;s/t connec.*/t associated (on '$dev')/' \
       |sed '/[RT]X:/d;/^$/,$d;s/^\t/        /'
@@ -318,7 +338,7 @@ case $1 in
     if show_interface_config_and_status 
     then
       echo
-      /etc/network/bridge.sh 2>/dev/null
+      /etc/network/bridge.sh 2>/dev/null && echo
       route -ne
       echo -e "\nDNS:\r\t/etc/resolv.conf"
       sed '$G' /etc/resolv.conf 2>/dev/null
@@ -350,7 +370,13 @@ case $1 in
     exit $?
     ;;  
 
-  noauto|auto|flags|status|down|dn|up) ## require iface
+  auto) ## report 'auto <iface>'s
+    echo auto interfaces: \
+         `sed -n '/^${1} [a-z]/s/auto \(.*\)/\1/p' $eni |tr '\n' ' '`
+    echo "  ...usage: ${0##*/} <iface> {noauto|auto}"
+    ;;
+
+  flags|status|down|dn|up) ## require iface
     usage error: "...must specify an interface" "ifrc <iface> $1" 
     ;;
 
@@ -376,55 +402,39 @@ then
   #
 elif [ -n "$dev" ]
 then
-  # See if this is an aliased interface to act on...
-  # Otherwise (assume) treat the interface as an alias by the same name.
-  # when given dev is the alias for an interface name, determine actual name
-  # when given dev is the actual interface name of an alias, use as an alias
+  # Find iface stanza using '$dev' as a devalias name or as the deviface name.
+  # Then extract any general settings for it.
+  msg3 "  checking /e/n/i file..."
   D='[a-z][a-z][a-z0-9]*'
-  msg3 "  checking the /e/n/i file to determine if aliased interface"
   devalias=$( sed -n "/$dev/s/^[ \t]*alias \($D\)[ is]* \($D\)/\1 \2/p" $eni )
-  msg3 "  eni_alias: ${devalias%% *}?${devalias##* }"
-  deviface=$( sed -n "/$dev/s/^iface $dev.*/$dev/p" $eni )
-  msg3 "  eni_iface: $deviface?"
-  ##
-  if [ -z "$devalias" ]
+  if [ -n "$devalias" ]
   then
-    if [ -n "$deviface" ]
-    then
-      [ "$dev" == "wl" ] \
-      && devalias=$( sleuth_wl ) \
-      || devalias=$dev
-    else  
-      devalias=$dev
-      msg3 "  ...no alias found, so assumed to be real"
+    if grep -q "^iface ${devalias%% *} inet" $eni
+    then # matched devalias name via alias
+      ifacemsg="${devalias%% *} (alias)"
+      dev=${devalias##* }
+      devalias=${devalias%% *}
+    elif grep -q "^iface ${devalias##* } inet" $eni
+    then # matched deviface name via alias
+      ifacemsg="${devalias%% *} (alias)"
+      dev=${devalias##* }
+      devalias=${devalias##* }
     fi
   else
-    # found alias, so try to sort out what is the actual name...
-    if [ "${devalias%% *}" != "$dev" ]
+    if grep -q "^iface $dev inet" $eni
     then
-      ifacemsg="(alias)"
-      dev=${devalias##* }
-      devalias=${devalias%% *}
-      msg3 "  ...\"${devalias}\" is the alias for \"${dev}\""
-    elif [ "${devalias##* }" != "$dev" ]
-    then
-      ifacemsg="(alias)"
-      dev=${devalias##* }
-      devalias=${devalias%% *}
-      msg3 "  ...assuming \"${dev}\" as \"${devalias}\""
-    else
+      ifacemsg="$dev"
       devalias=$dev
-      msg3 "  ...can't determine, so assuming $dev"
     fi
   fi
+  ## devalias is used to further process settings for deviface in /e/n/i
+  msg3 "  iface stanza: ${ifacemsg:-?}"
   test -n "$devalias" || exit 1
-  ## devalias now is set, and used to further process settings from /e/n/i
 
   # check for ifrc-flags if none specified on cli - cummulative
   test -z "${fls//-v /}" \
   && flags=$( sed -n "/^iface $devalias/,/^$/\
                       s/^[ \t]\+[^#]ifrc-flags \(.*\)/\1/p" $eni 2>/dev/null )
-  #
   [ -n "$flags" ] \
   && msg3 "applying ifrc-flags via /e/n/i: $flags"
   for af in $flags; do parse_flag $af; done
@@ -443,6 +453,7 @@ then
   eval $IFRC_SCRIPT
   make_() { ( eval $1; x=$?; [ ${1:0:1} == / ] && echo \ \ ${1##*/}: $x ); }
 fi
+msg3 "  deviface: ${dev:-?}"
 test -n "$dev" || exit 1
 
 # set logfile name and limit the file size to just 100-blocks
@@ -456,7 +467,7 @@ fi
 # begin a new timestamp log entry for the dev operations that follow 
 read -rs us is </proc/uptime
 printf "\n% 13.2f __${ifrc_Cmd}  $ifrc_Via\n" $us >>$ifrc_Log
-msg3 -e "env:\n`env |sed -n 's/^IF[A-Z]*_.*/  &/p' |grep . || echo \ \ ...`"
+msg3 -e "env:\n`env |sed -n 's/^IF[A-Z]*_.*/  &/p' |grep . || echo \ \ ...`\n"
 
 # external globals - carried per instance and can be used by *-do scripts too 
 export IFRC_STATUS="${ifnl_s:-  ->  }"
@@ -538,10 +549,11 @@ then
   fi
 
   ## event rules for additional condition/states...
+  #
+  msg @. ifrc_s/d/a/m: "$IFRC_STATUS" $IFRC_DEVICE ${IFRC_ACTION:---} \
+                       ${IFRC_METHOD%% *} s\{$IFRC_SCRIPT\}
 fi
 
-msg @. ifrc_s/d/a/m: "$IFRC_STATUS" $IFRC_DEVICE ${IFRC_ACTION:---} \
-                     ${IFRC_METHOD%% *} s\{$IFRC_SCRIPT\}
 #
 # Do not really 'down' or 'up' an interface here with: 'ifconfig <dev> down/up'
 # We leave that to the driver init-scripts instead, so they handle stop/start.
@@ -549,44 +561,49 @@ msg @. ifrc_s/d/a/m: "$IFRC_STATUS" $IFRC_DEVICE ${IFRC_ACTION:---} \
 #
 case $IFRC_ACTION in
   status) ## check if iface is configured and show its ip-address
-    ## confirm configured <iface>: [ip-address]:0/1
-    ip=$( gipa $dev )
-    test -n "$ip" && { msg $ip; exit 0; } || exit 1
+    # affirm configured <iface>: ip-address [...status]:0/1
+    # returns true if the iface is configured with an ip-address
+    is=; ip=$( gipa $dev ); rv=$?
+    [ -n "${vm:0:1}" ] && { ip=${ip:-0.0.0.0}; summarize_interface_status; }
+    [ -n "$ip$is" ] && msg $ip $is
+    exit $rv
     ;;
 
   show) ## show info/status for an iface
     test -f /sys/class/net/$dev/uevent \
     || { echo \ \ ...not available, not a kernel-resident interface; exit 1; }
-    
-    # summarize the status of this interface
-    { read -r ccl </sys/class/net/$dev/carrier; } 2>/dev/null
-    [ "$ccl" != "1" ] && ccl="no carrier/cable/link" || ccl="linked"
-
-    iw dev $dev link |grep -q Connected \
-    && ccl="$ccl, associated"
-    
-    ps ax |grep -q "ifplug[d].*${dev}" && ccl="managed, $ccl" 
-    ifconfig $dev |grep -q UP && ccl="$ccl, up" || ccl="$ccl, dn"
-
-    echo -e "Configuration for interface: $devalias $ifacemsg ...$ccl"
+    summarize_interface_status
+    echo Configuration for interface: $ifacemsg $is
     if grep -qs Generic /sys/class/net/$dev/*/uevent
     then
       echo Warning: using 'Generic PHY' driver
-      [ -n "$mii" ] && $mii $dev |sed -n '/You/,$d;/media type/,$p'
+      [ -n "$mii" ] && $mii $dev |sed -n '/Yo/,$d;/media type/,$p'
     fi
     show_interface_config_and_status
-    #netstat -nre |grep -E "Kernel|Destina|$dev"
-    #route -ne |grep -E "Kernel|Destina|$dev"
-    if [ "$dev" == "lo" ]
+    if gipa $dev >/dev/null
     then
-      echo -e "\nRouting: (local)"
-      ip route show table local dev $dev |sed 's/local/    local/'
+      echo -e "\nConnections:"
+      netstat -ntuw 2>/dev/null \
+      |sed -n "/${ip%%[ /]*}/!d;s/\(^....\) .*[0-9] [0-9.]*\(:.*\)/\1   \2/p" \
+      |grep . || echo \ \ ...
+    fi
+    if [ "${dev:0:2}" == "br" ]
+    then
+      echo
+      /etc/network/bridge.sh 2>/dev/null
     else
-      echo -e "\nRouting: "
-      ip route show dev $dev
-      # get arp-table entries count, then display entries
-      let `arp -ani $dev |sed '/No match/d; $=; d'`+0 && x=cached || x=empty
-      echo -e "\nARP:\r\t($x)" && arp -ani $dev |sed '/No match/d;/^$/d'
+      if [ "$dev" == "lo" ]
+      then
+        echo -e "\nRouting: (local)"
+        ip route show table local dev $dev \
+        |sed 's/^/  /;s/broad/b/;s/  pr/\t pr/'
+      else
+        echo -e "\nRouting: "
+        ip route show dev $dev
+        echo -e "\nARP:     \c"
+        arp -ani $dev \
+        |sed -e '/[Nn]o match/a(empty)' -e '/[Nn]o match/d;s/on .*//;1i(cached)'
+      fi
     fi
     [ -n "${vm:0:1}" ] \
     && echo -e "\nProcesses:\n`ps ax -opid,args |grep "$dev\ " || echo \ \ ...`"
@@ -667,7 +684,7 @@ case $IFRC_ACTION in
       fi
     fi
     rm -fv ${ifrc_Lfp}/$dev.lock
-    
+
     if [ "$dev" != "lo" ] \
     && [ "$devalias" != "wl" ] \
     && [ ! -d /sys/class/net/$dev/phy80211 ]
@@ -717,7 +734,7 @@ case $IFRC_ACTION in
     rm -f ${ifrc_Lfp}/$dev.lock
     exit 0
     ;;
-    
+
   ''|ee|xx|\.*) ## no action
     msg2 \ \ ...no action on $dev
     exit 0
@@ -896,7 +913,7 @@ check_link() {
 run_udhcpc() {
   # BusyBox v1.19.3 multi-call binary.
   source /etc/dhcp/udhcpc.conf 2>/dev/null
-  
+
   # set no-verbose or verbose mode level
   [ -z "$vm" ] && nv='|grep -E "obtained|udhcpc"'
   [ "${vm:2:1}" == "." ] && vb='-v' 
@@ -920,7 +937,7 @@ run_udhcpc() {
 
   # specific opt:val pairs to send - must be hex
   for t in ${OPT_SND}; do xopt=$xopt\ -x$t; done
-  
+
   # request bootfile (via flag-file)
   rbf=${rbf:+-O$rbf}
 
@@ -935,7 +952,7 @@ run_udhcpc() {
   # May be signalled or spawned again depending on events/conditions. Flags are: 
   # iface, verbose, request-ip, exit-no-lease/quit-option, exit-release, retry..
   # For retry, send 4-discovers, paused at 2sec, and repeat after 5sec.
-  eval udhcpc -i$dev $vb $rip $nq -R -t4 -T2 -A5 $ropt $vci $xopt $rbf $rs $nv
+  eval udhcpc -i$dev $vb $rip $nq -R -t4 -T2 -A5 -b $ropt $vci $xopt $rbf $rs $nv
   #
   #return $?
 }
@@ -954,7 +971,7 @@ run_dhclient() {
 
   # -cf /etc/dhcp/dhclient.$dev.conf \
   # -pf /var/log/dhclient.$dev.pid \
-  
+
   dhclient -d -v $dev --no-pid \
    -lf /var/lib/dhcp/dhclient.$dev.leases \
     >/var/log/dhclient.$dev.log 2>&1
@@ -1005,7 +1022,7 @@ fi
 # And so the specified method and optional parameters will now be applied.
 #
 case ${IFRC_METHOD%% *} in
-  
+
   dhcp) ## method + optional params
     [ -n "$rcS_" -a -f /tmp/bootfile_ ] && rbf=bootfile
     ifrc_validate_dhcp_method_params
@@ -1040,14 +1057,14 @@ case ${IFRC_METHOD%% *} in
     echo -en \\\r 
 
     test -n "$to" && await_timeout_for_dhcp 
-   
+
     ## restart auto-negotiation after using fixed speed
     # developmental...
     #[ -n "$fpsd" ] && [ -n "$mii" ] && $mii -r $dev >/dev/null
     # well... restoring this has another side-effect...
     # disabled for now, so the fpsd will remain in-effect, if used
     ;;
-  
+
   static) ## method + optional params
     ifrc_validate_static_method_params
     # configure interface <ip [+nm]>
@@ -1087,7 +1104,7 @@ case ${IFRC_METHOD%% *} in
   manual) ## method ...no params
     # do nothing, configuration is to be handled manually
     ;;
-    
+
   *) ## error
     msg "unhandled, configuration method: ${IFRC_METHOD%% *} (error)"
     exit 1

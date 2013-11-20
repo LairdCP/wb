@@ -4,39 +4,55 @@
 # This init only loads/unloads the hw-phy gadget driver for a USB interface.
 # Configuration is handled via helpers in /etc/network. See the /e/n/i file.
 
-# the iface name
-USB_IF=usb0
 
+iface=usb0
 
-checkinterface() {
-  # args: <deciseconds> <iface>
-  let n=$1 
-  ds='busybox usleep 100000'
-  until grep -so "$2" /proc/net/dev || ! let n-=1; do echo -en .; $ds; done
-  [ $n -le 0 ] && return 1 || return 0
+await_interface() {
+  # args: <class/iface> [<milliseconds> [{up|down}]]
+  let n=0 w=${2:-0}
+  while : wait increments of 10ms for address
+  do
+    { mac=; read -rs mac </sys/class/${1}/address; } 2>/dev/null
+    test "${mac/??:??:??:??:??:??/up}" == "up" && break
+    test "$3" == "down" && break
+    test $n -lt $w && let n+=10 && usleep 9999 || break
+  done
+  test $n -ge 10 && echo -en "  ...waited ${n}ms${mac:+\n}${3:+\n}"
+  test -n "$mac" && rv=0 || rv=1
+  return $rv
 }
 
 start() {
-  echo -e "Enabling USB gadget ethernet \c"
+  echo "Enabling USB gadget ethernet"
 
+  [ ! -d /sys/module/usb_storage ] \
+  || { echo "  Error: USB is already in host mode, for usb_storage."; return; }
+ 
+  # udc required, do not unload!
   modprobe atmel_usba_udc
+
   modprobe g_ether
   
-  # await 1.2 seconds for interface
-  checkinterface 12 $USB_IF \
-  || { echo -e "\n  ...driver error, interface $USB_IF n/a"; exit 1; }
+  await_interface net/$iface 1200 up \
+  || { echo "  Error: g_ether $iface n/a?"; return; }
   
-  ifconfig $USB_IF up
+  ifconfig $iface up
+  rv=$?
 }
 
 stop() {
   echo "Disabling USB gadget ethernet"
-  ifconfig $USB_IF 0.0.0.0 2>/dev/null
-  ifconfig $USB_IF down 2>/dev/null
-  
-  grep -q ^g_ether /proc/modules && modprobe -r g_ether
+
+  ifconfig $iface 0.0.0.0 2>/dev/null \
+  && ifconfig $iface down
+
+  await_interface net/$iface 600 down
+ 
+  modprobe -r g_ether
+  rv=$?
 }
 
+rv=1
 case $1 in
   stop)
     stop
@@ -46,16 +62,28 @@ case $1 in
     start
     ;;
 
+  status)
+    echo -n STATUS=
+    ##
+    ## note: cable/link detect change down|up may take awhile
+    ##
+    if await_interface net/$iface
+    then
+      grep -s . /sys/class/net/$iface/operstate
+      grep -s . /sys/class/net/$iface/uevent
+      echo MAC=$mac
+    else
+      echo n/a
+    fi
+    ;;
+
   restart)
     stop
     start
     ;;
 
   *)
-    echo "$0 $@ -- error"
-    echo "Usage: $0 {start|stop|restart}"
-    exit 1
+    echo "Usage: $0 {stop|start|status|restart}"
     ;;
 esac
-
-exit 0
+exit $rv

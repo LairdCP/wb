@@ -72,23 +72,22 @@ iface br0 inet manual
   #bridge_ports usb0 wlan0
   bridge_stp off
   bridge_fd 0
-  post-cfg-do /etc/network/bridge_mode.conf
-  pre-dcfg-do /etc/network/bridge_mode.conf
+  #post-cfg-do /etc/network/bridge_mode.conf eth0 wlan0
+  #pre-dcfg-do /etc/network/bridge_mode.conf eth0 wlan0
 
 
 ## USB
 auto usb0
-iface usb0 inet manual
-#iface usb0 inet static
-  #address 192.168.3.1
-  #broadcast 192.168.3.255
-  #netmask 255.255.255.252
-  ## optionally configure wifi tethering
+iface usb0 inet static
+  address 192.168.3.1
+  broadcast 192.168.3.255
+  netmask 255.255.255.0
+  ## optional wifi-tethering
   #post-cfg-do /etc/network/wifi-nat.conf
   #pre-dcfg-do /etc/network/wifi-nat.conf
-  ## optionally configure ethernet traffic
-  #post-cfg-do /etc/network/usb-g_ether.conf
-  #pre-dcfg-do /etc/network/usb-g_ether.conf
- 
+  ## optional g_ether-nat
+  post-cfg-do /etc/network/usb-g_ether-nat.conf
+  pre-dcfg-do /etc/network/usb-g_ether-nat.conf
+
 
 

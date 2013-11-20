@@ -38,12 +38,12 @@ then
   tm=echo && echo \ \ $0 $@ [TESTMODE ACTIVE]
 fi
 
-# Parse the /e/n/i file for what to do, if 1st arg is a stop|start command.
-# Otherwise, shift a given arg into device-list. 
-case ${1:0:2} in
-  re) ## restart ignored
+# An optionally specified iface is shifted into the device-list to act on. 
+# Parse the /e/n/i for '^auto <iface>' enabled stanzas, in lieu of given iface.
+case $1 in
+  restart) ## ignored, bypass this step
     ;;
-  st) ## stop|start ...check /e/n/i 
+  stop|start) ## check /e/n/i 
     [ -f $eni ] && devls=$( sed -n 's/^auto \([a-z][a-z0-9]*\).*$/\1/p' $eni )
     ;;
   *) ## <iface> assumed
@@ -100,31 +100,20 @@ bring() {
       # maybe using 'wl' as alias for wireless
       # the wireless script handles device up/down
       # and the ifrc script will handle configuration
-      $tm $wifi $3 nowait
+      $tm $wifi $3
       $up && $tm $ifrc $1 $2 $method &
       $dn && wait
       ;;
 
     br*) ## bridge-mode support
-      # (de)config handled in bridge script as required
-      case $3 in
-        restart)
-          #$tm $ifrc $1 dn
-          #$dn && wait && $tm $ifconfig $1 $2
-          $tm $bridge -x stop $1 
-          $tm $bridge -x start $1
-          #$tm $ifrc $1 up
-          ;;
-        start)
-          $tm $bridge -x start $1
-          #$tm $ifrc $1 up
-          ;;
-        stop)
-          #$tm $ifrc $1 dn
-          #$dn && wait && $tm $ifconfig $1 $2
-          $tm $bridge -x stop $1
-          ;;
-      esac
+      $dn && $tm $ifrc $1 $2
+    # $dn && wait && $tm $ifconfig $1 $2
+      $tm $bridge $3 $1
+      $up && $tm $ifrc $1 $2 $method & 
+      ;;
+
+    *) ## unhandled interface name
+      echo \ \ ...unhandled interface name
       ;;
   esac
 }
@@ -153,17 +142,18 @@ wnw=wait
 case $1 in
     
   stop)
-    echo Stopping network interfaces... $devls
+    echo -n Stopping network interfaces... #$devls
     #
     check_ifrc || ifrc=$ifconfig
-    for dev in $devls; do bring $dev down $1 >>$log; $wnw; done
+    for dev in $devls; do echo -n \ $dev; bring $dev down $1 >>$log; $wnw; done
+    echo
     ;;
   
   start)
     echo Starting network interfaces... $devls
     #
     # prevent general configurations when also doing bridge_mode
-    echo \ $devls |grep -q " br[i0-9]" && method=manual
+    #echo \ $devls |grep -q " br[i0-9]" && method=manual
     [ "$2" == "manual" ] && method=manual
     #
     check_ifrc || ifrc=$ifconfig
@@ -171,8 +161,9 @@ case $1 in
     ;;
     
   restart)
-    $0 $tm $devls stop
-    $0 $tm $devls start
+    echo Restarting network...
+    $0 $devls stop
+    $0 $devls start
     ;;
   
   *)
