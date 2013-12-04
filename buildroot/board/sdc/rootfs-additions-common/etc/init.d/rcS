@@ -71,7 +71,7 @@ rcS_watchdog() {
     done
     # timed-out, so terminate the script
     echo rcS_watchdog: $2 >/dev/console
-    kill -9 `pidof $2` echo "${ets}$2 terminated by rcS_watchdog" >>$rcS_log
+    kill -9 `pidof $2` && echo "${ets}$2 terminated by rcS_watchdog" >>$rcS_log
   fi
 }
 
