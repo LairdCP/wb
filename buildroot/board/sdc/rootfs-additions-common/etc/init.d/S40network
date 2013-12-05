@@ -1,4 +1,4 @@
-#!/usr/bin/env ash
+#!/bin/ash
 # network - init script for controlling all interfaces
 # jon.hefling@lairdtech.com 20120522
 #
