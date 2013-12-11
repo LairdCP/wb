@@ -84,7 +84,7 @@ msg() {
 }
 
 # internals
-ifrc_Version=20131009
+ifrc_Version=20131011
 ifrc_Disable=/etc/default/ifrc.disable
 ifrc_Script=/etc/network/ifrc.sh
 ifrc_Lfp=/var/log/ifrc
@@ -100,8 +100,8 @@ ifrc=/sbin/ifrc
 [ -d "$ifrc_Lfp" ] || mkdir -p ${ifrc_Lfp}
 
 # check init-script exists
-nis=/etc/init.d/S??network*
-[ -x $nis ] || msg "warning: network init-script ($nis) not found!"
+nis=/etc/init.d/S??network
+[ -x "$nis" ] || nis="echo Cant exec: ${nis:-network-init-script}"
 
 # /e/n/i should exist...
 eni=/etc/network/interfaces
@@ -370,9 +370,8 @@ case $1 in
     exit $?
     ;;  
 
-  auto) ## report 'auto <iface>'s
-    echo auto interfaces: \
-         `sed -n '/^${1} [a-z]/s/auto \(.*\)/\1/p' $eni |tr '\n' ' '`
+  noauto|auto) ## report 'auto <iface>'s
+    echo $1 interfaces: `sed -n "/^${1/no/#} [a-z]/s/^.* / /p" $eni |tr -d '\n'`
     echo "  ...usage: ${0##*/} <iface> {noauto|auto}"
     ;;
 
@@ -613,6 +612,11 @@ case $IFRC_ACTION in
 
   flags) ## (re)set ifrc-flags for an iface
     msg "not implemented"
+    exit 0
+    ;;
+
+  eni) ## report interface stanza
+    sed '/./{H;$!d;};x;/[#]*iface '$devalias' inet/!d;n' $eni
     exit 0
     ;;
 
