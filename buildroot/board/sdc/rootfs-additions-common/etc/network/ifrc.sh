@@ -84,7 +84,7 @@ msg() {
 }
 
 # internals
-ifrc_Version=20131011
+ifrc_Version=20131011b
 ifrc_Disable=/etc/default/ifrc.disable
 ifrc_Script=/etc/network/ifrc.sh
 ifrc_Lfp=/var/log/ifrc
@@ -101,7 +101,7 @@ ifrc=/sbin/ifrc
 
 # check init-script exists
 nis=/etc/init.d/S??network
-[ -x "$nis" ] || nis="echo Cant exec: ${nis:-network-init-script}"
+[ -x $nis ] || nis="echo Cant exec: ${nis:-network-init-script}"
 
 # /e/n/i should exist...
 eni=/etc/network/interfaces
@@ -476,7 +476,9 @@ export IFRC_METHOD
 export IFRC_SCRIPT
 
 # determine action to apply - assume 'show'
-[ -n "$1" ] && { IFRC_ACTION=$1; shift; } || IFRC_ACTION=show
+[ -n "$1" ] \
+&& { IFRC_ACTION=$1; shift; } \
+|| { [ -z $ifnl_disable ] && IFRC_ACTION=show; }
 
 # determine method to apply
 if [ "$IFRC_ACTION" == "up" ]
@@ -739,7 +741,12 @@ case $IFRC_ACTION in
     exit 0
     ;;
 
-  ''|ee|xx|\.*) ## no action
+  '') ## no action unless disable nl for interface
+    [ -n "$ifnl_disable" ] && ifrc_stop_netlink_daemon
+    exit 0
+    ;;
+
+  ee|xx|\.*) ## no action
     msg2 \ \ ...no action on $dev
     exit 0
     ;;
