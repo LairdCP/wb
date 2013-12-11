@@ -322,8 +322,8 @@ diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/common/env_common.c ub
  
 diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb40n.h uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb40n.h
 --- uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb40n.h	1969-12-31 18:00:00.000000000 -0600
-+++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb40n.h	2013-05-15 17:10:25.197230042 -0500
-@@ -0,0 +1,198 @@
++++ uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb40n.h	2013-12-04 09:27:44.407194799 -0600
+@@ -0,0 +1,200 @@
 +/*
 + * Copyright (c) 2010-2012 Laird technologies
 + * All rights reserved.
@@ -484,8 +484,10 @@ diff -urNa uboot-ebbf0d20aa85f623c49b7ed3349ebfea450c152d/include/configs/wb40n.
 +#define CONFIG_SYS_CBSIZE		256
 +#define CONFIG_SYS_MAXARGS		16
 +#define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
-+#define CONFIG_SYS_LONGHELP		1
-+#define CONFIG_CMDLINE_EDITING		1
++#define CONFIG_SYS_LONGHELP
++#define CONFIG_CMDLINE_EDITING
++#define CONFIG_AUTO_COMPLETE
++#define CONFIG_SYS_HUSH_PARSER
 +
 +/*
 + * Size of malloc() pool

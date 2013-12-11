@@ -7,7 +7,7 @@ ifdef BUILDROOT_DL_DIR
 LAIRD_DL_DIR            := $(BUILDROOT_DL_DIR)
 LAIRD_ARCHIVES          := archive/AT91Bootstrap-v3.4.4.tar.xz \
                            archive/openssl-fips-2.0.5.tar.gz
-LAIRD_ARCHIVES_OPTIONAL := archive/msd40n-laird-3.4.1.7.tar.bz2
+LAIRD_ARCHIVES_OPTIONAL := archive/msd40n-laird-3.4.1.8.tar.bz2
 endif
 
 URL   := http://buildroot.uclibc.org/downloads/
