@@ -34,7 +34,7 @@ case $1 in
     ;;
 
   *)
-    echo $"Usage: $0 {stop|start|restart}"
+    echo "Usage: $0 {stop|start|restart}"
     exit 1
 esac
 
