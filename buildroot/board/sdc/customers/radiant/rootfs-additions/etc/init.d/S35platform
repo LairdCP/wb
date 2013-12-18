@@ -1,0 +1,91 @@
+#!/bin/sh
+#
+# Check the platform
+#
+
+case "$1" in
+  
+  start)
+    echo "Checking platform... "
+    if [ `/sbin/ifconfig eth0 |sed -n 's/.*HWaddr \(.*\)/\1/p'` == '00:17:23:00:00:00' ]
+    then
+      echo "  NULL Ethernet MAC address detected; Storing a random MAC address to Flash."
+      random_mac=`dd if=/dev/urandom bs=1 count=3 2>/dev/null \
+      |/usr/bin/od -t x1 -N 3 \
+      |/bin/sed -n '1s/^....... \(..\) \(..\) \(..\)/00:17:23:\1:\2:\3/p'`
+      /sbin/ifconfig eth0 hw ether $random_mac
+      /usr/sbin/fw_setenv ethaddr $random_mac
+    fi
+
+    if [ `fw_printenv -n updated_kernel 2> /dev/null` ]
+    then
+      echo "  Clearing updated_kernel flag"
+      fw_setenv updated_kernel
+    fi
+
+    if [ `fw_printenv -n updated_rootfs 2> /dev/null` ]
+    then
+      echo "  Clearing updated_rootfs flag"
+      fw_setenv updated_rootfs
+    fi
+	
+ 	need_reboot=0
+	if [ `fw_printenv baudrate | cut -d= -f2` != 9600 ]; then fw_setenv baudrate 9600 ; need_reboot=1 ; fi
+	if [ `fw_printenv bootargs | grep 9600 | wc -l` == 0 ]
+	then
+		BOOTARGS=`fw_printenv bootargs | sed s/115200/9600/g | cut -d= -f2-`
+		fw_setenv bootargs $BOOTARGS
+		need_reboot=1
+	fi
+	if [ `fw_printenv bootargs | grep "loglevel=0" | wc -l` == 0 ]
+	then
+		echo 'setting loglevel=0'
+		BOOTARGS=`fw_printenv bootargs | sed s/loglevel=./loglevel=0/g | cut -d= -f2-`
+		fw_setenv bootargs $BOOTARGS
+		need_reboot=1
+	fi
+	if [ -h /etc/summit/WB40N.conf ]
+	then
+		# Symbolic link to WB40N.conf file has already been made.
+		echo -n
+	elif [ -f /etc/summit/WB40N.conf ]
+	then
+		# Old config file exists; move it over and create a symbolic link to it for compatibility.
+		mv /etc/summit/WB40N.conf /etc/summit/profiles.conf
+		ln -s /etc/summit/profiles.conf /etc/summit/WB40N.conf
+		need_reboot=1
+	else
+		# Old config file does not exist, but we still do need to create the symbolic link for compatibility.
+		echo does not exist, make a link.
+		ln -s /etc/summit/profiles.conf /etc/summit/WB40N.conf
+	fi
+	if [ $need_reboot == 1 ]; then reboot ; fi
+
+    # Check to see if the extra/log partition is formatted
+    #ubiattach -p /dev/mtd7
+    #if [ $? != 0 ]
+    #then
+    #  echo "  Preparing /dev/mtd7 with UBIFS"
+    #  flash_erase /dev/mtd7 0 0
+    #  ubiformat /dev/mtd7
+    #  ubiattach -p /dev/mtd7
+    #  ubimkvol /dev/ubi1 -N ubifs -m
+    #fi
+    #ubidetach -p /dev/mtd7
+    ;;
+    
+  stop)
+    ;;
+  
+  restart)
+    $0 stop
+    $0 start
+    ;;
+  
+  *)
+    echo $"Usage: $0 {start|stop|restart}"
+    exit 1
+esac
+
+exit $?
+

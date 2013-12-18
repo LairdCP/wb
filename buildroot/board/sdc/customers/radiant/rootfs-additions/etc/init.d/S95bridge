@@ -1,0 +1,63 @@
+#!/bin/sh
+
+trap "" 1
+trap "" 15
+
+ETH_WIRED=eth0
+ETH_WIFI=eth1
+BRIDGE=br0
+TheMac=`/sbin/ifconfig eth1 | grep HWaddr | cut -c39-55`
+
+start() {
+	/usr/bin/killall -9 dhclient
+	/sbin/ifconfig $ETH_WIRED up
+	/sbin/ifconfig $ETH_WIRED 0.0.0.0
+	/sbin/ifconfig $ETH_WIFI 0.0.0.0
+	/usr/sbin/brctl addbr $BRIDGE
+	/usr/sbin/brctl stp $BRIDGE off
+	/usr/sbin/brctl setfd $BRIDGE 0
+	/usr/sbin/brctl addif $BRIDGE $ETH_WIRED
+	/usr/sbin/brctl addif $BRIDGE $ETH_WIFI
+	/sbin/ifconfig $BRIDGE up
+	/bin/echo 1 > /proc/sys/net/ipv4/conf/all/proxy_arp
+	/bin/echo 1 > /proc/sys/net/ipv4/ip_forward
+	ebtables -A FORWARD --in-interface eth1 --protocol ARP --arp-mac-src $TheMac -j DROP
+	/sbin/ebtables -t nat -F PREROUTING
+	/sbin/ebtables -t nat -F POSTROUTING
+	/sbin/ebtables -t broute -F BROUTING
+	/sbin/ebtables -t nat -A PREROUTING  --in-interface $ETH_WIFI -j arpnat --arpnat-target ACCEPT
+	/sbin/ebtables -t nat -A POSTROUTING --out-interface $ETH_WIFI -j arpnat --arpnat-target ACCEPT
+	/sbin/ebtables -t broute -A BROUTING --in-interface $ETH_WIFI --protocol 0x888e -j DROP
+}
+
+stop() {
+	/sbin/ebtables -t nat -F
+	/sbin/ebtables -F
+	/sbin/ifconfig $BRIDGE down
+	/usr/sbin/brctl delbr $BRIDGE
+	/bin/echo "done."
+}
+
+case "$1" in
+	start)
+		start
+		;;
+
+	stop)
+		stop
+		;;
+
+	restart)
+		stop
+		start
+		;;
+
+	*)
+
+		/bin/echo "Usage: $0 {start|stop|restart}"
+		exit 1
+		;;
+esac
+
+exit 0
+
