@@ -84,7 +84,7 @@ msg() {
 }
 
 # internals
-ifrc_Version=20131012
+ifrc_Version=20131015
 ifrc_Disable=/etc/default/ifrc.disable
 ifrc_Script=/etc/network/ifrc.sh
 ifrc_Lfp=/var/log/ifrc
