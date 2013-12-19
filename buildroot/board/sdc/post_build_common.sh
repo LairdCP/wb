@@ -73,6 +73,9 @@ tar c --exclude=.svn --exclude=.empty -C board/sdc/rootfs-additions-common/ . | 
 [ -f $TARGETDIR/etc/init.d/S??openvpn ] \
 && chmod a-x $TARGETDIR/etc/init.d/S??openvpn     #not ready for use
 
+# create a compressed backup copy of the /e/n/i file
+gzip -c $TARGETDIR/etc/network/interfaces >$TARGETDIR/etc/network/interfaces~.gz
+
 # Create default firmware description file.
 # This may be overwritten by a proper release file.
 if [ -z "$LAIRD_RELEASE_STRING" ]; then

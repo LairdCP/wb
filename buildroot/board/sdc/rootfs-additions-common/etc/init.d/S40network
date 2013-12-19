@@ -19,7 +19,7 @@
 # A testmode is invoked by appending ' -x' in the 1st line of the /e/n/i file.
 #
 eni=/etc/network/interfaces
-log=${rcS_log:-/dev/null}
+log=${rcS_log:-/var/log/nis}
 
 ifconfig=/sbin/ifconfig
 ifrc=/etc/network/ifrc.sh
@@ -29,6 +29,11 @@ bridge=/etc/network/bridge.sh
 pppd=/etc/init.d/opt/S??pppd
 g_ether=/etc/init.d/opt/S??g_ether
 
+# Check /e/n/i
+test -s $eni \
+|| { test -s $eni~ && mv -f $eni~ $eni; } \
+|| { rm -f $eni~ && gzip -fdc $eni~.gz >$eni; } \
+|| { printf "# $eni - nis\n\nauto lo\niface lo inet loopback\n\n\n" >$eni; }
 
 # Check /e/n/i option for testmode.
 { read -r nopt < $eni; } 2>/dev/null
@@ -44,7 +49,8 @@ case $1 in
   restart) ## ignored, bypass this step
     ;;
   stop|start) ## check /e/n/i 
-    [ -f $eni ] && devls=$( sed -n 's/^auto \([a-z][a-z0-9]*\).*$/\1/p' $eni )
+    ls=; devls=$( sed -n 's/^auto \([a-z][a-z0-9]*\).*$/\1/p' $eni )
+    test $1 != start && for dev in $devls; do ls=$dev\ $ls; done && devls=$ls
     ;;
   *) ## <iface> assumed
     [ -n "$1" ] && devls=$1 && shift

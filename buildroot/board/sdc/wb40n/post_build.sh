@@ -10,4 +10,7 @@ source "board/sdc/post_build_common.sh" "$TARGETDIR"
 # Copy the product specific rootfs additions
 tar c --exclude=.svn --exclude=.empty -C board/sdc/wb40n/rootfs-additions/ . | tar x -C $TARGETDIR/
 
+# create a compressed backup copy of the /e/n/i file
+gzip -c $TARGETDIR/etc/network/interfaces >$TARGETDIR/etc/network/interfaces~.gz
+
 echo "WB40n POST BUILD script: done."

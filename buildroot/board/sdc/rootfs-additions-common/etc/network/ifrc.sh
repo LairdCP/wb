@@ -105,7 +105,10 @@ nis=/etc/init.d/S??network
 
 # /e/n/i should exist...
 eni=/etc/network/interfaces
-[ -f $eni ] || echo "# $eni" >$eni
+test -s $eni \
+|| { test -s $eni~ && mv -f $eni~ $eni; } \
+|| { rm -f $eni~ && gzip -fdc $eni~.gz >$eni; } \
+|| { printf "# $eni - ifrc\n\nauto lo\niface lo inet loopback\n\n\n" >$eni; }
 
 # check mii (optional)
 mii=/usr/sbin/mii-diag
@@ -622,23 +625,24 @@ case $IFRC_ACTION in
     exit 0
     ;;
 
-  noauto|auto) ## unset or set auto-starting for an iface
+  noauto|auto) ## unset or set auto-starting an interface
     auto=${IFRC_ACTION/no/#}
     if grep -q "auto $devalias$" $eni
     then
-      sed "/^[#]*auto $devalias$/s/^.*/$auto $devalias/" -i $eni
+      ## edit the #auto|auto iface, for the interface stanza
+      sed "/^[#]*auto $devalias$/s/^.*/$auto $devalias/" $eni >$eni~
     else
       if grep -q "^iface $devalias inet" $eni
       then
-        # insert the noauto|auto just above stanza iface
-        sed "/^iface $devalias inet/i$auto $devalias" -i $eni
+        ## insert a #auto|auto iface, for the interface stanza
+        sed "/^iface $devalias inet/i$auto $devalias" $eni >$eni~
       else
-        echo "stanza for $devalias not found in $eni"
+        echo "$devalias stanza not found in $eni"
         exit 1
       fi
     fi
-    [ -n "${vm:0:1}" ] && echo "/e/n/i: `grep "auto $devalias" $eni`"
-    exit 0
+    [ -s $eni~ ] && mv -f $eni~ $eni
+    exit $?
     ;;
 
   stop|start|restart) ## act on init/driver, does not return
