@@ -84,7 +84,7 @@ msg() {
 }
 
 # internals
-ifrc_Version=20131016
+ifrc_Version=20131018
 ifrc_Disable=/etc/default/ifrc.disable
 ifrc_Script=/etc/network/ifrc.sh
 ifrc_Lfp=/var/log/ifrc
@@ -126,9 +126,8 @@ parse_flag() {
       usage
       ;;
     --|--version) ## just report version
-      msg ${ifrc_Script##*/} v$ifrc_Version - \
-       md5:`md5sum < $ifrc_Script` \
-        len:`wc -c < $ifrc_Script`
+      echo ${ifrc_Script##*/} v$ifrc_Version \
+           - md5:`md5sum < $0` len:`wc -c < $0`
       exit 0
       ;;
     -n) ## do not use a log file
