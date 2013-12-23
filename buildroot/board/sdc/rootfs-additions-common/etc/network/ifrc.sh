@@ -33,7 +33,7 @@ usage() {
 	Action:
 	  stop|start|restart   - act on phy-init/driver (up or down the hw-phy)
 	  noauto|auto   - unset or set auto-starting an interface (for init/rcS)
-	  status   - check an interface and report its ip-address, with exit code
+	  status   - check an interface and report its ip-address, w/ exit code
 	  up|dn   - up or down the interface configuration (use '...' to renew)
 	  logs   - manage related files: (clean|show [<iface>])
 	  eni   - edit file: /etc/network/interfaces
@@ -44,7 +44,7 @@ usage() {
 	     - employ client to get/renew lease, info stored in leases file
 	       requestip=x.x.x.x   - request an address (rip) from dhcp server
 	       timeout=nn   - seconds to allow client to try/await response
-	       $mii_speed
+	       ${mii_usage}\
 	
 	  static [<param=x.x.x.x> ...]
 	     - use settings from /e/n/i file or those given on commandline
@@ -84,7 +84,7 @@ msg() {
 }
 
 # internals
-ifrc_Version=20131015
+ifrc_Version=20131016
 ifrc_Disable=/etc/default/ifrc.disable
 ifrc_Script=/etc/network/ifrc.sh
 ifrc_Lfp=/var/log/ifrc
@@ -99,11 +99,11 @@ ifrc=/sbin/ifrc
 [ ${#ifrc_Lfp} -gt 5 ] || ifrc_Lfp=/tmp/ifrc
 [ -d "$ifrc_Lfp" ] || mkdir -p ${ifrc_Lfp}
 
-# check init-script exists
+# check network-init-script
 nis=/etc/init.d/S??network
 [ -x $nis ] || nis="echo Cant exec: ${nis:-network-init-script}"
 
-# /e/n/i should exist...
+# check /e/n/i exists...
 eni=/etc/network/interfaces
 test -s $eni \
 || { test -s $eni~ && mv -f $eni~ $eni; } \
@@ -117,7 +117,7 @@ then
   mii=
 else
   # this package is used to optionally set a fixed port speed during dhcp
-  mii_speed="portspeed=10baseT...   - use fixed port speed during dhcp trial"
+  mii_usage="portspeed=10baseT...   - use a fixed speed during dhcp trial"$'\n'
 fi
 
 parse_flag() {
