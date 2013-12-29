@@ -1,6 +1,6 @@
 #!/usr/bin/env ash
 # /etc/dhcp/udhcpc.script
-# Action script for udhcpc, to handle DHCP client events.
+# An event action script for udhcpc.
 # jon.hefling@lairdtech.com,20120521,20130113,20131217
 
 eval $udhcpc_Settings 2>/dev/null
@@ -30,7 +30,7 @@ RESOLV_HOOK=${resolv_hook:-${RESOLV_HOOK:-''}}
 LEASES_FILE=${leases_file:-${LEASES_FILE:-'/var/lib/dhcp/dhclient.leases'}}
 LEASES_FILE=${LEASES_FILE/leases/$interface.leases}
 test -d ${LEASES_FILE%/*} || ln -s /tmp ${LEASES_FILE%/*}
-test -f ${LEASES_FILE} || printf "# via: $0\n#\n\n" >${LEASES_FILE}
+test -s ${LEASES_FILE} || printf "# via: $0\n#\n\n" >${LEASES_FILE}
 
 write_lease_info() {
   # calculate expiry info: renew=50%, rebind=87.5%, and expire=100%
@@ -44,7 +44,7 @@ write_lease_info() {
 
   # make new copy of leases file, while retaining other non-lease info,
   # get just the previous lease-entry and then append current lease-entry
-  sed '/^lease/,$!p;/^lease/h;/^lease/!H;$!b;x;/^#/d;p' -n $1 2>/dev/null >$1~
+  sed '/^leas/,$!p;/^leas/h;/^leas/!H;$!b;x;/^leas/,$p' -n $1 >$1~
 
   cat >>$1~<<-	\
 	lease-entry
@@ -72,27 +72,30 @@ do_source() {
   then
     $vecho "$@" >>$LOG_FILE
     ( source "$@" >>$LOG_FILE 2>&1 ) \
-    || $vecho "$0: $1 - error $?" >&2
+    || $vecho "$1 - error $?" >>$LOG_FILE
   fi
 }
 
-fn() { $vecho $@ >&2; $@; }
+fn() { $vecho $@ >>$LOG_FILE; $@; }
 
-exit_err() { echo "__${0} - error: $@" >&2; exit 1; }
+exit_err() { echo "__${0} - error: $@" >>$LOG_FILE; exit 1; }
 
 # Event
 action=$1
 dateRT=`date +%s`
 dateT0=`date +%u\ %Y/%m/%d\ %H:%M:%S -d @$dateRT`
 
+# Repair leases file as necessary.
+sed '/^ *$/{$!d};1,/^leas/{/^leas/{s/^/\n&/}}' -i $LEASES_FILE
+
 # Update leases file w/ this event action state.
 esa=$( printf "# esa: %10.10s - %s" "$action" "$dateT0" )
-sed "/^${esa:0:17}/d;/^#/h;/^$/{s,^,${esa}\n,}" -i $LEASES_FILE
+sed "/^${esa:0:17}/d;/^#/h;/^ *$/{s,^,${esa}\n,}" -i $LEASES_FILE
 
-# Limit log_file size to 100-blocks.
+# Limit log_file size.
 if [ -f "$LOG_FILE" ]
 then
-  let sz=$( { wc -c < $LOG_FILE""; } 2>/dev/null )+0
+  let sz=$( { wc -c < $LOG_FILE; } 2>/dev/null )+0
   if [ $sz -le 102400 ]
   then
     read -rs us is </proc/uptime
@@ -102,18 +105,22 @@ then
   fi
 fi
 
-#test -n "$VERBOSE" -a -z "${action/bound}" \
-#&& export \
-#   |sed -n -e "1i\ \ dhcp-rx: $action" -e '/_/d;s/^export \([a-z].*\)/  \1/p' \
-#    >$LOG_FILE
-
-# The verbose-mode is defined w/indented echo.
-test -n "$VERBOSE" && vecho='eval echo \ \ ' || vecho=:
+# Check verbose-mode.
+if test -n "$VERBOSE"
+then
+  #[ -z "${action/bound}" ] \
+  #&& export \
+  # |sed -n -e "1i\ \ udhcpc: $action" -e '/_/d;s/^export \([a-z].*\)/  \1/p' \
+  #  >>$LOG_FILE
+  vecho='eval echo \ \ '
+else
+  vecho=:
+fi
 
 case $action in
   deconfig)
     fn ifconfig $interface 0.0.0.0 \
-    || exit_err ${interface:-<interface>?}
+    || exit_err ${interface:-<interface>}?
     # This de-configures the interface, so packets can't use it...
     # And removes (flushes) all relative entries from the routing table.
     # It is still (up) and accessible to the IP layer (kernel-resident).
@@ -146,10 +153,8 @@ case $action in
 
     # Re-write entries in routing table, only for this interface, if set.
     # A metric value may be passed in via settings, or is zero by default.
-    if [ -z "$router" ]
+    if [ -n "$router" ]
     then
-      $vecho ...dhcp router not set, so not updating table >&2
-    else
       while :
       do
         fn route del default gw 0.0.0.0 dev $interface 2>/dev/null || break
@@ -179,16 +184,11 @@ case $action in
     ;;
 
   leasefail)
-    $vecho ...dhcp leasefail >&2
     ;;
 
   nak)
-    $vecho ...dhcp nak >&2
     ;;
 
-  *)
-    exit_err script arg ${1:-missing}
-    ;;
 esac
 
 # Call an on-event-action-handler if set and it exists.
