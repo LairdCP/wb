@@ -64,8 +64,6 @@ tar c --exclude=.svn --exclude=.empty -C board/sdc/rootfs-additions-common/ . | 
 # TODO: shouldn't have to do this here, temporary workaround
 ( cd $TARGETDIR/usr/lib \
   && ln -sf libsdc_sdk.so.1.0 libsdc_sdk.so.1 )
-( cd $TARGETDIR/usr/lib \
-  && ln -sf liblrd_platspec.so.1.0 liblrd_platspec.so.1 )
 
 # Services to disable by default
 [ -f $TARGETDIR/etc/init.d/S??lighttpd ] \
