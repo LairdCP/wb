@@ -64,14 +64,15 @@ tar c --exclude=.svn --exclude=.empty -C board/sdc/rootfs-additions-common/ . | 
 # TODO: shouldn't have to do this here, temporary workaround
 ( cd $TARGETDIR/usr/lib \
   && ln -sf libsdc_sdk.so.1.0 libsdc_sdk.so.1 )
-( cd $TARGETDIR/usr/lib \
-  && ln -sf liblrd_platspec.so.1.0 liblrd_platspec.so.1 )
 
 # Services to disable by default
 [ -f $TARGETDIR/etc/init.d/S??lighttpd ] \
 && chmod a-x $TARGETDIR/etc/init.d/S??lighttpd
 [ -f $TARGETDIR/etc/init.d/S??openvpn ] \
 && chmod a-x $TARGETDIR/etc/init.d/S??openvpn     #not ready for use
+
+# create a compressed backup copy of the /e/n/i file
+gzip -c $TARGETDIR/etc/network/interfaces >$TARGETDIR/etc/network/interfaces~.gz
 
 # Create default firmware description file.
 # This may be overwritten by a proper release file.

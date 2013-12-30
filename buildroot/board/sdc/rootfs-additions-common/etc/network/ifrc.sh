@@ -33,7 +33,7 @@ usage() {
 	Action:
 	  stop|start|restart   - act on phy-init/driver (up or down the hw-phy)
 	  noauto|auto   - unset or set auto-starting an interface (for init/rcS)
-	  status   - check an interface and report its ip-address, with exit code
+	  status   - check an interface and report its ip-address, w/ exit code
 	  up|dn   - up or down the interface configuration (use '...' to renew)
 	  logs   - manage related files: (clean|show [<iface>])
 	  eni   - edit file: /etc/network/interfaces
@@ -44,13 +44,13 @@ usage() {
 	     - employ client to get/renew lease, info stored in leases file
 	       requestip=x.x.x.x   - request an address (rip) from dhcp server
 	       timeout=nn   - seconds to allow client to try/await response
-	       $mii_speed
+	       ${mii_usage}\
 	
-	  static [<param=x.x.x.x> ...]
+	  static [ip=x.x.x.x[/b] <param=value> ...]
 	     - use settings from /e/n/i file or those given on commandline
 	       params:  address, netmask, broadcast, gateway  (ip,nm,bc,gw)
 	
-	  loopback [<param=value>]
+	  loopback [ip=x.x.x.x]
 	     - use to set a specific localhost address
 	
 	  manual
@@ -84,7 +84,7 @@ msg() {
 }
 
 # internals
-ifrc_Version=20131012
+ifrc_Version=20131019
 ifrc_Disable=/etc/default/ifrc.disable
 ifrc_Script=/etc/network/ifrc.sh
 ifrc_Lfp=/var/log/ifrc
@@ -99,13 +99,16 @@ ifrc=/sbin/ifrc
 [ ${#ifrc_Lfp} -gt 5 ] || ifrc_Lfp=/tmp/ifrc
 [ -d "$ifrc_Lfp" ] || mkdir -p ${ifrc_Lfp}
 
-# check init-script exists
+# check network-init-script
 nis=/etc/init.d/S??network
 [ -x $nis ] || nis="echo Cant exec: ${nis:-network-init-script}"
 
-# /e/n/i should exist...
+# check /e/n/i exists...
 eni=/etc/network/interfaces
-[ -f $eni ] || echo "# $eni" >$eni
+test -s $eni \
+|| { test -s $eni~ && mv -f $eni~ $eni; } \
+|| { rm -f $eni~ && gzip -fdc $eni~.gz >$eni; } \
+|| { printf "# $eni - ifrc\n\nauto lo\niface lo inet loopback\n\n\n" >$eni; }
 
 # check mii (optional)
 mii=/usr/sbin/mii-diag
@@ -114,7 +117,7 @@ then
   mii=
 else
   # this package is used to optionally set a fixed port speed during dhcp
-  mii_speed="portspeed=10baseT...   - use fixed port speed during dhcp trial"
+  mii_usage="portspeed=10baseT...   - use a fixed speed during dhcp trial"$'\n'
 fi
 
 parse_flag() {
@@ -123,9 +126,8 @@ parse_flag() {
       usage
       ;;
     --|--version) ## just report version
-      msg ${ifrc_Script##*/} v$ifrc_Version - \
-       md5:`md5sum < $ifrc_Script` \
-        len:`wc -c < $ifrc_Script`
+      echo ${ifrc_Script##*/} v$ifrc_Version \
+           - md5:`md5sum < $0` len:`wc -c < $0`
       exit 0
       ;;
     -n) ## do not use a log file
@@ -622,23 +624,24 @@ case $IFRC_ACTION in
     exit 0
     ;;
 
-  noauto|auto) ## unset or set auto-starting for an iface
+  noauto|auto) ## unset or set auto-starting an interface
     auto=${IFRC_ACTION/no/#}
     if grep -q "auto $devalias$" $eni
     then
-      sed "/^[#]*auto $devalias$/s/^.*/$auto $devalias/" -i $eni
+      ## edit the #auto|auto iface, for the interface stanza
+      sed "/^[#]*auto $devalias$/s/^.*/$auto $devalias/" $eni >$eni~
     else
       if grep -q "^iface $devalias inet" $eni
       then
-        # insert the noauto|auto just above stanza iface
-        sed "/^iface $devalias inet/i$auto $devalias" -i $eni
+        ## insert a #auto|auto iface, for the interface stanza
+        sed "/^iface $devalias inet/i$auto $devalias" $eni >$eni~
       else
-        echo "stanza for $devalias not found in $eni"
+        echo "$devalias stanza not found in $eni"
         exit 1
       fi
     fi
-    [ -n "${vm:0:1}" ] && echo "/e/n/i: `grep "auto $devalias" $eni`"
-    exit 0
+    [ -s $eni~ ] && mv -f $eni~ $eni
+    exit $?
     ;;
 
   stop|start|restart) ## act on init/driver, does not return
@@ -819,45 +822,58 @@ show_filtered_method_params() {
   [ -n "$rip" ] && msg request-ip-address: $rip
 }
 
+cidr_to_ip_nm() {
+  if ip=${1%/*} && [ ${1%/[0-9]*} != ${1} ]
+  then
+    local px maskpat=255\ 255\ 255\ 255
+    local mx maskdgt=254\ 252\ 248\ 240\ 224\ 192\ 128
+    let px=${1#*/}/8 px*=4 mx=7-${1#*/}%8 mx*=4
+    set -- ${maskpat:0:$px}${maskdgt:$mx:3}
+    nm=${1:-0}.${2:-0}.${3:-0}.${4:-0}
+  fi
+}
+
 ifrc_validate_loopback_method_params() {
-  for x in ${IFRC_METHOD/loopback /}
+  for x in $IFRC_METHOD
   do
-    echo $x |grep -q "[ia][a-z]*=[0-9].*" \
-    || { msg2 "ignoring invalid extra parameter: $x"; continue; }
-    case $x in
-      ip=*|address=*)
+    case ${x%%=*} in
+      loopback)
+        ;;
+      ip|address)
         ip=${x##*=}
         ;;
       *)
-        msg2 "ignoring extra parameter: $x"
+        msg2 "ignoring extra parameter: [$x]"
     esac
   done
   show_filtered_method_params
 }
 
 ifrc_validate_static_method_params() {
-  for x in ${IFRC_METHOD/static /}
+  for x in $IFRC_METHOD
   do
-    echo $x |grep -q "[aingb][a-z]*=[0-9]*.[0-9]*.[0-9]*.[0-9]*[/0-9]*" \
-    || { msg2 "ignoring invalid extra parameter: $x"; continue; }
-    ##
-    case $x in
-      ip=*|address=*)
-        ip=${x##*=}
+    case ${x%%=*} in
+      static)
         ;;
-      nm=*|netmask=*)
+      ip|address)
+        cidr_to_ip_nm ${x##*=}
+        ;;
+      nm|netmask)
         nm=${x##*=}
         ;;
-      gw=*|gateway=*)
+      gw|gateway)
         gw=${x##*=}
         ;;
-      bc=*|broadcast=*)
+      bc|broadcast)
         bc=${x##*=}
         ;;
-      ns=*|nameserver=*)
-        ns="$ns ${x##*=}"
+      ns|nameserver)
+        ns=${ns:+$ns }${x##*=}
         ;;
-      fpsd=*|portspeed=*)
+      metric)
+        metric=${x##*=}
+        ;;
+      fpsd|portspeed)
         fpsd=${x##*=}
         ;;
       *)
@@ -868,29 +884,30 @@ ifrc_validate_static_method_params() {
 }
 
 ifrc_validate_dhcp_method_params() {
-  for x in ${IFRC_METHOD/dhcp /}
+  for x in $IFRC_METHOD
   do
-    echo $x |grep -q "[iatpfc][a-z]*=[0-9].*" \
-    || { msg2 "ignoring invalid extra parameter: $x"; continue; }
-    case $x in
-      rip=*|requestip=*) ## specify ip to request from server (if supported)
+    case ${x%%=*} in
+      dhcp) ## method
+        ;;
+      rip|requestip) ## specify ip to request from server (if supported)
         rip=${x##*=}
         ;;
-      to=*|timeout=*) ## specify a minimum timeout of 4s
-        to=${x##*=}
-        [ 4 -le $to ] || let to=4
+      metric) ## apply a hop metric for default the router
+        metric=${x##*=}
         ;;
-      fpsd=*|portspeed=*) ## specify a fixed-port-speed-duplex to use for dhcp
+      fpsd|portspeed) ## specify a fixed-port-speed-duplex
         fpsd=${x##*=}
         ;;
-#      client=*) ## specify a preferred client
-#        client=${##*=}
-#        ;;
+      to|timeout) ## specify a minimum timeout of 4s
+        to=${x##*=}; [ 4 -le $to ] || let to=4
+        ;;
+      client) ## specify a preferred client
+        client=${x##*=}
+        ;;
       *)
-        msg2 "ignoring extra parameter: $x"
+        msg2 "ignoring extra parameter: [$x]"
     esac
   done
-  ipa=
   show_filtered_method_params
 }
 
@@ -957,7 +974,7 @@ run_udhcpc() {
 
   # The run-script handles client states and writes to a leases file.
   # options: vb, log_file, leases_file, resolv_conf
-  export udhcpc_Settings="vb=$vb log_file=$ifrc_Log"
+  export udhcpc_Settings="vb=$vb log_file=$ifrc_Log metric=$metric"
 
   # Client normally continues running in background, and upon obtaining a lease.
   # May be signalled or spawned again depending on events/conditions. Flags are: 
@@ -1078,20 +1095,26 @@ case ${IFRC_METHOD%% *} in
 
   static) ## method + optional params
     ifrc_validate_static_method_params
-    # configure interface <ip [+nm]>
+    ## configure interface <ip [+nm] [+gw] [+ns]..>
     if [ -z "$ip" ]
     then
-      msg "configuration in-complete, need at lease the ip"
+      msg "configuration in-complete, need at least an address: ip=x.x.x.x[/b]"
+      ifrc_stop_netlink_daemon
+      exit 1
     else
+      msg2 \
+      ifconfig $dev $ip ${nm:+netmask $nm}
       ifconfig $dev $ip ${nm:+netmask $nm}
     fi
-    # add to the routing table
+    ## replace default gw in routing table
+    while route del default gw 0.0.0.0 dev $dev 2>/dev/null; do :; done
     if [ -n "$gw" ]
     then
-      msg route add default gw $gw $dev
-      route add default gw $gw $dev
+      msg2 \
+      route add default gw $gw dev $dev metric ${metric:-0}
+      route add default gw $gw dev $dev metric ${metric:-0}
     fi
-    # add nameservers
+    ## add new nameservers
     if [ -n "$ns" ]
     then
       echo "# statically assigned via ifrc" >/etc/resolv.conf
@@ -1117,7 +1140,10 @@ case ${IFRC_METHOD%% *} in
     ;;
 
   *) ## error
-    msg "unhandled, configuration method: ${IFRC_METHOD%% *} (error)"
+    x=${IFRC_METHOD%% *}
+    msg "  ...unhandled, configuration method: ${x/=*/=} (error)"
+    msg "  methods:  manual, loopback, static, dhcp"
+    msg "  more info, try:  ifrc -h"
     exit 1
     ;;
 esac
