@@ -21,21 +21,15 @@ define MSD45N_BINARIES_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 755 $(@D)/usr/bin/athtestcmd $(TARGET_DIR)/usr/bin/athtestcmd
     mkdir -p $(TARGET_DIR)/usr/lib
     $(INSTALL) -m 755 $(@D)/usr/lib/libsdc_sdk.so* $(TARGET_DIR)/usr/lib/
-    $(INSTALL) -m 755 $(@D)/usr/lib/liblrd_platspec.so* $(TARGET_DIR)/usr/lib/
 endef
 
 define MSD45N_BINARIES_INSTALL_STAGING_CMDS
-	rm -f $(STAGING_DIR)/usr/lib/liblrd_platspec.so*
     rm -f $(STAGING_DIR)/usr/lib/libsdc_sdk.so*
 	$(INSTALL) -D -m 0755 $(@D)/usr/lib/libsdc_sdk.so.1.0 $(STAGING_DIR)/usr/lib/
-	$(INSTALL) -D -m 0755 $(@D)/usr/lib/liblrd_platspec.so.1.0 $(STAGING_DIR)/usr/lib/
-    cd  $(STAGING_DIR)/usr/lib/ && ln -s liblrd_platspec.so.1.0 liblrd_platspec.so.1
-    cd  $(STAGING_DIR)/usr/lib/ && ln -s liblrd_platspec.so.1 liblrd_platspec.so
 	cd  $(STAGING_DIR)/usr/lib/ && ln -s libsdc_sdk.so.1.0 libsdc_sdk.so.1
     cd  $(STAGING_DIR)/usr/lib/ && ln -s libsdc_sdk.so.1 libsdc_sdk.so
 	$(INSTALL) -D -m 0755 $(@D)/include/sdc_sdk.h \
                           $(@D)/include/sdc_events.h \
-						  $(@D)/include/lrd_platspec.h \
                           $(STAGING_DIR)/usr/include/
 endef
 
