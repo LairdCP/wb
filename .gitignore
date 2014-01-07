@@ -67,6 +67,10 @@
 /images/carefusion/20??????
 /images/carefusion/fw.txt
 
+# /images/radiant
+/images/radiant/20??????
+/images/radiant/fw.txt
+
 /images/*/latest
 
 .*.swp

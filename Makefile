@@ -18,9 +18,9 @@ ARCHV := $(PKG).tar.bz2
 
 default: wb40n wb45n
 
-all: wb40n wb45n msd40n msd45n welch_allyn carefusion
+all: wb40n wb45n msd40n msd45n welch_allyn carefusion radiant
 
-msd40n msd45n msd45n_fips welch_allyn carefusion wb40n wb45n wb45n_devel wb40n_devel: unpack.stamp
+msd40n msd45n msd45n_fips welch_allyn carefusion radiant wb40n wb45n wb45n_devel wb40n_devel: unpack.stamp
 	# install the config file
 	$(MAKE) O=output/$@ -C buildroot $@_defconfig
 	$(MAKE) O=output/$@ -C buildroot
@@ -46,6 +46,7 @@ endif
 	# link the board configs as *_defconfig names
 	cd buildroot/configs && ln -s ../board/sdc/customers/welch_allyn/configs/buildroot.config welch_allyn_defconfig
 	cd buildroot/configs && ln -s ../board/sdc/customers/carefusion/configs/buildroot.config carefusion_defconfig
+	cd buildroot/configs && ln -s ../board/sdc/customers/radiant/configs/buildroot.config radiant_defconfig
 	cd buildroot/configs && ln -s ../board/sdc/wb40n/configs/buildroot.config wb40n_defconfig
 	cd buildroot/configs && ln -s ../board/sdc/wb40n/configs/buildroot-wb40n_devel.config wb40n_devel_defconfig
 	cd buildroot/configs && ln -s ../board/sdc/wb45n/configs/buildroot.config wb45n_defconfig
@@ -103,5 +104,5 @@ legal-info-wb40n:
 legal-info: legal-info-wb40n legal-info-wb45n
 	
 .PHONY: default all unpack clean cleanall clean-wb40n clean-wb45n wb40n wb45n \
-        source source-wb40n source-wb45n clean-sdc-pkg clean-wb40n-sdc-pkg clean-wb45n-sdc-pkg welch_allyn carefusion
+        source source-wb40n source-wb45n clean-sdc-pkg clean-wb40n-sdc-pkg clean-wb45n-sdc-pkg welch_allyn carefusion radiant
 .NOTPARALLEL:
