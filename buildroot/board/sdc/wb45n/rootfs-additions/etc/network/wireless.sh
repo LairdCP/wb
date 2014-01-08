@@ -34,7 +34,7 @@ wifi_config()
   # check global profile setting: fips-mode <disabled|enabled>
   # cmdline or script setting may override, otherwise not-enabled
   fm=$( ${SDC_CLI:-:} global show fips-mode 2>/dev/null )
-  [ "${fm/*enabled/yes}" == yes ] && WIFI_FIPS=-F
+  [ "${fm/*Enabled*/yes}" == yes ] && WIFI_FIPS=-F
 
   return 0
 }
