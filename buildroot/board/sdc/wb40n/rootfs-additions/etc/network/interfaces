@@ -72,8 +72,8 @@ iface br0 inet manual
   #bridge_ports usb0 wlan0
   bridge_stp off
   bridge_fd 0
-  post-cfg-do /etc/network/bridge_mode.conf
-  pre-dcfg-do /etc/network/bridge_mode.conf
+  #post-cfg-do /etc/network/bridge_mode.conf eth0 wlan0
+  #pre-dcfg-do /etc/network/bridge_mode.conf eth0 wlan0
 
 
 ## USB
