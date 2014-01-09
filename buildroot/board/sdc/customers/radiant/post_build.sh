@@ -24,7 +24,6 @@ tar c --exclude=.svn -C board/sdc/customers/radiant/rootfs-additions/ . \
   |tar x -C $TARGETDIR/
 
 # enable/disable services
-chmod -x /etc/init.d/S??lighttpd
-
+[ -f /etc/init.d/S??lighttpd ] && chmod -x /etc/init.d/S??lighttpd
 
 echo "NCR/Radiant POST BUILD ...completed"
