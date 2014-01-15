@@ -44,6 +44,7 @@ define SDCSDK_INSTALL_STAGING_CMDS
 	$(INSTALL) -D -m 0755 $(@D)/src/sdc_sdk.h \
               $(@D)/src/sdc_events.h \
 			  $(@D)/src/linux/include/linux_perm_stor.h \
+			  $(@D)/src/sdk_version.h \
 			  $(@D)/src/config_strings.h \
 			  $(@D)/src/linux/include/lrd_sdk_pil.h \
 			  $(@D)/src/sdc_sdk_private.h \
