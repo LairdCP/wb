@@ -1,5 +1,0 @@
-config BR2_PACKAGE_LIBEDIT
-	bool "libedit"
-	help
-      libedit
-

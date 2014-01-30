@@ -7,36 +7,7 @@
 /archive/*
 
 # /buildroot/
-/buildroot/arch
-/buildroot/system
-/buildroot/output
-/buildroot/CHANGES
-/buildroot/COPYING
-/buildroot/Config.in
-/buildroot/Config.in.legacy
-/buildroot/Makefile
-/buildroot/Makefile.legacy
-/buildroot/boot
-/buildroot/configs
-/buildroot/docs
-/buildroot/fs
-/buildroot/linux
-/buildroot/support
-/buildroot/target
-/buildroot/toolchain
-/buildroot/.gitignore
-/buildroot/.defconfig
-
-# /buildroot/board/
-/buildroot/board/*
-!/buildroot/board/sdc
-
-# /buildroot/package/
-/buildroot/package/*
-!/buildroot/package/sdc
-!/buildroot/package/sdc-closed-source
-
-/buildroot/package/sdc-closed-source/externals/*
+/buildroot
 
 # /images/msd40n/
 /images/msd40n/20??????
@@ -55,26 +26,12 @@
 /images/wb45n/20??????
 /images/wb45n/fw.txt
 
-# /images/welch_allyn/
-/images/welch_allyn/20??????
-/images/welch_allyn/fw.txt
-
 # /images/wb45n_devel
 /images/wb45n_devel/20??????
 /images/wb45n_devel/fw.txt
-
-# /images/carefusion
-/images/carefusion/20??????
-/images/carefusion/fw.txt
-
-# /images/radiant
-/images/radiant/20??????
-/images/radiant/fw.txt
 
 /images/*/latest
 
 .*.swp
 *~
 
-# ncm
-/buildroot/board/sdc/customers/carefusion/ncm

@@ -7,7 +7,7 @@ TOPDIR = ../../..
 IMAGES = $(TOPDIR)/buildroot/output/$(PRODUCT)/images
 
 fw.txt: copyall
-	$(TOPDIR)/buildroot/board/sdc/mkfwtxt.sh $(URL)/$(DATE)
+	$(TOPDIR)/buildroot/board/laird/mkfwtxt.sh $(URL)/$(DATE)
 
 copyall:
 	cp $(IMAGES)/kernel.bin .

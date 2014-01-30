@@ -1,6 +1,0 @@
-source "package/sdc/patchram/Config.in"
-source "package/sdc/libedit/Config.in"
-source "package/sdc/msd45n-binaries/Config.in"
-source "package/sdc/msd40n-binaries/Config.in"
-source "package/sdc/openssl-fips/Config.in"
-source "package/sdc/mc-mint/Config.in"

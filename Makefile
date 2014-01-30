@@ -18,46 +18,25 @@ ARCHV := $(PKG).tar.bz2
 
 default: wb40n wb45n
 
-all: wb40n wb45n msd40n msd45n carefusion radiant
+all: wb40n wb45n msd40n msd45n
 
-msd40n msd45n msd45n_fips carefusion radiant wb40n wb45n wb45n_devel wb40n_devel: unpack.stamp
-	# install the config file
+msd40n msd45n msd45n_fips wb40n wb45n wb45n_devel wb40n_devel: unpack.stamp
+        # install the config file
 	$(MAKE) O=output/$@ -C buildroot $@_defconfig
 	$(MAKE) O=output/$@ -C buildroot
 	$(MAKE) -C images $@
 
 unpack: unpack.stamp
-unpack.stamp: $(LAIRD_DL_DIR)/$(ARCHV)
+unpack.stamp:
 ifdef BUILDROOT_DL_DIR
-	# copy the Laird archives into the override buildroot directory
+        # copy the Laird archives into the override buildroot directory
 	cp -n $(LAIRD_ARCHIVES) $(BUILDROOT_DL_DIR)/
 	for i in $(LAIRD_ARCHIVES_OPTIONAL); do \
 	    test -f $$i && cp -n $$i $(BUILDROOT_DL_DIR)/ || true; \
 	done
 endif
-	# unpack buildroot, rename the directory to 'buildroot' for easier management
-	tar xf $(LAIRD_DL_DIR)/$(ARCHV) --xform "s/^$(PKG)/buildroot/"
-	patch -d buildroot -p1 < buildroot-patches/buildroot-2013.02-laird1.patch
-	patch -d buildroot -p1 < buildroot-patches/wireless-regdb.patch
-	patch -d buildroot -p1 < buildroot-patches/crda.patch
-	patch -d buildroot -p1 < buildroot-patches/strip_whitespace_device_table.patch
-	patch -d buildroot -p1 -R < buildroot-patches/external-toolchain-relocatable.patch
-	patch -d buildroot -p1 < buildroot-patches/bluez-upgrade.patch
-	# link the board configs as *_defconfig names
-	cd buildroot/configs && ln -s ../board/sdc/customers/carefusion/configs/buildroot.config carefusion_defconfig
-	cd buildroot/configs && ln -s ../board/sdc/customers/radiant/configs/buildroot.config radiant_defconfig
-	cd buildroot/configs && ln -s ../board/sdc/wb40n/configs/buildroot.config wb40n_defconfig
-	cd buildroot/configs && ln -s ../board/sdc/wb40n/configs/buildroot-wb40n_devel.config wb40n_devel_defconfig
-	cd buildroot/configs && ln -s ../board/sdc/wb45n/configs/buildroot.config wb45n_defconfig
-	cd buildroot/configs && ln -s ../board/sdc/wb45n/configs/buildroot-wb45n_devel.config wb45n_devel_defconfig
-	cd buildroot/configs && ln -s ../board/sdc/msd40n/configs/buildroot.config msd40n_defconfig
-	cd buildroot/configs && ln -s ../board/sdc/msd45n/configs/buildroot.config msd45n_defconfig
-	cd buildroot/configs && ln -s ../board/sdc/msd45n/configs/buildroot-fips.config msd45n_fips_defconfig
-	# mark operation as done
+        # mark operation as done
 	touch unpack.stamp
-
-$(LAIRD_DL_DIR)/$(ARCHV):
-	wget -nc -c $(URL)$(ARCHV) -O $@
 
 source-wb40n:
 	$(MAKE) -C buildroot O=output/wb40n source
@@ -67,13 +46,13 @@ source-wb45n:
 
 source: source-wb40n source-wb45n
 
-clean-wb40n-sdc-pkg:
+clean-wb40n-lrd-pkg:
 	$(MAKE) -C buildroot O=output/wb40n sdccli-dirclean sdcsdk-dirclean sdcsupp-dirclean dhd-dirclean
 
-clean-wb45n-sdc-pkg:
+clean-wb45n-lrd-pkg:
 	$(MAKE) -C buildroot O=output/wb45n  sdccli-dirclean sdcsdk-dirclean sdcsupp-dirclean
 
-clean-sdc-pkg: clean-wb40n-sdc-pkg clean-wb45n-sdc-pkg
+clean-lrd-pkg: clean-wb40n-lrd-pkg clean-wb45n-lrd-pkg
 
 clean-wb40n:
 	$(MAKE) -C buildroot O=output/wb40n clean
@@ -88,12 +67,12 @@ cleanall:
                     -not -name '.svn' -not -name '.git' \
                     -exec rm -rf "{}" ";"
 	find buildroot/package buildroot/board  -mindepth 1 -maxdepth 1 \
-                -not -name sdc -not -name sdc-closed-source -not -name sdc-devel \
+                -not -name lrd -not -name lrd-closed-source -not -name lrd-devel \
                 -not -name ncm \
 		-not -name '.svn' -not -name .git \
                 -exec rm -rf "{}" ";"
 	rm -f unpack.stamp
-	
+
 legal-info-wb45n:
 	$(MAKE) -C buildroot O=output/wb45n legal-info
 
@@ -101,7 +80,7 @@ legal-info-wb40n:
 	$(MAKE) -C buildroot O=output/wb40n legal-info	
 
 legal-info: legal-info-wb40n legal-info-wb45n
-	
-.PHONY: default all unpack clean cleanall clean-wb40n clean-wb45n wb40n wb45n \
-        source source-wb40n source-wb45n clean-sdc-pkg clean-wb40n-sdc-pkg clean-wb45n-sdc-pkg carefusion radiant
+
+.PHONY: default all clean cleanall clean-wb40n clean-wb45n wb40n wb45n \
+        source source-wb40n source-wb45n clean-lrd-pkg clean-wb40n-lrd-pkg clean-wb45n-lrd-pkg
 .NOTPARALLEL:
