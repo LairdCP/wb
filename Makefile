@@ -63,15 +63,10 @@ clean-wb45n:
 clean: clean-wb40n clean-wb45n
 
 cleanall:
-	find buildroot/ -mindepth 1 -maxdepth 1 -not -name board -not -name package -not -name laird-devel \
-                    -not -name '.svn' -not -name '.git' \
-                    -exec rm -rf "{}" ";"
-	find buildroot/package buildroot/board  -mindepth 1 -maxdepth 1 \
-                -not -name lrd -not -name lrd-closed-source -not -name lrd-devel \
-                -not -name ncm \
-		-not -name '.svn' -not -name .git \
-                -exec rm -rf "{}" ";"
 	rm -f unpack.stamp
+	cd buildroot; git clean -d -f -e "package/lrd-closed-source/externals/" \
+	                              -e "package/lrd-devel/" \
+	                              -e "boards/laird/customers/*" -x
 
 legal-info-wb45n:
 	$(MAKE) -C buildroot O=output/wb45n legal-info
