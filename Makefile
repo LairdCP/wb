@@ -7,7 +7,7 @@ ifdef BUILDROOT_DL_DIR
 LAIRD_DL_DIR            := $(BUILDROOT_DL_DIR)
 LAIRD_ARCHIVES          := archive/AT91Bootstrap-v3.4.4.tar.xz \
                            archive/openssl-fips-2.0.5.tar.gz
-LAIRD_ARCHIVES_OPTIONAL := archive/msd45n-laird_fips-3.4.1.15.tar.bz2
+LAIRD_ARCHIVES_OPTIONAL := archive/msd45n-laird_fips-3.4.1.16.tar.bz2
 endif
 
 URL   := http://buildroot.uclibc.org/downloads/
@@ -43,6 +43,7 @@ endif
 	patch -d buildroot -p1 < buildroot-patches/strip_whitespace_device_table.patch
 	patch -d buildroot -p1 -R < buildroot-patches/external-toolchain-relocatable.patch
 	patch -d buildroot -p1 < buildroot-patches/bluez-upgrade.patch
+	patch -d buildroot -p1 < buildroot-patches/busybox-networking-ifplugd-nl-state.patch
 	# link the board configs as *_defconfig names
 	cd buildroot/configs && ln -s ../board/sdc/wb45n/configs/buildroot.config wb45n_defconfig
 	# mark operation as done

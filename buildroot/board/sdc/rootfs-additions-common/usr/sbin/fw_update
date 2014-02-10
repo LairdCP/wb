@@ -2,7 +2,7 @@
 # FirmWare Update Utility for WB40NBT/WB45NBT Linux
 # Jon Hefling, jon.hefling@lairdtech.com, 29-Jun'12
 #
-VERSION=20130309c
+VERSION=20130313
 SELF=${0##*/}
 NS_PORT=2012
 TM_FILE=/etc/default/$SELF.test
@@ -36,7 +36,7 @@ Using 'fw_update':
   images on a remote server.  It may be downloaded using the '--url' option.
   This file contains a URL for each binary image file and its MD5sum.  Any
   lines beginning with a '#' will be ignored.  If this file exists, then the
-  remote method will be attempted.
+  remote method (wget) will be attempted.
 
   The local media method is assummed, in lieu of a firmware-update-list, and
   the current directory (or specified path) is searched for any binary images.
@@ -48,13 +48,19 @@ Using 'fw_update':
   be able to re-attempt the update again.  Note, that the bootstrap and u-boot
   images should only be updated if very neccessary.
 
+  If '/tmp/alt_rootfs.transfer-list' exists, then 'fw_select --transfer push'
+  is also run.  (see fw_select for details)
+
+  To avoid extended operations at end of the update procedure, use '-x' flag.
+    ...this disables automatic: notify, transfer, reboot
+
   Examples of usage:
   remote method... 
-  # $SELF [--url http://<server/path/to/images>/${FWUL##*/}]
-  # $SELF [--url ftp://<server/path/to/images>/${FWUL##*/}]
+  # $SELF [-x] [--url http://<server/path/to/images>/${FWUL##*/}]
+  # $SELF [-x] [--url ftp://<server/path/to/images>/${FWUL##*/}]
 
   locally attached media... (USB Flash Drive)
-  # $SELF [<path/to/images/directory>]
+  # $SELF [-x] [<path/to/images/directory>]
 
 __End_Of_Usage_Block
 }
@@ -65,8 +71,8 @@ json_notification() {
   [ -n "$2" ] && message="\"message\": \"$2\""
   cat <<__END-OF-JSON-NOTIFICATION-BLOCK
   {\"$name\": {
-    \"mac\": \"`cat /sys/class/net/eth0/address 2>/dev/null`\",
-    \"version\": \"`cat /etc/\*-release 2>/dev/null`\",
+    \"mac\": \"`grep -so ..:. /sys/class/net/eth0/address 2>/dev/null`\",
+    \"version\": \"`grep -m1 -so '[^ ]*$' /etc/\*-release 2>/dev/null`\",
     $status
     $message
   }
@@ -78,8 +84,8 @@ xml_notification() {
   [ -n "$1" ] && status="<status>$1</status>"
   [ -n "$2" ] && message="<message>$2</message>"
   cat <<__END-OF-XML-NOTIFICATION-BLOCK
-  <$name id=`cat /sys/class/net/eth0/address 2>/dev/null`>
-    <version>`cat /etc/\*-release 2>/dev/null`</version>
+  <$name id=`grep -so ..:. /sys/class/net/eth0/address 2>/dev/null`>
+  <version>`grep -m1 -so '[^ ]*$' /etc/\*-release 2>/dev/null`</version>
     $status
     $message
   </$name>
@@ -109,9 +115,12 @@ led0() {
 exit_error() {
   # arg1 is optional exit-context-message
   [ -n "$1" ] && echo -e \ \ ..."$@" >&2
-  if [ -n "$nsap" ]
+  if $extend_op
   then
-    $0 --n $nsap update_error
+    if [ -n "$nsap" ]
+    then
+      $0 --n $nsap update_error
+    fi
   fi
   led0 0
   exit 1
@@ -120,16 +129,21 @@ exit_error() {
 n_sync_updated() {
   led0 500 500
   echo
-  if [ -n "$nsap" ] \
-  && $0 --n $nsap update_pending
+  if ! $extend_op
   then
-    echo -en Awaiting remote update message.
-    { let ds=9; while let ds-=1; do sleep 1; echo -en .; done; }&
-    rum=$( $nc -l -w9 -p${nsap##*:} 2>/dev/null \
-         |sed -n "/->|<-\ */s/^.....\ *//p" )
-    echo ${rum:+OK}
+    nsap=
+  else
+    if [ -n "$nsap" ] \
+    && $0 --n $nsap update_pending
+    then
+      echo -en Awaiting remote update message.
+      { let ds=9; while let ds-=1; do sleep 1; echo -en .; done; }&
+      rum=$( $nc -l -w9 -p${nsap##*:} 2>/dev/null \
+           |sed -n "/->|<-\ */s/^.....\ *//p" )
+      echo ${rum:+OK}
+    fi
+    [ -n "$nsap" ] && nsap=nsap=$nsap
   fi
-  [ -n "$nsap" ] && nsap=nsap=$nsap
   [ -n "$at91bs" ] && at91bs=at91bs=$at91bs
   [ -n "$u_boot" ] && u_boot=u_boot=$u_boot
   [ -n "$kernel" ] && kernel=kernel=$kernel
@@ -146,8 +160,6 @@ n_sync_updated() {
 
 # set testmode if TM_FILE exists
 test -f "$TM_FILE" && tm=echo\ -e || tm=
-grep -sq ^verbose "$TM_FILE" && set -x
-eval `grep -sq ^nsap= "$TM_FILE" `
 
 # set command utilities - no writes in testmode
 flash_erase=$tm\ flash_erase
@@ -155,7 +167,9 @@ nandwrite=$tm\ nandwrite
 copy=cat
 nc=$tm\ nc
 wget=wget
-[ "$1" == "bb-wget" ] && { shift; wget='busybox wget'; }
+
+# check for exit-flag, disable extended operations after update
+[ "$1" == "-x" ] && { shift; extend_op=false; } || extend_op=true
 
 clx='printf `usleep 333333` \\033[1K\\r'
 ask() { read -rst1 -n999 a; eval ${@##* }=; read -r "$@"; eval $clx; }
@@ -262,10 +276,12 @@ case $1 in
     exit 0
     ;;
 
-  \?|-h|--help) # quick help
-    echo "Options:"
+  -h|--help) # quick help
+    echo "Options:   (exclusive)"
     sed -n 's/\(^  --[a-z]*\)[\*]*) ## \(.*\)/\1    \2/p' $0
-    echo -e "Usage:\n  $SELF [option]\n"
+    echo "Flags:"
+    echo "  -x   exit after update (no automatic: notify, transfer, reboot)"
+    echo -e "Usage:\n  $SELF [flag] [option]\n"
     exit 0
     ;;
     
@@ -316,6 +332,8 @@ fi
 # otherwise, we search local media, using optionally specified path
 if [ -f $FWUL ]
 then
+  [ -s $FWUL ] || exit_error "$FWUL is zero-length file, aborted"
+
   echo "Accessing images via remote server."
   ${tm:-:} "${FWUL}:\n`cat ${FWUL} |sed -n 's/\(^[^#].*bin\).*/  \1/p'`"
   eval AT91BS_IMG=`sed -n "/^[^#].*\/$AT91BS_IMG/\
@@ -341,7 +359,7 @@ eval $( $fw_printenv -n updated_% 2>/dev/null \
       |grep -oE "at91bs=.|u_boot=.|kernel=.|rootfs=." )
 if [ -n "$at91bs$u_boot$kernel$rootfs" ]
 then
-  echo -e "Previous update detected:" \
+  echo -e "Previous update detected: (pending)" \
           ${at91bs:+\\\n\\\tbootstrap} \
           ${u_boot:+\\\n\\\tbootloader} \
           ${kernel:+\\\n\\\tkernel-${kernel}} \
@@ -432,7 +450,7 @@ check_image() {
 
 compare_image_md5() {
   # args: <md5_from_image> <md5_from_flash>
-  ${tm:-:} \?: $1 :: ${2:-md5-not-in-flash}
+  ${tm:-:} \ \ \?: $1 :: ${2:-md5-not-in-flash}
   # compare the two md5sums and prompt if same
   if [ "$2" != "$1" ]
   then
@@ -476,7 +494,7 @@ flash_image_procedure() {
 
 update_bootstrap_mtd() {
   # args: <mtd> <size> <md5sum> <loc|rem> <url/path/-name>
-  ${tm:-:} \\\n@: $1 $2 $3 $4\\\n@: $5
+  ${tm:-:} \\\n\ \ @: $1 $2 $3 $4\\\n\ \ @: $5
   # if updating via local media, then prompt user for confirmation
   if [ -z "$fwul_url" ]
   then
@@ -486,28 +504,30 @@ update_bootstrap_mtd() {
   fi
   # set target partition
   mtd=mtd$1
-  compare_image_md5 $3 $( $fw_printenv -n md5_bootstrap 2>/dev/null ) || return
+  compare_image_md5 $3 $( $fw_printenv -n md5_at91bs-x 2>/dev/null ) || return
   if flash_image_procedure $mtd bootstrap $2 $4 $5
   then
-    $fw_setenv md5_bootstrap $3 && at91bs=x && echo OK
+    $fw_setenv md5_bootstrap
+    $fw_setenv md5_at91bs-x $3 && at91bs=x && echo OK
   fi
 }
 
 update_bootloader_mtd() {
   # args: <mtd> <size> <md5sum> <loc|rem> <url/path/-name>
-  ${tm:-:} \\\n@: $1 $2 $3 $4\\\n@: $5
+  ${tm:-:} \\\n\ \ @: $1 $2 $3 $4\\\n\ \ @: $5
   # set target partition
   mtd=mtd$1
-  compare_image_md5 $3 $( $fw_printenv -n md5_u-boot 2>/dev/null ) || return
+  compare_image_md5 $3 $( $fw_printenv -n md5_u-boot-x 2>/dev/null ) || return
   if flash_image_procedure $mtd bootloader $2 $4 $5
   then
-    $fw_setenv md5_u-boot $3 && u_boot=x && echo OK
+    $fw_setenv md5_u-boot
+    $fw_setenv md5_u-boot-x $3 && u_boot=x && echo OK
   fi
 }
 
 update_kernel_mtd() {
   # args: <mtd> <size> <md5sum> <loc|rem> <url/path/-name>
-  ${tm:-:} \\\n@: $1 $2 $3 $4\\\n@: $5
+  ${tm:-:} \\\n\ \ @: $1 $2 $3 $4\\\n\ \ @: $5
   # swap current partition to target alternate for update
   let kip_a=$KIP
   let kip_b=$KIP+1
@@ -525,7 +545,7 @@ update_kernel_mtd() {
 
 update_rootfs_mtd() {
   # args: <mtd> <size> <md5sum> <loc|rem> <url/path/-name>
-  ${tm:-:} \\\n@: $1 $2 $3 $4\\\n@: $5
+  ${tm:-:} \\\n\ \ @: $1 $2 $3 $4\\\n\ \ @: $5
   # swap current partition to target alternate for update
   let rip_a=$RIP
   let rip_b=$RIP+1
@@ -545,7 +565,7 @@ update_rootfs_mtd() {
 echo -e \# $wb ${tm:++tm} update && bootcmd_x
 #
 # Check and update each of the platform partitions in order:
-# bootstrap-loader, uboot-bootloader, linux-kernel-a/b, linux-rootfs-a/b
+# at91bs-bootstrap, uboot-bootloader, linux-kernel-a/b, linux-rootfs-a/b
 # 
 # Each image source is evaluated to ensure it's really there. (non-zero length)
 # And the image's md5sum is compared to the stored value in Flash to avoid
@@ -590,15 +610,21 @@ fi
 
 n_sync_updated
 
-if [ -n "$rootfs" ] \
-&& fw_select -- 2>/dev/null
+if $extend_op
 then
-  ask -p"Transfer system settings? [y/N ..3s] " -t3 -n1 a
-  [ "$a" == "y" ] && $tm fw_select --transfer push
+  if [ -n "$rootfs" ] \
+  && fw_select -- 2>/dev/null
+  then
+    # assume go-ahead if transfer-list was placed
+    [ -r /tmp/alt_rootfs.transfer-list ] \
+    && { echo -e "system transfer-list available.."; a=y; } \
+    || ask -p"Transfer system settings? [y/N ..3s] " -t3 -n1 a
+
+    [ "$a" == "y" ] && $tm fw_select --transfer push
+  fi
+
+  ask -p"Rebooting in 3s ...[Y/n]? " -t3 -n1 -s a
+  [ "$a" != "n" ] && $tm reboot
 fi
-
-ask -p"Rebooting in 3s ...[Y/n]? " -t3 -n1 -s a
-[ "$a" != "n" ] && $tm reboot
-
 exit 0
 
