@@ -1,0 +1,12 @@
+diff -urNa at91bootstrap3-3.4.4/board/wb40n/wb40n.c at91bootstrap3-3.4.4/board/wb40n/wb40n.c
+--- at91bootstrap3-3.4.4/board/wb40n/wb40n.c	2013-12-04 15:46:08.999032011 -0600
++++ at91bootstrap3-3.4.4/board/wb40n/wb40n.c	2014-01-08 16:49:03.759120733 -0600
+@@ -68,7 +68,7 @@
+ {
+ 	at91_dbgu_hw_init();
+ 
+-	dbgu_init(BAUDRATE(MASTER_CLOCK, 115200));
++	dbgu_init(BAUDRATE(MASTER_CLOCK, 9600));
+ }
+ #endif /* #ifdef CONFIG_DEBUG */
+ 
