@@ -43,7 +43,7 @@ endif
 	patch -d buildroot -p1 < buildroot-patches/strip_whitespace_device_table.patch
 	patch -d buildroot -p1 -R < buildroot-patches/external-toolchain-relocatable.patch
 	patch -d buildroot -p1 < buildroot-patches/bluez-upgrade.patch
-	patch -d buildroot -p1 < busybox-networking-ifplugd-nl-state.patch
+	patch -d buildroot -p1 < buildroot-patches/busybox-networking-ifplugd-nl-state.patch
 	# link the board configs as *_defconfig names
 	cd buildroot/configs && ln -s ../board/sdc/customers/welch_allyn/configs/buildroot.config welch_allyn_defconfig
 	cd buildroot/configs && ln -s ../board/sdc/customers/carefusion/configs/buildroot.config carefusion_defconfig
