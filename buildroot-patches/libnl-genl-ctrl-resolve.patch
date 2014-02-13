@@ -1,0 +1,19 @@
+diff --git old/package/libnl/libnl-genl-ctrl-resolve-memleak-fix.patch new/package/libnl/libnl-genl-ctrl-resolve-memleak-fix.patch
+new file mode 100644
+index 0000000..b672a15
+--- old/dev/null
++++ new/package/libnl/libnl-genl-ctrl-resolve-memleak-fix.patch
+@@ -0,0 +1,10 @@
++--- libnl-3.2.21/lib/genl/ctrl.c
+++++ libnl-3.2.21/lib/genl/ctrl.c
++@@ -432,6 +432,7 @@ int genl_ctrl_resolve(struct nl_sock *sk, const char *name)
++ 		goto errout;
++ 	}
++ 
+++	nl_cb_put(sk->s_cb);
++ 	err = genl_family_get_id(family);
++ 	genl_family_put(family);
++ errout:
+-- 
+1.8.3.2
+

@@ -44,6 +44,7 @@ endif
 	patch -d buildroot -p1 -R < buildroot-patches/external-toolchain-relocatable.patch
 	patch -d buildroot -p1 < buildroot-patches/bluez-upgrade.patch
 	patch -d buildroot -p1 < buildroot-patches/busybox-networking-ifplugd-nl-state.patch
+	patch -d buildroot -p1 < buildroot-patches/libnl-genl-ctrl-resolve.patch
 	# link the board configs as *_defconfig names
 	cd buildroot/configs && ln -s ../board/sdc/wb45n/configs/buildroot.config wb45n_defconfig
 	# mark operation as done

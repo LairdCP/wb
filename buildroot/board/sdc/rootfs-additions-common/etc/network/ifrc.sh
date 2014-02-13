@@ -71,9 +71,11 @@ msg() {
     then
       tty >/dev/null 2>&1 && tty >$ifrc_Lfp/$dev.tty
       echo -e "$@" >`cat $ifrc_Lfp/$dev.tty 2>/dev/null || echo -n /dev/console`
-
-      logger -tifrc \
+      # and to syslog if verbose too
+      test -n "$vm" \
+        && logger -tifrc \
         "$IFRC_STATUS $IFRC_DEVICE ${IFRC_ACTION:-??} m:${IFRC_METHOD%% *}"
+      return
     fi
   else
     # to stdout while not quiet-mode
@@ -84,7 +86,7 @@ msg() {
 }
 
 # internals
-ifrc_Version=20140207
+ifrc_Version=20140213
 ifrc_Disable=/etc/default/ifrc.disable
 ifrc_Script=/etc/network/ifrc.sh
 ifrc_Lfp=/var/log/ifrc
@@ -177,8 +179,8 @@ ifnl_s=${ifnl_s//down/dn}
 ifnl_s=${ifnl_s//dormant/dt}
 [ "$ifnl_s" == "->" ] && ifnl_s=
 
-[ -n "$rcS_" ] && ifrc_Via=" (...via rcS)"
-[ -n "$ifnl_s" ] && ifrc_Via=" (...via $ifnl)"
+[ -n "$rcS_" ] && ifrc_Via="-- ${PPID}_rcS"
+[ -n "$ifnl_s" ] && ifrc_Via="-- ${PPID}_$ifnl"
 [ -n "$ifrc_Via" ] && qm='>/dev/null'
 
 [ "$vm" == "....." ] && set -x
@@ -257,13 +259,12 @@ show_interface_config_and_status() {
 }
 
 ifrc_stop_netlink_daemon() {
-  prg="ifplug[d]"
-  # find all ifplug* instances for this interface  
+  prg="${ifnl##*/}"
+  # find daemon instances for this interface
   for pid in \
   $( ps ax |sed -n "/${dev}/s/^[ ]*\([0-9]*\).*[\/ ]\(${prg}\) -.*/\1_\2 /p" )
   do
-    kill ${pid%%_*} \
-    && msg1 @. "`printf \"% 7d %s <-sigterm\" ${pid%%_*} ${pid##*_}`"
+    kill ${pid%%_*} && msg1 "  $pid <- sigterm:0"
   done
 }
 
@@ -282,32 +283,30 @@ signal_dhcp_client() {
   for pid in \
   $( ps ax |sed -n "/${dev}/s/^[ ]*\([0-9]*\).*[\/ ]\(${prg}\)[ -].*/\1_\2 /p" )
   do
-    if kill $signal ${pid%%_*}
-    then
-      msg1 @. "`printf \"% 7d %s <-${action}\" ${pid%%_*} ${pid##*_}`"
-      let rv=0
-    else
-      let rv=1
-    fi
+    kill $signal ${pid%%_*}; rv=$?
+    msg1 "  $pid <- $action:$rv"
   done
 
   # interrupt link-beat check, while in-progress
-  rmdir ${ifrc_Lfp}/$dev.lbto 2>/dev/null && pause 0.2
+  rmdir ${ifrc_Lfp}/$dev.lbto 2>/dev/null
   return $rv
 }
 
 make_dhcp_renew_request() {
   for x in 1 2 3 4 5
   do
-    msg1 \\\trenew_req: $x
+    msg1 "    renew_req: $x"
+    { read -r txp_b </sys/class/net/$dev/statistics/tx_packets; } 2>/dev/null
+    signal_dhcp_client USR1 || break
+    pause 1
     { read -r txp_a </sys/class/net/$dev/statistics/tx_packets; } 2>/dev/null
-    signal_dhcp_client USR1 && pause 1 || break
-    let txp_b=$txp_a
-    { read -r txp_a </sys/class/net/$dev/statistics/tx_packets; } 2>/dev/null
-    msg2 \\\ttx_packets: $txp_a-$txp_b
-    let $txp_a-$txp_b && return 0
+    msg2 "    tx_packets: $txp_b -> $txp_a"
+    let txp_b=$txp_a-$txp_b || break
+    pause 2
+    signal_dhcp_client ZERO && return 0
+    pause 1
   done
-  msg1 \\\tfailed...
+  msg1 "    failed..."
   return 1
 }
 
@@ -555,8 +554,14 @@ then
   then
     if [ "${IFRC_METHOD%% *}" == "dhcp" ]
     then
+      if [ -d ${ifrc_Lfp}/$dev.dhcp ]
+      then
+        msg1 "dhcp client lock exists, no act..."
+        IFRC_ACTION=xx
+      else
       # check if dhcp client is running
       signal_dhcp_client ZERO && IFRC_ACTION=..
+      fi
     fi
   fi
 
@@ -780,17 +785,16 @@ if [ -n "$ifnl_disable" ]
 then
   ifrc_stop_netlink_daemon
 else
-  if ! { ps ax |grep -q "ifplug[d].*${dev}" && msg "  ...nl-daemon is running"; }
+  if ! { ps ax |grep -q "$ifnl[ ].*${dev}" && msg2 "  $ifnl is running"; }
   then
     # when not verbose, don't log to syslog
     [ -z "${vm:0:1}" ] && nsl=-s || nsl=   
     #
-    # use auto API mode for all interfaces except wireless
-    #[ "${dev:0:2}" == wl ] && api=-mwlan || api=-mauto
+    # allow auto API mode for all interfaces except wireless
+    $phy80211 && api=-miff
     #
-    # the ifnl daemon will terminate if internal-error
+    # start the netlink daemon
     $ifnl -i$dev $api $nsl -fa -qMp -u0 -d0 -Ir$0
-    pause 0.333
   fi
 fi
 
@@ -959,6 +963,7 @@ check_link() {
 
 run_udhcpc() {
   # BusyBox v1.19.3 multi-call binary.
+  mkdir ${ifrc_Lfp}/$dev.dhcp 2>/dev/null
   source /etc/dhcp/udhcpc.conf 2>/dev/null
 
   # set no-verbose or verbose mode level
@@ -1001,6 +1006,7 @@ run_udhcpc() {
   # For retry, send 4-discovers, paused at 2sec, and repeat after 5sec.
   eval udhcpc -i$dev $vb $rip $nq -R -t4 -T2 -A5 -b $ropt $vci $xopt $rbf $rs $nv
   #
+  rmdir ${ifrc_Lfp}/$dev.dhcp 2>/dev/null || :
   #return $?
 }
 
@@ -1071,6 +1077,8 @@ fi
 case ${IFRC_METHOD%% *} in
 
   dhcp) ## method + optional params
+    test -d ${ifrc_Lfp}/$dev.dhcp \
+      && { msg1 "client startup already in progress"; exit 0; }
     [ -n "$rcS_" -a -f /tmp/bootfile_ ] && rbf=bootfile
     ifrc_validate_dhcp_method_params
     check_link
