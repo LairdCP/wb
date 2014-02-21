@@ -20,7 +20,7 @@ default: wb40n wb45n
 
 all: wb40n wb45n msd40n msd45n
 
-msd40n msd45n msd45n_fips wb40n wb45n wb45n_devel wb40n_devel: unpack.stamp
+msd40n msd45n msd45n_fips wb40n wb45n wb45n_devel wb40n_devel wb45n_customer: unpack.stamp
         # install the config file
 	$(MAKE) O=output/$@ -C buildroot $@_defconfig
 	$(MAKE) O=output/$@ -C buildroot
@@ -35,6 +35,7 @@ ifdef BUILDROOT_DL_DIR
 	    test -f $$i && cp -n $$i $(BUILDROOT_DL_DIR)/ || true; \
 	done
 endif
+	cd buildroot/configs && ln -s ../board/laird/customers/wb45n_customer/configs/buildroot.config wb45n_customer_defconfig
         # mark operation as done
 	touch unpack.stamp
 
