@@ -9,6 +9,17 @@
 # /buildroot/
 /buildroot
 
+*.mk
+/images/*/
+/images/*.mk
+#!/images/Makefile
+!/images/msd40n
+!/images/msd45n
+!/images/msd45n_fips
+!/images/wb40n
+!/images/wb45n
+!/images/wb45n_devel
+
 # /images/msd40n/
 /images/msd40n/20??????
 
