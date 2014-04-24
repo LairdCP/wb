@@ -43,6 +43,8 @@
 
 /images/*/latest
 
+/examples/eventmon
+
 .*.swp
 *~
 
