@@ -10,10 +10,10 @@ fw.txt: copyall
 	$(TOPDIR)/buildroot/board/laird/mkfwtxt.sh $(URL)/$(DATE)
 
 copyall:
+	cp $(IMAGES)/at91bs.bin .
+	cp $(IMAGES)/u-boot.bin .
 	cp $(IMAGES)/kernel.bin .
 	cp $(IMAGES)/rootfs.bin .
-	cp $(IMAGES)/u-boot.bin .
-	cp $(IMAGES)/bootstrap.bin .
 	cp $(IMAGES)/fw_update .
 	cp $(IMAGES)/fw_select .
 	cp $(IMAGES)/rootfs.tar .
