@@ -18,9 +18,9 @@ ARCHV := $(PKG).tar.bz2
 
 default: wb40n wb45n
 
-all: wb40n wb45n msd40n msd45n
+all: wb40n wb45n msd40n msd45n msd45n-x86
 
-msd40n msd45n msd45n_fips wb40n wb45n wb45n_devel wb40n_devel: unpack.stamp
+msd40n msd45n msd45n_fips wb40n wb45n wb45n_devel wb40n_devel msd45n-x86: unpack.stamp
         # install the config file
 	$(MAKE) O=output/$@ -C buildroot $@_defconfig
 	$(MAKE) O=output/$@ -C buildroot
