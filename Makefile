@@ -52,7 +52,10 @@ clean-wb40n-lrd-pkg:
 clean-wb45n-lrd-pkg:
 	$(MAKE) -C buildroot O=output/wb45n  sdccli-dirclean sdcsdk-dirclean sdcsupp-dirclean
 
-clean-lrd-pkg: clean-wb40n-lrd-pkg clean-wb45n-lrd-pkg
+clean-wb45n_devel-lrd-pkg:
+	$(MAKE) -C buildroot O=output/wb45n_devel  sdccli-dirclean sdcsdk-dirclean sdcsupp-dirclean
+
+clean-lrd-pkg: clean-wb40n-lrd-pkg clean-wb45n-lrd-pkg clean-wb45n_devel-lrd-pkg
 
 clean-wb40n:
 	$(MAKE) -C buildroot O=output/wb40n clean
@@ -60,7 +63,10 @@ clean-wb40n:
 clean-wb45n:
 	$(MAKE) -C buildroot O=output/wb45n clean
 
-clean: clean-wb40n clean-wb45n
+clean-wb45n_devel:
+	$(MAKE) -C buildroot O=output/wb45n_devel clean
+
+clean: clean-wb40n clean-wb45n clean-wb45n_devel
 
 cleanall:
 	rm -f unpack.stamp
@@ -78,5 +84,7 @@ legal-info-wb40n:
 legal-info: legal-info-wb40n legal-info-wb45n
 
 .PHONY: default all clean cleanall clean-wb40n clean-wb45n wb40n wb45n \
-        source source-wb40n source-wb45n clean-lrd-pkg clean-wb40n-lrd-pkg clean-wb45n-lrd-pkg
+        source source-wb40n source-wb45n clean-lrd-pkg clean-wb40n-lrd-pkg clean-wb45n-lrd-pkg \
+        clean-wb45n_devel clean-wb45n_devel-lrd-pkg
+
 .NOTPARALLEL:
