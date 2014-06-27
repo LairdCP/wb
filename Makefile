@@ -21,9 +21,16 @@ default: wb40n wb45n
 
 all: wb40n wb45n msd40n msd45n msd45n-x86
 
+msd40n_config msd45n_config msd45n_fips_config wb40n_config wb45n_config wb45n_devel_config wb40n_devel_config msd45n-x86_config: unpack.stamp
+    # install the config file
+    # $(subst _config,,$@) trims the _config part so we get clean directory and target
+	$(MAKE) O=output/$(subst _config,,$@) -C buildroot $(subst _config,,$@)_defconfig
+	# mark the operation as done.
+	touch $@
+
 msd40n msd45n msd45n_fips wb40n wb45n wb45n_devel wb40n_devel msd45n-x86: unpack.stamp
-        # install the config file
-	$(MAKE) O=output/$@ -C buildroot $@_defconfig
+	# first check/do config, because can't use $@ in dependency
+	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
 	$(MAKE) -C images $@
 
@@ -60,26 +67,30 @@ clean-lrd-pkg: clean-wb40n-lrd-pkg clean-wb45n-lrd-pkg clean-wb45n_devel-lrd-pkg
 
 clean-wb40n:
 	$(MAKE) -C buildroot O=output/wb40n clean
+	rm -f wb40n_config
 
 clean-wb45n:
 	$(MAKE) -C buildroot O=output/wb45n clean
+	rm -f wb45n_config
 
 clean-wb45n_devel:
 	$(MAKE) -C buildroot O=output/wb45n_devel clean
+	rm -f wb45n_devel_config
 
 clean: clean-wb40n clean-wb45n clean-wb45n_devel
 
 cleanall:
 	rm -f unpack.stamp
+	rm -f *_config
 	cd buildroot; git clean -d -f -e "package/lrd-closed-source/externals/" \
 	                              -e "package/lrd-devel/" \
 	                              -e "configs/" \
 	                              -e "board/laird/customers/*" -x
 
-legal-info-wb45n:
+legal-info-wb45n: wb45n_config
 	$(MAKE) -C buildroot O=output/wb45n legal-info
 
-legal-info-wb40n:
+legal-info-wb40n: wb40n_config
 	$(MAKE) -C buildroot O=output/wb40n legal-info	
 
 legal-info: legal-info-wb40n legal-info-wb45n
