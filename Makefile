@@ -89,9 +89,11 @@ cleanall:
 
 legal-info-wb45n: wb45n_config
 	$(MAKE) -C buildroot O=output/wb45n legal-info
+	$(MAKE) -C images $@
 
 legal-info-wb40n: wb40n_config
 	$(MAKE) -C buildroot O=output/wb40n legal-info	
+	$(MAKE) -C images $@
 
 legal-info: legal-info-wb40n legal-info-wb45n
 
