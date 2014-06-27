@@ -6,6 +6,13 @@ URL = http://$(shell hostname)/wb/$(PRODUCT)
 TOPDIR = ../../..
 IMAGES = $(TOPDIR)/buildroot/output/$(PRODUCT)/images
 
+legal-info:
+	rsync -a --exclude=sources $(TOPDIR)/buildroot/output/$(PRODUCT)/legal-info/ ./legal-info-$(DATE)
+	tar cjf legal-info-$(DATE).tar.bz ./legal-info-$(DATE)
+	rm -f latest.tar.bz
+	ln -s legal-info-$(DATE).tar.bz latest.tar.bz
+	rm -rf ./legal-info-$(DATE)
+
 fw.txt: copyall
 	$(TOPDIR)/buildroot/board/laird/mkfwtxt.sh $(URL)/$(DATE)
 
@@ -20,5 +27,7 @@ copyall:
 	rm -f rootfs.tar.bz2
 	bzip2 rootfs.tar
 
-.PHONY: all copyall
+all: copyall
+
+.PHONY: all copyall legal-info
 
