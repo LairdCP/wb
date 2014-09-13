@@ -48,6 +48,7 @@
 /images/*/latest
 
 /examples/eventmon
+/examples/sdk_wf_pil
 
 .*.swp
 *~
