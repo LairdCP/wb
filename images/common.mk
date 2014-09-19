@@ -20,5 +20,7 @@ copyall:
 	rm -f rootfs.tar.bz2
 	bzip2 rootfs.tar
 
-.PHONY: all copyall
+all: fw.txt copyall
+
+.PHONY: all copyall legal-info
 
