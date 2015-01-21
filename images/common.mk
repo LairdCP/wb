@@ -23,6 +23,7 @@ copyall:
 	cp $(IMAGES)/rootfs.bin .
 	cp $(IMAGES)/fw_update .
 	cp $(IMAGES)/fw_select .
+	cp $(IMAGES)/fw_usi .
 	cp $(IMAGES)/rootfs.tar .
 	rm -f rootfs.tar.bz2
 	bzip2 rootfs.tar
