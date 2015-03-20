@@ -7,7 +7,7 @@ WB_IP=$1
 NO_KEY_CHECK='-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
 
 #update to 3.5.0.30, which has the base files for the patch
-sshpass -p summit ssh root@$WB_IP $NO_KEY_CHECK 'fw_update -xt -f http://10.1.40.199/builds/linux/wb45n/laird_fips/3.5.0.30/image/fw.txt'
+sshpass -p summit ssh root@$WB_IP $NO_KEY_CHECK 'fw_update -xt -f http://10.1.40.199/builds/linux/wb45n/laird_fips/3.5.0.31/image/fw.txt'
 
 #wait for WB to flash and restart
 sleep 180
@@ -24,7 +24,7 @@ sshpass -p summit ssh root@$WB_IP $NO_KEY_CHECK 'sed -i '123d' /etc/dhcp/udhcpc.
 sshpass -p summit ssh root@$WB_IP $NO_KEY_CHECK 'sed -i '125d' /etc/dhcp/udhcpc.script'
 
 #now tar gzip everything up
-sshpass -p summit ssh root@$WB_IP $NO_KEY_CHECK 'cd /;tar -cvzf hillrom_disconnect_ga3_fix.tar.gz etc/dhcp/udhcpc.script lib/firmware/ath6k/AR6003/hw2.1.1/fw-4.bin lib/firmware/ath6k/AR6003/hw2.1.1/fw_v3.4.0.86.bin usr/lib/libsdc_sdk.so.1.0 etc/summit/profiles.conf'
+sshpass -p summit ssh root@$WB_IP $NO_KEY_CHECK 'cd /;tar -cvzf hillrom_disconnect_ga3_fix.tar.gz etc/dhcp/udhcpc.script lib/firmware/ath6k/AR6003/hw2.1.1/fw-4.bin lib/firmware/ath6k/AR6003/hw2.1.1/fw_v3.4.0.87.bin usr/lib/libsdc_sdk.so.1.0 etc/summit/profiles.conf'
 
 #copy the file to the local host
 sshpass -p summit scp $NO_KEY_CHECK root@$WB_IP:/hillrom_disconnect_ga3_fix.tar.gz .
@@ -51,5 +51,5 @@ __TARFILE_FOLLOWS__
 __END_SCRIPT__
 
 #put the tarfile after the script and make it executable
-cat extract.sh hillrom_disconnect_ga3_fix.tar.gz > hillrom_ga3_discon_fix.sh
-chmod +x hillrom_ga3_discon_fix.sh
+cat extract.sh hillrom_disconnect_ga3_fix.tar.gz > hillrom_ga3_discon_fix_v2.sh
+chmod +x hillrom_ga3_discon_fix_v2.sh
