@@ -53,6 +53,30 @@ source-wb45n:
 
 source: source-wb40n source-wb45n
 
+patches-bootstrap: buildroot/package/lrd-devel/at91bootstrap3
+	cd buildroot/package/lrd-devel/at91bootstrap3 &&\
+	mkdir patches &&\
+	git format-patch -N -o patches v3.7.1.. &&\
+	cd patches/ &&\
+	rename -v 's/(.*)$$/at91bootstrap3-v3.7.1-$$1/' * &&\
+	cp -nv * ~/projects/wb_project/wb/buildroot/board/laird/wb45n/patches/. &&\
+	cd ../../../../..
+	cd buildroot/package/lrd-devel/at91bootstrap3 &&\
+	rm -rf patches &&\
+	cd ../../../..
+
+patches-kernel: buildroot/package/lrd-closed-source/externals/kernel
+	cd buildroot/package/lrd-closed-source/externals/kernel &&\
+	mkdir patches &&\
+	git format-patch -N -o patches v3.8.. &&\
+	cd patches/ &&\
+	rename -v 's/(.*)$$/linux-3.8-$$1/' * &&\
+	cp -nv * ~/projects/wb_project/wb/buildroot/board/laird/wb45n/patches/. &&\
+	cd ../../../../../..
+	cd buildroot/package/lrd-closed-source/externals/kernel &&\
+	rm -rf patches &&\
+	cd ../../../../..
+
 clean-wb40n-lrd-pkg:
 	$(MAKE) -C buildroot O=output/wb40n sdccli-dirclean sdcsdk-dirclean sdcsupp-dirclean dhd-dirclean
 
@@ -105,6 +129,7 @@ legal-info: legal-info-wb40n legal-info-wb45n
 
 .PHONY: default all clean cleanall clean-wb40n clean-wb45n wb40n wb45n \
         source source-wb40n source-wb45n clean-lrd-pkg clean-wb40n-lrd-pkg clean-wb45n-lrd-pkg \
-        clean-wb40n_devel clean-wb45n_devel clean-wb40n_devel-lrd-pkg clean-wb45n_devel-lrd-pkg
+        clean-wb40n_devel clean-wb45n_devel clean-wb40n_devel-lrd-pkg clean-wb45n_devel-lrd-pkg \
+        patches-bootstrap patches-kernel
 
 .NOTPARALLEL:
