@@ -13,7 +13,7 @@
 *.mk
 /images/*/
 /images/*.mk
-#!/images/Makefile
+!/images/Makefile
 !/images/msd40n
 !/images/msd45n
 !/images/msd45n-x86
@@ -21,6 +21,9 @@
 !/images/wb40n
 !/images/wb45n
 !/images/wb45n_devel
+!/images/msd50n
+!/images/wb50n
+!/images/wb50n_devel
 
 # /images/msd40n/
 /images/msd40n/20??????
