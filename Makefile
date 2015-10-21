@@ -11,11 +11,6 @@ LAIRD_ARCHIVES_OPTIONAL := archive/msd45n-laird_fips-3.5.1.23.tar.bz2 \
                            archive/msd40n-laird-3.5.1.23.tar.bz2
 endif
 
-URL   := http://buildroot.uclibc.org/downloads/
-VER   := 2013.02
-PKG   := buildroot-$(VER)
-ARCHV := $(PKG).tar.bz2
-
 default: wb40n wb45n
 
 all: wb40n wb45n msd40n msd45n msd45n-x86
