@@ -11,9 +11,9 @@ LAIRD_ARCHIVES_OPTIONAL := archive/msd45n-laird_fips-3.5.1.23.tar.bz2 \
                            archive/msd40n-laird-3.5.1.23.tar.bz2
 endif
 
-default: wb40n wb45n
+default: wb45n wb50n
 
-all: wb40n wb45n msd40n msd45n msd45n-x86
+all: wb40n wb45n msd40n msd45n msd45n-x86 msd50n wb50n
 
 msd40n_config msd45n_config msd45n_fips_config msd50n_config wb40n_config wb45n_config wb45n_devel_config wb40n_devel_config msd45n-x86_config wb50n_config wb50n_devel_config: unpack.stamp
     # install the config file
