@@ -34,6 +34,12 @@
 # /images/msd45n_fips/
 /images/msd45n_fips/20??????
 
+# /images/msd45n-x86/
+/images/msd45n-x86/20??????
+
+# /images/msd50n/
+/images/msd50n/20??????
+
 # /images/wb40n/
 /images/wb40n/20??????
 /images/wb40n/fw.txt
@@ -47,6 +53,15 @@
 # /images/wb45n_devel
 /images/wb45n_devel/20??????
 /images/wb45n_devel/fw.txt
+
+# /images/wb50n/
+/images/wb50n/20??????
+/images/wb50n/fw.txt
+/images/wb50n/legal-info
+
+# /images/wb50n_devel
+/images/wb50n_devel/20??????
+/images/wb50n_devel/fw.txt
 
 /images/*/latest
 
