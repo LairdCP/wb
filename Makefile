@@ -145,6 +145,16 @@ cleanall:
 	                              -e "configs/" \
 	                              -e "board/laird/customers/*" -x
 
+# The prune-workspace target is intended for CI systems to cleanup after a
+# successful build. It isn't intended for users to use.
+prune-workspace:
+	rm -rf buildroot
+	rm -rf ../.repo/projects
+	rm -rf ../.repo/projects-objects
+	rm -rf ../wb_docs
+	rm -rf archive examples doc
+	rm -rf .git
+
 legal-info-wb45n: wb45n_config
 	$(MAKE) -C buildroot O=output/wb45n legal-info
 	$(MAKE) -C images $@
@@ -164,6 +174,7 @@ legal-info: legal-info-wb40n legal-info-wb45n legal-info-wb50n
         clean-wb40n_devel clean-wb45n_devel clean-wb40n_devel-lrd-pkg clean-wb45n_devel-lrd-pkg \
         msd50n wb50n wb50n_devel source-wb50n legal-info-wb50n \
         clean-wb50n-lrd-pkg clean-wb50n_devel-lrd-pkg clean-wb50n clean-wb50n_devel \
-        patches-bootstrap patches-uboot patches-kernel all-patches
+        patches-bootstrap patches-uboot patches-kernel all-patches \
+        prune-workspace
 
 .NOTPARALLEL:
