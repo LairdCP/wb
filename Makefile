@@ -1,10 +1,8 @@
 # This makefile downloads buildroot from the buildroot website
 # and prepares it for Laird WB40/45 building
 
-# if BUILDROOT_DL_DIR is set, archives are downloaded to BUILDROOT_DL_DIR
-LAIRD_DL_DIR := archive
-ifdef BUILDROOT_DL_DIR
-LAIRD_DL_DIR            := $(BUILDROOT_DL_DIR)
+# if BR2_DL_DIR is set, archives are downloaded to BR2_DL_DIR
+ifdef BR2_DL_DIR
 LAIRD_ARCHIVES          := archive/AT91Bootstrap-v3.4.4.tar.xz \
                            archive/openssl-fips-2.0.5.tar.gz
 LAIRD_ARCHIVES_OPTIONAL := archive/msd50n-laird-3.5.2.1.tar.bz2 \
@@ -31,11 +29,11 @@ msd40n msd45n msd45n_fips wb40n wb45n wb45n_devel wb40n_devel msd45n-x86 msd50n 
 
 unpack: unpack.stamp
 unpack.stamp:
-ifdef BUILDROOT_DL_DIR
+ifdef BR2_DL_DIR
         # copy the Laird archives into the override buildroot directory
-	cp -n $(LAIRD_ARCHIVES) $(BUILDROOT_DL_DIR)/
+	cp -n $(LAIRD_ARCHIVES) $(BR2_DL_DIR)/
 	for i in $(LAIRD_ARCHIVES_OPTIONAL); do \
-	    test -f $$i && cp -n $$i $(BUILDROOT_DL_DIR)/ || true; \
+	    test -f $$i && cp -n $$i $(BR2_DL_DIR)/ || true; \
 	done
 endif
         # mark operation as done
