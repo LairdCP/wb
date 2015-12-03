@@ -71,3 +71,5 @@
 .*.swp
 *~
 
+!backports.mk
+
