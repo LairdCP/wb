@@ -1,5 +1,5 @@
-export PLATFORM = msd45n-x86
-export PRODUCT = msd45n-x86
+export PLATFORM = msd-x86
+export PRODUCT = msd-x86
 export DATE := $(shell date "+%Y%m%d")
 
 all:
