@@ -10,6 +10,8 @@
 BP_OUT := $(PWD)/buildroot/output/backport
 BP_COCCINELLE_URL = https://github.com/coccinelle/coccinelle.git
 
+SPATCH_PATH := /usr/local/bin/spatch
+
 PATH := $(PATH):$(BP_OUT)/staging/bin
 DATE := $(shell date +%Y%m%d)
 
@@ -30,19 +32,23 @@ $(BP_OUT):
 	mkdir $(BP_OUT)/staging
 
 $(BP_SPATCH): $(BP_OUT)/coccinelle
-	cd $(BP_OUT)/coccinelle ; ./configure --prefix=$(BP_OUT)/staging --enable-release
+	cd $(BP_OUT)/coccinelle ; ./configure --prefix=$(BP_OUT)/staging
 	cd $(BP_OUT)/coccinelle ; make
 	cd $(BP_OUT)/coccinelle ; make install
 
 $(BP_OUT)/coccinelle: $(filter-out $(wildcard $(BP_OUT)), $(BP_OUT))
-	git clone $(BP_COCCINELLE_URL) $(BP_OUT)/coccinelle
+	git clone --depth 1 -b ubuntu/15.04-vivid/1.0.2 $(BP_COCCINELLE_URL) $(BP_OUT)/coccinelle
 
 #############################################################################
 # Backports components
 backports:
 	$(error backports clone was not found, please retrieve via `repo sync`)
 
-$(BP_TREE): $(BP_SPATCH) backports $(filter-out $(wildcard $(BP_OUT)), $(BP_OUT))
+ifeq ("$(wildcard $(SPATCH_PATH))","")
+SPATCH_PRE=$(BP_SPATCH)
+endif
+
+$(BP_TREE): $(SPATCH_PRE) backports $(filter-out $(wildcard $(BP_OUT)), $(BP_OUT))
 	./backports/gentree.py --copy-list ./backports/copy-list \
 			       $(BP_LINUX_DIR) \
 			       $(BP_TREE)
