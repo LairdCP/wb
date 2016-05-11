@@ -13,7 +13,7 @@ BP_COCCINELLE_URL = https://github.com/coccinelle/coccinelle.git
 SPATCH_PATH := /usr/local/bin/spatch
 
 PATH := $(PATH):$(BP_OUT)/staging/bin
-DATE := $(shell date +%Y%m%d)
+LAIRD_RELEASE_STRING ?= $(shell date +%Y%m%d)
 
 BP_TREE :=  $(BP_OUT)/laird-backport-tree
 BP_SPATCH := $(BP_OUT)/staging/bin/spatch
@@ -28,8 +28,7 @@ all: backport image
 #############################################################################
 # Support targets
 $(BP_OUT):
-	mkdir $(BP_OUT)
-	mkdir $(BP_OUT)/staging
+	mkdir -p $(BP_OUT)/staging
 
 $(BP_SPATCH): $(BP_OUT)/coccinelle
 	cd $(BP_OUT)/coccinelle ; ./configure --prefix=$(BP_OUT)/staging
@@ -60,8 +59,8 @@ $(BP_IMAGE_DIR):
 
 # $(@F) is the file part of the target
 # $(<F) is the file part of the first prerequesite
-images/backport/backport-$(DATE).tar.bz2: $(BP_TREE) $(filter-out $(wildcard $(BP_IMAGE_DIR)), $(BP_IMAGE_DIR))
-	cd $(BP_OUT) ; tar cjf $(@F) $(<F)
+images/backport/laird-backport-$(LAIRD_RELEASE_STRING).tar.bz2: $(BP_TREE) $(filter-out $(wildcard $(BP_IMAGE_DIR)), $(BP_IMAGE_DIR))
+	cd $(<) ; tar -cj --transform "s,^,laird-backport-$(LAIRD_RELEASE_STRING)/," -f ../$(@F) .
 	cp $(BP_OUT)/$(@F) $@
 
 #############################################################################
@@ -94,11 +93,12 @@ wb50-test: $(BP_TREE)
 clean-all:
 	rm -rf $(BP_OUT)
 	rm -rf $(BP_TEST_TREE)
-	rm -f images/backport/backport-$(DATE).tar.bz2
+	rm -f images/backport/backport-$(LAIRD_RELEASE_STRING).tar.bz2
+
 clean:
 	rm -rf $(BP_TREE)
 	rm -rf $(BP_TEST_TREE)
-	rm -f images/backport/backport-$(DATE).tar.bz2
+	rm -f images/backport/backport-$(LAIRD_RELEASE_STRING).tar.bz2
 
 clean-nuke:
 	rm -rf $(BP_OUT)
@@ -109,7 +109,6 @@ clean-nuke:
 # top level targets
 backport: $(BP_TREE)
 
-image: images/backport/backport-$(DATE).tar.bz2
-
+image: images/backport/laird-backport-$(LAIRD_RELEASE_STRING).tar.bz2
 
 .PHONY: all image backport wb50-test clean clean-all clean-nuke
