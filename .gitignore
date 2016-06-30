@@ -24,6 +24,7 @@
 !/images/msd50n
 !/images/wb50n
 !/images/wb50n_devel
+!/images/wb50n_rdvk
 
 # /images/msd40n/
 /images/msd40n/20??????
@@ -62,6 +63,10 @@
 # /images/wb50n_devel
 /images/wb50n_devel/20??????
 /images/wb50n_devel/fw.txt
+
+# /images/wb50n_rdvk
+/images/wb50n_rdvk/20??????
+/images/wb50n_rdvk/fw.txt
 
 /images/*/latest
 
