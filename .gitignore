@@ -1,0 +1,37 @@
+.repo
+
+# /
+/unpack.stamp
+
+# /archive/
+/archive/*
+
+# /buildroot/
+/buildroot
+
+# /images/msd40n/
+/images/msd40n/20??????
+
+# /images/msd45n/
+/images/msd45n/20??????
+
+# /images/msd45n_fips/
+/images/msd45n_fips/20??????
+
+# /images/wb40n/
+/images/wb40n/20??????
+/images/wb40n/fw.txt
+
+# /images/wb45n/
+/images/wb45n/20??????
+/images/wb45n/fw.txt
+
+# /images/wb45n_devel
+/images/wb45n_devel/20??????
+/images/wb45n_devel/fw.txt
+
+/images/*/latest
+
+.*.swp
+*~
+
