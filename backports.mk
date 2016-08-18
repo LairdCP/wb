@@ -16,9 +16,11 @@ PATH := $(PATH):$(BP_OUT)/staging/bin
 LAIRD_RELEASE_STRING ?= $(shell date +%Y%m%d)
 
 BP_TREE :=  $(BP_OUT)/laird-backport-tree
+BP_TREE_WORKING :=  $(BP_OUT)/laird-backport-tree-working
 BP_SPATCH := $(BP_OUT)/staging/bin/spatch
 BP_LINUX_DIR :=  $(PWD)/buildroot/package/lrd-closed-source/externals/kernel
 BP_LINUX_BUILT:= $(PWD)/buildroot/output/wb50n/build/linux-4.1.13
+BP_TEST_TARGET:= $(PWD)/buildroot/output/wb50n/target
 BP_TEST_TREE := $(BP_OUT)/modules
 
 BP_IMAGE_DIR := images/backport
@@ -48,9 +50,10 @@ SPATCH_PRE=$(BP_SPATCH)
 endif
 
 $(BP_TREE): $(SPATCH_PRE) backports $(filter-out $(wildcard $(BP_OUT)), $(BP_OUT))
-	./backports/gentree.py --copy-list ./backports/copy-list \
+	./backports/gentree.py --clean --copy-list ./backports/copy-list \
 			       $(BP_LINUX_DIR) \
-			       $(BP_TREE)
+			       $(BP_TREE_WORKING)
+	mv $(BP_TREE_WORKING) $(BP_TREE) # necessary to catch failure of prev step
 
 #############################################################################
 # Image export
@@ -68,8 +71,8 @@ images/backport/laird-backport-$(LAIRD_RELEASE_STRING).tar.bz2: $(BP_TREE) $(fil
 
 CROSS_COMPILE := arm-laird-linux-gnueabi-
 ARCH := arm
-KLIB_BUILD := $(BP_LINUX_DIR)
-KLIB := $(BP_LINUX_DIR)
+KLIB_BUILD := $(BP_LINUX_BUILT)
+KLIB := $(BP_TEST_TREE)
 
 export KLIB KLIB_BUILD ARCH CROSS_COMPILE
 
