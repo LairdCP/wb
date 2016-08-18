@@ -90,6 +90,8 @@ wb50-test: $(BP_TREE)
 		cp ath6kl_laird.ko sdc2u.ko $(BP_TEST_TREE)/
 	cd $(BP_TREE)/drivers/net/wireless/ath/ath6kl ; \
 		cp ath6kl_core.ko ath6kl_sdio.ko ath6kl_usb.ko $(BP_TEST_TREE)/
+	cd $(BP_TREE)/drivers/net/wireless/brcm80211 ; \
+		cp brcmfmac/brcmfmac.ko brcmutil/brcmutil.ko $(BP_TEST_TREE)/
 
 #############################################################################
 #  clean targets
