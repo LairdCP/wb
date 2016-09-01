@@ -6,7 +6,7 @@ ifdef BR2_DL_DIR
 LAIRD_ARCHIVES          := archive/AT91Bootstrap-v3.4.4.tar.xz \
                            archive/openssl-fips-2.0.5.tar.gz
 LAIRD_ARCHIVES_OPTIONAL := archive/msd50n-laird-3.5.3.4.tar.bz2 \
-			   archive/msd45n-laird_fips-3.5.3.4.tar.bz2 \
+			   archive/msd45n-laird-3.5.3.4.tar.bz2 \
                            archive/msd40n-laird-3.5.3.4.tar.bz2
 endif
 
@@ -14,14 +14,14 @@ default: wb45n wb50n
 
 all: wb40n wb45n msd40n msd45n msd-x86 msd50n wb50n
 
-msd40n_config msd45n_config msd45n_fips_config msd50n_config wb40n_config wb45n_config wb45n_devel_config wb40n_devel_config msd-x86_config wb50n_config wb50n_devel_config wb50n_rdvk_config: unpack.stamp
+msd40n_config msd45n_config msd50n_config wb40n_config wb45n_config wb45n_devel_config wb40n_devel_config msd-x86_config wb50n_config wb50n_devel_config wb50n_rdvk_config: unpack.stamp
     # install the config file
     # $(subst _config,,$@) trims the _config part so we get clean directory and target
 	$(MAKE) O=output/$(subst _config,,$@) -C buildroot $(subst _config,,$@)_defconfig
 	# mark the operation as done.
 	touch $@
 
-msd40n msd45n msd45n_fips wb40n wb45n wb45n_devel wb40n_devel msd-x86 msd50n wb50n_devel wb50n wb50n_rdvk: unpack.stamp
+msd40n msd45n wb40n wb45n wb45n_devel wb40n_devel msd-x86 msd50n wb50n_devel wb50n wb50n_rdvk: unpack.stamp
 	# first check/do config, because can't use $@ in dependency
 	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
@@ -162,7 +162,7 @@ legal-info-wb45n: wb45n_config
 	$(MAKE) -C images $@
 
 legal-info-wb40n: wb40n_config
-	$(MAKE) -C buildroot O=output/wb40n legal-info	
+	$(MAKE) -C buildroot O=output/wb40n legal-info
 	$(MAKE) -C images $@
 
 legal-info-wb50n: wb50n_config
