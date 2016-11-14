@@ -14,14 +14,14 @@ default: wb45n wb50n
 
 all: wb40n wb45n msd40n msd45n msd-x86 msd50n wb50n
 
-msd40n_config msd45n_config msd50n_config wb40n_config wb45n_config wb45n_devel_config wb40n_devel_config msd-x86_config wb50n_config wb50n_devel_config wb50n_rdvk_config: unpack.stamp
+msd40n_config msd45n_config msd50n_config wb40n_config wb45n_config wb45n_devel_config wb40n_devel_config msd-x86_config wb50n_config wb50n_devel_config wb50n_rdvk_config reg45n_config reg50n_config: unpack.stamp
     # install the config file
     # $(subst _config,,$@) trims the _config part so we get clean directory and target
 	$(MAKE) O=output/$(subst _config,,$@) -C buildroot $(subst _config,,$@)_defconfig
 	# mark the operation as done.
 	touch $@
 
-msd40n msd45n wb40n wb45n wb45n_devel wb40n_devel msd-x86 msd50n wb50n_devel wb50n wb50n_rdvk: unpack.stamp
+msd40n msd45n wb40n wb45n wb45n_devel wb40n_devel msd-x86 msd50n wb50n_devel wb50n wb50n_rdvk reg45n reg50n: unpack.stamp
 	# first check/do config, because can't use $@ in dependency
 	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
@@ -136,8 +136,16 @@ clean-msd-x86:
 	$(MAKE) -C buildroot O=output/msd-x86 clean
 	rm -f msd-x86_config
 
+clean-reg45n:
+	$(MAKE) -C buildroot O=output/reg45n clean
+	rm -f reg45n_config
 
-clean: clean-wb40n clean-wb40n_devel clean-wb45n clean-wb45n_devel clean-wb50n clean-wb50n_devel clean-msd-x86
+clean-reg50n:
+	$(MAKE) -C buildroot O=output/reg50n clean
+	rm -f reg50n_config
+
+
+clean: clean-wb40n clean-wb40n_devel clean-wb45n clean-wb45n_devel clean-wb50n clean-wb50n_devel clean-msd-x86 clean-reg45n clean-reg50n
 
 cleanall:
 	rm -f unpack.stamp
@@ -174,9 +182,9 @@ legal-info: legal-info-wb40n legal-info-wb45n legal-info-wb50n
 .PHONY: default all clean cleanall clean-wb40n clean-wb45n wb40n wb45n \
         source source-wb40n source-wb45n clean-lrd-pkg clean-wb40n-lrd-pkg clean-wb45n-lrd-pkg \
         clean-wb40n_devel clean-wb45n_devel clean-wb40n_devel-lrd-pkg clean-wb45n_devel-lrd-pkg \
-        msd50n wb50n wb50n_devel wb50n_rdvk source-wb50n legal-info-wb50n msd-x86 \
+        msd50n wb50n wb50n_devel wb50n_rdvk reg45n reg50n source-wb50n legal-info-wb50n msd-x86 \
         clean-wb50n-lrd-pkg clean-wb50n_devel-lrd-pkg clean-wb50n clean-wb50n_devel clean-msd-x86 \
-        patches-bootstrap patches-uboot patches-kernel all-patches \
+        clean-reg45n clean-reg50n patches-bootstrap patches-uboot patches-kernel all-patches \
         prune-workspace
 
 .NOTPARALLEL:
