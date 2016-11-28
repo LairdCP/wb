@@ -30,12 +30,12 @@ $(ST_IMAGE_DIR):
 
 # $(@F) is the file part of the target
 images/sterling/$(ST_FCC_NAME).tar.bz2: $(filter-out $(wildcard $(ST_IMAGE_DIR)), $(ST_IMAGE_DIR))
-	cd $(ST_FCC_OUT) ; tar -cj --transform "s,^,$(ST_FCC_NAME)/," -f ../$(@F) .
+	cd $(ST_OUT) ; tar -cjf $(@F) $(ST_FCC_NAME)
 	cp $(ST_OUT)/$(@F) $@
 
 # $(@F) is the file part of the target
 images/sterling/$(ST_ETSI_NAME).tar.bz2: $(filter-out $(wildcard $(ST_IMAGE_DIR)), $(ST_IMAGE_DIR))
-	cd $(ST_ETSI_OUT) ; tar -cj --transform "s,^,$(ST_ETSI_NAME)/," -f ../$(@F) .
+	cd $(ST_OUT) ; tar -cjf $(@F) $(ST_ETSI_NAME)
 	cp $(ST_OUT)/$(@F) $@
 
 sterling-fcc-staging: $(ST_OUT)
