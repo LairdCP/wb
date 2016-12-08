@@ -4,7 +4,7 @@
 # if BR2_DL_DIR is set, archives are downloaded to BR2_DL_DIR
 ifdef BR2_DL_DIR
 LAIRD_ARCHIVES          := archive/AT91Bootstrap-v3.4.4.tar.xz \
-                           archive/openssl-fips-2.0.5.tar.gz
+                           archive/openssl-fips-2.0.10.tar.gz
 LAIRD_ARCHIVES_OPTIONAL := archive/msd50n-laird-3.5.3.4.tar.bz2 \
 			   archive/msd45n-laird-3.5.3.4.tar.bz2 \
                            archive/msd40n-laird-3.5.3.4.tar.bz2
