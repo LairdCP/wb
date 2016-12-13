@@ -13,9 +13,6 @@ legal-info:
 	ln -s legal-info-$(DATE).tar.bz latest.tar.bz
 	rm -rf ./legal-info-$(DATE)
 
-fw.txt: copyall
-	$(TOPDIR)/buildroot/board/laird/mkfwtxt.sh $(URL)/$(DATE)
-
 copyall:
 	cp $(IMAGES)/at91bs.bin .
 	cp $(IMAGES)/u-boot.bin .
@@ -24,11 +21,12 @@ copyall:
 	cp $(IMAGES)/fw_update .
 	cp $(IMAGES)/fw_select .
 	cp $(IMAGES)/fw_usi .
+	cp $(IMAGES)/fw.txt .
 	cp $(IMAGES)/rootfs.tar .
 	rm -f rootfs.tar.bz2
 	bzip2 rootfs.tar
 
-all: fw.txt copyall
+all: copyall
 
 .PHONY: all copyall legal-info
 
