@@ -77,10 +77,10 @@ patches-uboot: buildroot/package/lrd-devel/u-boot
 patches-kernel: buildroot/package/lrd-closed-source/externals/kernel
 	cd buildroot/package/lrd-closed-source/externals/kernel &&\
 	mkdir patches &&\
-	git format-patch -N -o patches v4.4.11.. &&\
+	git format-patch -N -o patches v4.4.39.. &&\
 	cd patches/ &&\
-	rename -v 's/(.*)$$/linux-4.4.11-$$1/' * &&\
-	cp -nv * ~/projects/wb_project/wb/buildroot/board/laird/wb45n/patches/linux-4.4.11/. &&\
+	rename -v 's/(.*)$$/linux-4.4.39-$$1/' * &&\
+	cp -nv * ~/projects/wb_project/wb/buildroot/board/laird/wb45n/patches/linux-4.4.39/. &&\
 	cd ../../../../../..
 	cd buildroot/package/lrd-closed-source/externals/kernel &&\
 	rm -rf patches &&\
