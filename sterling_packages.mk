@@ -11,8 +11,7 @@ ST_ETSI_NAME := laird-sterling-etsi-$(LAIRD_RELEASE_STRING)
 ST_FCC_OUT := $(ST_OUT)/$(ST_FCC_NAME)
 ST_ETSI_OUT := $(ST_OUT)/$(ST_ETSI_NAME)
 
-ST_RDVK_DIR := $(PWD)/buildroot/board/laird/wb50n_rdvk
-ST_BRCM_DIR := $(ST_RDVK_DIR)/rootfs-additions/lib/firmware/brcm
+ST_BRCM_DIR := $(PWD)/buildroot/package/lrd-closed-source/externals/firmware/brcm
 
 ST_IMAGE_DIR := images/sterling
 
