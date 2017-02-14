@@ -132,6 +132,14 @@ clean-wb50n_devel:
 	$(MAKE) -C buildroot O=output/wb50n_devel clean
 	rm -f wb50n_devel_config
 
+clean-msd45n:
+	$(MAKE) -C buildroot O=output/msd45n clean
+	rm -f msd45n_config
+
+clean-msd50n:
+	$(MAKE) -C buildroot O=output/msd50n clean
+	rm -f msd50n_config
+
 clean-msd-x86:
 	$(MAKE) -C buildroot O=output/msd-x86 clean
 	rm -f msd-x86_config
@@ -145,7 +153,7 @@ clean-reg50n:
 	rm -f reg50n_config
 
 
-clean: clean-wb40n clean-wb40n_devel clean-wb45n clean-wb45n_devel clean-wb50n clean-wb50n_devel clean-msd-x86 clean-reg45n clean-reg50n
+clean: clean-wb40n clean-wb40n_devel clean-wb45n clean-wb45n_devel clean-wb50n clean-wb50n_devel clean-msd45n clean-msd50n clean-msd-x86 clean-reg45n clean-reg50n
 
 cleanall:
 	rm -f unpack.stamp
@@ -183,8 +191,9 @@ legal-info: legal-info-wb40n legal-info-wb45n legal-info-wb50n
         source source-wb40n source-wb45n clean-lrd-pkg clean-wb40n-lrd-pkg clean-wb45n-lrd-pkg \
         clean-wb40n_devel clean-wb45n_devel clean-wb40n_devel-lrd-pkg clean-wb45n_devel-lrd-pkg \
         msd50n wb50n wb50n_devel wb50n_rdvk reg45n reg50n source-wb50n legal-info-wb50n msd-x86 \
-        clean-wb50n-lrd-pkg clean-wb50n_devel-lrd-pkg clean-wb50n clean-wb50n_devel clean-msd-x86 \
-        clean-reg45n clean-reg50n patches-bootstrap patches-uboot patches-kernel all-patches \
+        clean-wb50n-lrd-pkg clean-wb50n_devel-lrd-pkg clean-wb50n clean-wb50n_devel clean-msd45n \
+        clean-msd50n clean-msd-x86 clean-reg45n clean-reg50n patches-bootstrap patches-uboot \
+        patches-kernel all-patches \
         prune-workspace
 
 .NOTPARALLEL:
