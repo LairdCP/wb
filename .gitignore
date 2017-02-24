@@ -25,6 +25,7 @@
 !/images/wb50n
 !/images/wb50n_devel
 !/images/wb50n_rdvk
+!/images/wb50n_rdvk_devel
 !/images/reg45n
 !/images/reg50n
 
@@ -69,6 +70,10 @@
 # /images/wb50n_rdvk
 /images/wb50n_rdvk/20??????
 /images/wb50n_rdvk/fw.txt
+
+# /images/wb50n_rdvk_devel
+/images/wb50n_rdvk_devel/20??????
+/images/wb50n_rdvk_devel/fw.txt
 
 # /images/reg45n
 /images/reg45n/20??????
