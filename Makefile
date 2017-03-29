@@ -5,9 +5,9 @@
 ifdef BR2_DL_DIR
 LAIRD_ARCHIVES          := archive/AT91Bootstrap-v3.4.4.tar.xz \
                            archive/openssl-fips-2.0.10.tar.gz
-LAIRD_ARCHIVES_OPTIONAL := archive/msd50n-laird-3.5.3.14.tar.bz2 \
-			   archive/msd45n-laird_fips-3.5.3.14.tar.bz2 \
-                           archive/msd40n-laird-3.5.3.14.tar.bz2
+LAIRD_ARCHIVES_OPTIONAL := archive/msd50n-laird-3.5.3.15.tar.bz2 \
+			   archive/msd45n-laird_fips-3.5.3.15.tar.bz2 \
+                           archive/msd40n-laird-3.5.3.15.tar.bz2
 endif
 
 default: wb45n wb50n
@@ -162,7 +162,7 @@ legal-info-wb45n: wb45n_config
 	$(MAKE) -C images $@
 
 legal-info-wb40n: wb40n_config
-	$(MAKE) -C buildroot O=output/wb40n legal-info	
+	$(MAKE) -C buildroot O=output/wb40n legal-info
 	$(MAKE) -C images $@
 
 legal-info-wb50n: wb50n_config
