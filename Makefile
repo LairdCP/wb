@@ -56,7 +56,7 @@ patches-bootstrap: buildroot/package/lrd-devel/at91bootstrap3
 	git format-patch -N -o patches v3.7.1.. &&\
 	cd patches/ &&\
 	rename -v 's/(.*)$$/at91bootstrap3-v3.7.1-$$1/' * &&\
-	cp -nv * ~/projects/wb_project/wb/buildroot/board/laird/wb45n/patches/at91bootstrap3-3.7.1/. &&\
+	cp -nv * ../../../../board/laird/wb45n/patches/at91bootstrap3-3.7.1/. &&\
 	cd ../../../../..
 	cd buildroot/package/lrd-devel/at91bootstrap3 &&\
 	rm -rf patches &&\
@@ -68,7 +68,7 @@ patches-uboot: buildroot/package/lrd-devel/u-boot
 	git format-patch -N -o patches v2014.07.. &&\
 	cd patches/ &&\
 	rename -v 's/(.*)$$/u-boot-v2014.07-$$1/' * &&\
-	cp -nv * ~/projects/wb_project/wb/buildroot/board/laird/wb45n/patches/uboot-2014.07/. &&\
+	cp -nv * ../../../../board/laird/wb45n/patches/uboot-2014.07/. &&\
 	cd ../../../../..
 	cd buildroot/package/lrd-devel/u-boot &&\
 	rm -rf patches &&\
@@ -80,7 +80,7 @@ patches-kernel: buildroot/package/lrd-closed-source/externals/kernel
 	git format-patch -N -o patches v4.4.39.. &&\
 	cd patches/ &&\
 	rename -v 's/(.*)$$/linux-4.4.39-$$1/' * &&\
-	cp -nv * ~/projects/wb_project/wb/buildroot/board/laird/wb45n/patches/linux-4.4.39/. &&\
+	cp -nv * ../../../../../board/laird/wb45n/patches/linux-4.4.39/. &&\
 	cd ../../../../../..
 	cd buildroot/package/lrd-closed-source/externals/kernel &&\
 	rm -rf patches &&\
