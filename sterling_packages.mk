@@ -39,20 +39,20 @@ images/sterling/$(ST_ETSI_NAME).tar.bz2: $(filter-out $(wildcard $(ST_IMAGE_DIR)
 
 sterling-fcc-staging: $(ST_OUT)
 	mkdir -p $(ST_FCC_OUT)
-	cp $(ST_BRCM_DIR)/bcmdhd_4343w_fcc-*.cal $(ST_FCC_OUT)
-	cp $(ST_BRCM_DIR)/fw_bcmdhd_4343w-*.bin $(ST_FCC_OUT)
-	cp $(ST_BRCM_DIR)/fw_bcmdhd_mfgtest_4343w-*.bin $(ST_FCC_OUT)
-	cp $(ST_BRCM_DIR)/4343w-*.hcd $(ST_FCC_OUT)
+	cp $(ST_BRCM_DIR)/bcm4343w/2016-11-15/bcmdhd_4343w_fcc-*.cal $(ST_FCC_OUT)
+	cp $(ST_BRCM_DIR)/bcm4343w/2016-11-15/fw_bcmdhd_4343w-*.bin $(ST_FCC_OUT)
+	cp $(ST_BRCM_DIR)/bcm4343w/2016-11-15/fw_bcmdhd_mfgtest_4343w-*.bin $(ST_FCC_OUT)
+	cp $(ST_BRCM_DIR)/bcm4343w/2016-07-25/4343w-*.hcd $(ST_FCC_OUT)
 	cd $(ST_FCC_OUT);\
 	ln -sf bcmdhd_4343w_fcc-*.cal brcmfmac43430-sdio.txt;\
 	ln -sf fw_bcmdhd_4343w-*.bin brcmfmac43430-sdio.bin
 
 sterling-etsi-staging: $(ST_OUT)
 	mkdir -p $(ST_ETSI_OUT)
-	cp $(ST_BRCM_DIR)/bcmdhd_4343w_etsi-*.cal $(ST_ETSI_OUT)
-	cp $(ST_BRCM_DIR)/fw_bcmdhd_4343w-*.bin $(ST_ETSI_OUT)
-	cp $(ST_BRCM_DIR)/fw_bcmdhd_mfgtest_4343w-*.bin $(ST_ETSI_OUT)
-	cp $(ST_BRCM_DIR)/4343w-*.hcd $(ST_ETSI_OUT)
+	cp $(ST_BRCM_DIR)/bcm4343w/2016-11-15/bcmdhd_4343w_etsi-*.cal $(ST_ETSI_OUT)
+	cp $(ST_BRCM_DIR)/bcm4343w/2016-11-15/fw_bcmdhd_4343w-*.bin $(ST_ETSI_OUT)
+	cp $(ST_BRCM_DIR)/bcm4343w/2016-11-15/fw_bcmdhd_mfgtest_4343w-*.bin $(ST_ETSI_OUT)
+	cp $(ST_BRCM_DIR)/bcm4343w/2016-07-25/4343w-*.hcd $(ST_ETSI_OUT)
 	cd $(ST_ETSI_OUT);\
 	ln -sf bcmdhd_4343w_etsi-*.cal brcmfmac43430-sdio.txt;\
 	ln -sf fw_bcmdhd_4343w-*.bin brcmfmac43430-sdio.bin
