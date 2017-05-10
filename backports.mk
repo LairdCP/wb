@@ -19,6 +19,7 @@ BP_TREE :=  $(BP_OUT)/laird-backport-tree
 BP_TREE_WORKING :=  $(BP_OUT)/laird-backport-tree-working
 BP_SPATCH := $(BP_OUT)/staging/bin/spatch
 BP_LINUX_DIR :=  $(PWD)/buildroot/package/lrd-closed-source/externals/kernel
+BP_LRDMWL_DIR := $(BP_LINUX_DIR)/drivers/net/wireless/laird/lrdmwl
 BP_LINUX_BUILT:= $(PWD)/buildroot/output/wb50n/build/linux-4.1.13
 BP_TEST_TARGET:= $(PWD)/buildroot/output/wb50n/target
 BP_TEST_TREE := $(BP_OUT)/modules
@@ -49,7 +50,10 @@ ifeq ("$(wildcard $(SPATCH_PATH))","")
 SPATCH_PRE=$(BP_SPATCH)
 endif
 
-$(BP_TREE): $(SPATCH_PRE) backports $(filter-out $(wildcard $(BP_OUT)), $(BP_OUT))
+clean_lrdmwl:
+	rm -r $(BP_LRDMWL_DIR)/.git
+
+$(BP_TREE): clean_lrdmwl $(SPATCH_PRE) backports $(filter-out $(wildcard $(BP_OUT)), $(BP_OUT))
 	./backports/gentree.py --clean --copy-list ./backports/copy-list \
 			       $(BP_LINUX_DIR) \
 			       $(BP_TREE_WORKING)
