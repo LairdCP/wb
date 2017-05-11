@@ -5,8 +5,8 @@ ST_OUT := $(PWD)/buildroot/output/sterling
 
 LAIRD_RELEASE_STRING ?= $(shell date +%Y%m%d)
 
-LWB_FCC_NAME := laird-lwb-fcc-$(LAIRD_RELEASE_STRING)
-LWB_ETSI_NAME := laird-lwb-etsi-$(LAIRD_RELEASE_STRING)
+LWB_FCC_NAME := laird-sterling-fcc-$(LAIRD_RELEASE_STRING)
+LWB_ETSI_NAME := laird-sterling-etsi-$(LAIRD_RELEASE_STRING)
 LWB5_FCC_NAME := laird-lwb5-fcc-$(LAIRD_RELEASE_STRING)
 
 LWB_FCC_OUT := $(ST_OUT)/$(LWB_FCC_NAME)
