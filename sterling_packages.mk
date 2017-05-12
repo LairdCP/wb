@@ -8,16 +8,19 @@ LAIRD_RELEASE_STRING ?= $(shell date +%Y%m%d)
 LWB_FCC_NAME := laird-sterling-fcc-$(LAIRD_RELEASE_STRING)
 LWB_ETSI_NAME := laird-sterling-etsi-$(LAIRD_RELEASE_STRING)
 LWB5_FCC_NAME := laird-lwb5-fcc-$(LAIRD_RELEASE_STRING)
+60_NAME := laird-sterling-60-$(LAIRD_RELEASE_STRING)
 
 LWB_FCC_OUT := $(ST_OUT)/$(LWB_FCC_NAME)
 LWB_ETSI_OUT := $(ST_OUT)/$(LWB_ETSI_NAME)
 LWB5_FCC_OUT := $(ST_OUT)/$(LWB5_FCC_NAME)
+60_OUT := $(ST_OUT)/$(60_NAME)
 
 ST_BRCM_DIR := $(PWD)/buildroot/package/lrd-closed-source/externals/firmware/brcm
+ST_LRDMWL_DIR := $(PWD)/buildroot/package/lrd-closed-source/externals/firmware/lrdmwl
 
 ST_IMAGE_DIR := images/sterling
 
-all: lwb-fcc lwb-etsi lwb5-fcc
+all: lwb-fcc lwb-etsi lwb5-fcc 60
 
 #############################################################################
 # Support targets
@@ -47,6 +50,11 @@ images/sterling/$(LWB5_FCC_NAME).tar.bz2: $(filter-out $(wildcard $(ST_IMAGE_DIR
 # $(@F) is the file part of the target
 images/sterling/480-0081-$(LAIRD_RELEASE_STRING).zip: images/sterling/$(LWB5_FCC_NAME).tar.bz2
 	cd $(ST_OUT) ; zip $(@F) $(LWB5_FCC_NAME).tar.bz2
+	cp $(ST_OUT)/$(@F) $@
+
+# $(@F) is the file part of the target
+images/sterling/$(60_NAME).tar.bz2: $(filter-out $(wildcard $(ST_IMAGE_DIR)), $(ST_IMAGE_DIR))
+	cd $(60_OUT) ; tar -cjf $(ST_OUT)/$(@F) .
 	cp $(ST_OUT)/$(@F) $@
 
 lwb-fcc-staging: $(ST_OUT)
@@ -83,6 +91,10 @@ lwb5-fcc-staging: $(ST_OUT)
 	ln -sf ./bcm4339/brcmfmac4339-sdio.txt . ;\
 	ln -sf ./bcm4339/brcmfmac4339-sdio.bin .
 
+60-staging: $(ST_OUT)
+	mkdir -p $(60_OUT)/lib/firmware/
+	cp -rad $(ST_LRDMWL_DIR) $(60_OUT)/lib/firmware/
+
 #############################################################################
 #  clean targets
 clean-all:
@@ -91,10 +103,12 @@ clean-all:
 	rm -f images/sterling/$(LWB_ETSI_NAME).tar.bz2
 	rm -f images/sterling/$(LWB5_FCC_NAME).tar.bz2
 	rm -f images/sterling/480-0081-$(LAIRD_RELEASE_STRING).zip
+	rm -f images/sterling/$(60_NAME).tar.bz2
 
 clean:
 	rm -rf $(LWB_FCC_OUT)
 	rm -rf $(LWB_ETSI_OUT)
+	rm -rf $(60_OUT)
 	rm -f $(ST_OUT)/$(LWB_FCC_NAME).tar.bz2
 	rm -r $(ST_OUT)/$(LWB_ETSI_NAME).tar.bz2
 	rm -r $(ST_OUT)/480-0081-$(LAIRD_RELEASE_STRING).zip
@@ -102,6 +116,7 @@ clean:
 	rm -f images/sterling/$(LWB_ETSI_NAME).tar.bz2
 	rm -f images/sterling/$(LWB5_FCC_NAME).tar.bz2
 	rm -f images/sterling/480-0081-$(LAIRD_RELEASE_STRING).zip
+	rm -f images/sterling/$(60_NAME).tar.bz2
 
 clean-nuke:
 	rm -rf $(ST_OUT)
@@ -116,5 +131,6 @@ lwb-etsi: lwb-etsi-staging images/sterling/$(LWB_ETSI_NAME).tar.bz2
 
 lwb5-fcc: lwb5-fcc-staging images/sterling/$(LWB5_FCC_NAME).tar.bz2 images/sterling/480-0081-$(LAIRD_RELEASE_STRING).zip
 
+60: 60-staging images/sterling/$(60_NAME).tar.bz2
 
-.PHONY: all lwb-fcc lwb-etsi lwb5-fcc clean clean-all clean-nuke
+.PHONY: all lwb-fcc lwb-etsi lwb5-fcc 60 clean clean-all clean-nuke
