@@ -44,7 +44,7 @@ images/sterling/$(LWB_ETSI_NAME).tar.bz2: $(filter-out $(wildcard $(ST_IMAGE_DIR
 
 # $(@F) is the file part of the target
 images/sterling/$(LWB5_FCC_NAME).tar.bz2: $(filter-out $(wildcard $(ST_IMAGE_DIR)), $(ST_IMAGE_DIR))
-	cd $(LWB5_FCC_OUT) ; tar -cjf $(ST_OUT)/$(@F) .
+	cd $(LWB5_FCC_OUT) ; tar -cjf $(ST_OUT)/$(@F) lib
 	cp $(ST_OUT)/$(@F) $@
 
 # $(@F) is the file part of the target
@@ -54,7 +54,7 @@ images/sterling/480-0081-$(LAIRD_RELEASE_STRING).zip: images/sterling/$(LWB5_FCC
 
 # $(@F) is the file part of the target
 images/sterling/$(60_NAME).tar.bz2: $(filter-out $(wildcard $(ST_IMAGE_DIR)), $(ST_IMAGE_DIR))
-	cd $(60_OUT) ; tar -cjf $(ST_OUT)/$(@F) .
+	cd $(60_OUT) ; tar -cjf $(ST_OUT)/$(@F) lib
 	cp $(ST_OUT)/$(@F) $@
 
 lwb-fcc-staging: $(ST_OUT)
@@ -79,7 +79,7 @@ lwb-etsi-staging: $(ST_OUT)
 
 lwb5-fcc-staging: $(ST_OUT)
 	mkdir -p $(LWB5_FCC_OUT)/lib/firmware/brcm/bcm4339/region-fcc
-	cp -rad $(ST_BRCM_DIR)/bcm4339/* $(LWB5_FCC_OUT)/lib/firmware/brcm/bcm4339/region-fcc
+	cp -rd $(ST_BRCM_DIR)/bcm4339/* $(LWB5_FCC_OUT)/lib/firmware/brcm/bcm4339/region-fcc
 	echo $(LAIRD_RELEASE_STRING) > $(LWB5_FCC_OUT)/lib/firmware/brcm/bcm4339/region-fcc/laird-release
 	cd $(LWB5_FCC_OUT)/lib/firmware/brcm/bcm4339;\
         ln -sf ./region-fcc ./region ;\
@@ -93,7 +93,7 @@ lwb5-fcc-staging: $(ST_OUT)
 
 60-staging: $(ST_OUT)
 	mkdir -p $(60_OUT)/lib/firmware/
-	cp -rad $(ST_LRDMWL_DIR) $(60_OUT)/lib/firmware/
+	cp -rd $(ST_LRDMWL_DIR) $(60_OUT)/lib/firmware/
 
 #############################################################################
 #  clean targets
