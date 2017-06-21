@@ -9,18 +9,20 @@ LWB_FCC_NAME := laird-sterling-fcc-$(LAIRD_RELEASE_STRING)
 LWB_ETSI_NAME := laird-sterling-etsi-$(LAIRD_RELEASE_STRING)
 LWB5_FCC_NAME := laird-lwb5-fcc-$(LAIRD_RELEASE_STRING)
 60_NAME := laird-sterling-60-$(LAIRD_RELEASE_STRING)
+WL_FMAC_930_0081_NAME := 930-0081-$(LAIRD_RELEASE_STRING)
 
 LWB_FCC_OUT := $(ST_OUT)/$(LWB_FCC_NAME)
 LWB_ETSI_OUT := $(ST_OUT)/$(LWB_ETSI_NAME)
 LWB5_FCC_OUT := $(ST_OUT)/$(LWB5_FCC_NAME)
 60_OUT := $(ST_OUT)/$(60_NAME)
+WL_FMAC_930_0081_OUT := $(ST_OUT)/$(WL_FMAC_930_0081_NAME)
 
 ST_BRCM_DIR := $(PWD)/buildroot/package/lrd-closed-source/externals/firmware/brcm
 ST_LRDMWL_DIR := $(PWD)/buildroot/package/lrd-closed-source/externals/firmware/lrdmwl
 
 ST_IMAGE_DIR := images/sterling
 
-all: lwb-fcc lwb-etsi lwb5-fcc 60
+all: lwb-fcc lwb-etsi lwb5-fcc 60 wl
 
 #############################################################################
 # Support targets
@@ -95,6 +97,10 @@ lwb5-fcc-staging: $(ST_OUT)
 	mkdir -p $(60_OUT)/lib/firmware/
 	cp -rd $(ST_LRDMWL_DIR) $(60_OUT)/lib/firmware/
 
+$(WL_FMAC_930_0081_OUT).zip: buildroot/package/lrd-closed-source/externals/wl_fmac/bin/930-0081/wl_fmac | $(ST_OUT)
+	zip --junk-paths $@ $^
+
+
 #############################################################################
 #  clean targets
 clean-all:
@@ -117,6 +123,7 @@ clean:
 	rm -f images/sterling/$(LWB5_FCC_NAME).tar.bz2
 	rm -f images/sterling/480-0081-$(LAIRD_RELEASE_STRING).zip
 	rm -f images/sterling/$(60_NAME).tar.bz2
+	rm -f $(WL_FMAC_930_0081_OUT).zip
 
 clean-nuke:
 	rm -rf $(ST_OUT)
@@ -133,4 +140,6 @@ lwb5-fcc: lwb5-fcc-staging images/sterling/$(LWB5_FCC_NAME).tar.bz2 images/sterl
 
 60: 60-staging images/sterling/$(60_NAME).tar.bz2
 
-.PHONY: all lwb-fcc lwb-etsi lwb5-fcc 60 clean clean-all clean-nuke
+wl: $(WL_FMAC_930_0081_OUT).zip
+
+.PHONY: all lwb-fcc lwb-etsi lwb5-fcc 60 wl clean clean-all clean-nuke
