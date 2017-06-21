@@ -15,7 +15,6 @@ LWB_FCC_OUT := $(ST_OUT)/$(LWB_FCC_NAME)
 LWB_ETSI_OUT := $(ST_OUT)/$(LWB_ETSI_NAME)
 LWB5_FCC_OUT := $(ST_OUT)/$(LWB5_FCC_NAME)
 60_OUT := $(ST_OUT)/$(60_NAME)
-WL_FMAC_930_0081_OUT := $(ST_OUT)/$(WL_FMAC_930_0081_NAME)
 
 ST_BRCM_DIR := $(PWD)/buildroot/package/lrd-closed-source/externals/firmware/brcm
 ST_LRDMWL_DIR := $(PWD)/buildroot/package/lrd-closed-source/externals/firmware/lrdmwl
@@ -59,6 +58,9 @@ images/sterling/$(60_NAME).tar.bz2: $(filter-out $(wildcard $(ST_IMAGE_DIR)), $(
 	cd $(60_OUT) ; tar -cjf $(ST_OUT)/$(@F) lib
 	cp $(ST_OUT)/$(@F) $@
 
+images/sterling/$(WL_FMAC_930_0081_NAME).zip: $(ST_OUT)/$(WL_FMAC_930_0081_NAME).zip | $(ST_IMAGE_DIR)
+	cp -f $^ $@
+
 lwb-fcc-staging: $(ST_OUT)
 	mkdir -p $(LWB_FCC_OUT)
 	cp $(ST_BRCM_DIR)/bcm4343w/2016-11-15/bcmdhd_4343w_fcc-*.cal $(LWB_FCC_OUT)
@@ -97,7 +99,7 @@ lwb5-fcc-staging: $(ST_OUT)
 	mkdir -p $(60_OUT)/lib/firmware/
 	cp -rd $(ST_LRDMWL_DIR) $(60_OUT)/lib/firmware/
 
-$(WL_FMAC_930_0081_OUT).zip: buildroot/package/lrd-closed-source/externals/wl_fmac/bin/930-0081/wl_fmac | $(ST_OUT)
+$(ST_OUT)/$(WL_FMAC_930_0081_NAME).zip: buildroot/package/lrd-closed-source/externals/wl_fmac/bin/930-0081/wl_fmac | $(ST_OUT)
 	zip --junk-paths $@ $^
 
 
@@ -118,12 +120,13 @@ clean:
 	rm -f $(ST_OUT)/$(LWB_FCC_NAME).tar.bz2
 	rm -r $(ST_OUT)/$(LWB_ETSI_NAME).tar.bz2
 	rm -r $(ST_OUT)/480-0081-$(LAIRD_RELEASE_STRING).zip
+	rm -f $(ST_OUT)/$(WL_FMAC_930_0081_NAME).zip
 	rm -f images/sterling/$(LWB_FCC_NAME).tar.bz2
 	rm -f images/sterling/$(LWB_ETSI_NAME).tar.bz2
 	rm -f images/sterling/$(LWB5_FCC_NAME).tar.bz2
 	rm -f images/sterling/480-0081-$(LAIRD_RELEASE_STRING).zip
+	rm -f images/sterling/$(WL_FMAC_930_0081_NAME).zip
 	rm -f images/sterling/$(60_NAME).tar.bz2
-	rm -f $(WL_FMAC_930_0081_OUT).zip
 
 clean-nuke:
 	rm -rf $(ST_OUT)
@@ -140,6 +143,6 @@ lwb5-fcc: lwb5-fcc-staging images/sterling/$(LWB5_FCC_NAME).tar.bz2 images/sterl
 
 60: 60-staging images/sterling/$(60_NAME).tar.bz2
 
-wl: $(WL_FMAC_930_0081_OUT).zip
+wl: images/sterling/$(WL_FMAC_930_0081_NAME).zip
 
 .PHONY: all lwb-fcc lwb-etsi lwb5-fcc 60 wl clean clean-all clean-nuke
