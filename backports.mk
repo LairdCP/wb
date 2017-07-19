@@ -53,13 +53,14 @@ endif
 
 clean_lrdmwl:
 ifneq ("$(wildcard $(BP_LRDMWL_GIT_DIR))","")
-	rm -r $(BP_LRDMWL_GIT_DIR)
+	rm -rf $(BP_LRDMWL_GIT_DIR)/shallow
 endif
 
 $(BP_TREE): clean_lrdmwl $(SPATCH_PRE) backports $(filter-out $(wildcard $(BP_OUT)), $(BP_OUT))
 	./backports/gentree.py --clean --copy-list ./backports/copy-list \
 			       $(BP_LINUX_DIR) \
 			       $(BP_TREE_WORKING)
+	rm -rf $(BP_TREE_WORKING)/drivers/net/wireless/laird/lrdmwl/.git
 	mv $(BP_TREE_WORKING) $(BP_TREE) # necessary to catch failure of prev step
 
 #############################################################################
