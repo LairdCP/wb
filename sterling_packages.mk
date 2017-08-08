@@ -5,14 +5,17 @@ ST_OUT := $(PWD)/buildroot/output/sterling
 
 LAIRD_RELEASE_STRING ?= $(shell date +%Y%m%d)
 
-LWB_FCC_NAME := laird-sterling-fcc-$(LAIRD_RELEASE_STRING)
-LWB_ETSI_NAME := laird-sterling-etsi-$(LAIRD_RELEASE_STRING)
+LWB_FCC_NAME := laird-lwb-firmware-fcc-$(LAIRD_RELEASE_STRING)
+LWB_ETSI_NAME := laird-lwb-firmware-etsi-$(LAIRD_RELEASE_STRING)
+LWB_MFG_NAME := laird-lwb-firmware-mfg-$(LAIRD_RELEASE_STRING)
+
 LWB5_FCC_NAME := laird-lwb5-fcc-$(LAIRD_RELEASE_STRING)
 60_NAME := laird-sterling-60-$(LAIRD_RELEASE_STRING)
 WL_FMAC_930_0081_NAME := 930-0081-$(LAIRD_RELEASE_STRING)
 
 LWB_FCC_OUT := $(ST_OUT)/$(LWB_FCC_NAME)
 LWB_ETSI_OUT := $(ST_OUT)/$(LWB_ETSI_NAME)
+LWB_MFG_OUT := $(ST_OUT)/$(LWB_MFG_NAME)
 LWB5_FCC_OUT := $(ST_OUT)/$(LWB5_FCC_NAME)
 60_OUT := $(ST_OUT)/$(60_NAME)
 
@@ -21,7 +24,7 @@ ST_LRDMWL_DIR := $(PWD)/buildroot/package/lrd-closed-source/externals/firmware/l
 
 ST_IMAGE_DIR := images/sterling
 
-all: lwb-fcc lwb-etsi lwb5-fcc 60 wl
+all: lwb-fcc lwb-etsi lwb-mfg lwb5-fcc 60 wl
 
 #############################################################################
 # Support targets
@@ -35,12 +38,22 @@ $(ST_IMAGE_DIR):
 
 # $(@F) is the file part of the target
 images/sterling/$(LWB_FCC_NAME).tar.bz2: $(filter-out $(wildcard $(ST_IMAGE_DIR)), $(ST_IMAGE_DIR))
-	cd $(ST_OUT) ; tar -cjf $(@F) $(LWB_FCC_NAME)
+	cd $(ST_OUT)/$(LWB_FCC_NAME) ; tar -cjf ../$(@F) .
 	cp $(ST_OUT)/$(@F) $@
 
 # $(@F) is the file part of the target
 images/sterling/$(LWB_ETSI_NAME).tar.bz2: $(filter-out $(wildcard $(ST_IMAGE_DIR)), $(ST_IMAGE_DIR))
-	cd $(ST_OUT) ; tar -cjf $(@F) $(LWB_ETSI_NAME)
+	cd $(ST_OUT)/$(LWB_ETSI_NAME) ; tar -cjf ../$(@F) .
+	cp $(ST_OUT)/$(@F) $@
+
+# $(@F) is the file part of the target
+images/sterling/$(LWB_MFG_NAME).tar.bz2: $(filter-out $(wildcard $(ST_IMAGE_DIR)), $(ST_IMAGE_DIR))
+	cd $(ST_OUT)/$(LWB_MFG_NAME) ; tar -cjf ../$(@F) .
+	cp $(ST_OUT)/$(@F) $@
+
+# $(@F) is the file part of the target
+images/sterling/480-0108-$(LAIRD_RELEASE_STRING).zip: images/sterling/$(LWB_MFG_NAME).tar.bz2
+	cd $(ST_OUT) ; zip $(@F) $(LWB_MFG_NAME).tar.bz2
 	cp $(ST_OUT)/$(@F) $@
 
 # $(@F) is the file part of the target
@@ -62,24 +75,43 @@ images/sterling/$(WL_FMAC_930_0081_NAME).zip: $(ST_OUT)/$(WL_FMAC_930_0081_NAME)
 	cp -f $^ $@
 
 lwb-fcc-staging: $(ST_OUT)
-	mkdir -p $(LWB_FCC_OUT)
-	cp $(ST_BRCM_DIR)/bcm4343w/2016-11-15/bcmdhd_4343w_fcc-*.cal $(LWB_FCC_OUT)
-	cp $(ST_BRCM_DIR)/bcm4343w/2016-11-15/fw_bcmdhd_4343w-*.bin $(LWB_FCC_OUT)
-	cp $(ST_BRCM_DIR)/bcm4343w/2016-11-15/fw_bcmdhd_mfgtest_4343w-*.bin $(LWB_FCC_OUT)
-	cp $(ST_BRCM_DIR)/bcm4343w/2016-07-25/4343w-*.hcd $(LWB_FCC_OUT)
-	cd $(LWB_FCC_OUT);\
-	ln -sf bcmdhd_4343w_fcc-*.cal brcmfmac43430-sdio.txt;\
-	ln -sf fw_bcmdhd_4343w-*.bin brcmfmac43430-sdio.bin
+	mkdir -p $(LWB_FCC_OUT)/lib/firmware/brcm/bcm4343w
+	cd $(LWB_FCC_OUT)/lib/firmware/brcm/bcm4343w ; \
+	cp $(ST_BRCM_DIR)/bcm4343w/brcmfmac43430-sdio-prod.bin . ; \
+	ln -s brcmfmac43430-sdio-prod.bin brcmfmac43430-sdio.bin ; \
+	cp $(ST_BRCM_DIR)/bcm4343w/brcmfmac43430-sdio-fcc.txt . ; \
+	ln -s brcmfmac43430-sdio-fcc.txt brcmfmac43430-sdio.txt ; \
+	cp $(ST_BRCM_DIR)/bcm4343w/4343w.hcd . ; \
+	cd $(LWB_FCC_OUT)/lib/firmware/brcm ; \
+	ln -sf ./bcm4343w/brcmfmac43430-sdio.bin . ; \
+	ln -sf ./bcm4343w/brcmfmac43430-sdio.txt . ; \
+	ln -sf ./bcm4343w/4343w.hcd .
 
 lwb-etsi-staging: $(ST_OUT)
-	mkdir -p $(LWB_ETSI_OUT)
-	cp $(ST_BRCM_DIR)/bcm4343w/2016-11-15/bcmdhd_4343w_etsi-*.cal $(LWB_ETSI_OUT)
-	cp $(ST_BRCM_DIR)/bcm4343w/2016-11-15/fw_bcmdhd_4343w-*.bin $(LWB_ETSI_OUT)
-	cp $(ST_BRCM_DIR)/bcm4343w/2016-11-15/fw_bcmdhd_mfgtest_4343w-*.bin $(LWB_ETSI_OUT)
-	cp $(ST_BRCM_DIR)/bcm4343w/2016-07-25/4343w-*.hcd $(LWB_ETSI_OUT)
-	cd $(LWB_ETSI_OUT);\
-	ln -sf bcmdhd_4343w_etsi-*.cal brcmfmac43430-sdio.txt;\
-	ln -sf fw_bcmdhd_4343w-*.bin brcmfmac43430-sdio.bin
+	mkdir -p $(LWB_ETSI_OUT)/lib/firmware/brcm/bcm4343w
+	cd $(LWB_ETSI_OUT)/lib/firmware/brcm/bcm4343w ; \
+	cp $(ST_BRCM_DIR)/bcm4343w/brcmfmac43430-sdio-prod.bin . ; \
+	ln -s brcmfmac43430-sdio-prod.bin brcmfmac43430-sdio.bin ; \
+	cp $(ST_BRCM_DIR)/bcm4343w/brcmfmac43430-sdio-etsi.txt . ; \
+	ln -s brcmfmac43430-sdio-etsi.txt brcmfmac43430-sdio.txt ; \
+	cp $(ST_BRCM_DIR)/bcm4343w/4343w.hcd .
+	cd $(LWB_ETSI_OUT)/lib/firmware/brcm ; \
+	ln -sf ./bcm4343w/brcmfmac43430-sdio.bin . ; \
+	ln -sf ./bcm4343w/brcmfmac43430-sdio.txt . ; \
+	ln -sf ./bcm4343w/4343w.hcd .
+
+lwb-mfg-staging: $(ST_OUT)
+	mkdir -p $(LWB_MFG_OUT)/lib/firmware/brcm/bcm4343w
+	cd $(LWB_MFG_OUT)/lib/firmware/brcm/bcm4343w ; \
+	cp $(ST_BRCM_DIR)/bcm4343w/brcmfmac43430-sdio-mfg.bin . ; \
+	ln -s brcmfmac43430-sdio-mfg.bin brcmfmac43430-sdio.bin ; \
+	cp $(ST_BRCM_DIR)/bcm4343w/brcmfmac43430-sdio-fcc.txt . ; \
+	ln -s brcmfmac43430-sdio-fcc.txt brcmfmac43430-sdio.txt ; \
+	cp $(ST_BRCM_DIR)/bcm4343w/4343w.hcd .
+	cd $(LWB_MFG_OUT)/lib/firmware/brcm ; \
+	ln -sf ./bcm4343w/brcmfmac43430-sdio.bin . ; \
+	ln -sf ./bcm4343w/brcmfmac43430-sdio.txt . ; \
+	ln -sf ./bcm4343w/4343w.hcd .
 
 lwb5-fcc-staging: $(ST_OUT)
 	mkdir -p $(LWB5_FCC_OUT)/lib/firmware/brcm/bcm4339/region-fcc
@@ -111,18 +143,23 @@ clean-all:
 	rm -f images/sterling/$(LWB_ETSI_NAME).tar.bz2
 	rm -f images/sterling/$(LWB5_FCC_NAME).tar.bz2
 	rm -f images/sterling/480-0081-$(LAIRD_RELEASE_STRING).zip
+	rm -f images/sterling/480-0108-$(LAIRD_RELEASE_STRING).zip
 	rm -f images/sterling/$(60_NAME).tar.bz2
 
 clean:
 	rm -rf $(LWB_FCC_OUT)
 	rm -rf $(LWB_ETSI_OUT)
+	rm -rf $(LWB_MFG_OUT)
 	rm -rf $(60_OUT)
 	rm -f $(ST_OUT)/$(LWB_FCC_NAME).tar.bz2
-	rm -r $(ST_OUT)/$(LWB_ETSI_NAME).tar.bz2
-	rm -r $(ST_OUT)/480-0081-$(LAIRD_RELEASE_STRING).zip
+	rm -f $(ST_OUT)/$(LWB_ETSI_NAME).tar.bz2
+	rm -f $(ST_OUT)/$(LWB_MFG_NAME).tar.bz2
+	rm -f $(ST_OUT)/480-0081-$(LAIRD_RELEASE_STRING).zip
+	rm -f $(ST_OUT)/480-0108-$(LAIRD_RELEASE_STRING).zip
 	rm -f $(ST_OUT)/$(WL_FMAC_930_0081_NAME).zip
 	rm -f images/sterling/$(LWB_FCC_NAME).tar.bz2
 	rm -f images/sterling/$(LWB_ETSI_NAME).tar.bz2
+	rm -f images/sterling/$(LWB_MFG_NAME).tar.bz2
 	rm -f images/sterling/$(LWB5_FCC_NAME).tar.bz2
 	rm -f images/sterling/480-0081-$(LAIRD_RELEASE_STRING).zip
 	rm -f images/sterling/$(WL_FMAC_930_0081_NAME).zip
@@ -139,10 +176,12 @@ lwb-fcc: lwb-fcc-staging images/sterling/$(LWB_FCC_NAME).tar.bz2
 
 lwb-etsi: lwb-etsi-staging images/sterling/$(LWB_ETSI_NAME).tar.bz2
 
+lwb-mfg: lwb-mfg-staging images/sterling/$(LWB_MFG_NAME).tar.bz2 images/sterling/480-0108-$(LAIRD_RELEASE_STRING).zip
+
 lwb5-fcc: lwb5-fcc-staging images/sterling/$(LWB5_FCC_NAME).tar.bz2 images/sterling/480-0081-$(LAIRD_RELEASE_STRING).zip
 
 60: 60-staging images/sterling/$(60_NAME).tar.bz2
 
 wl: images/sterling/$(WL_FMAC_930_0081_NAME).zip
 
-.PHONY: all lwb-fcc lwb-etsi lwb5-fcc 60 wl clean clean-all clean-nuke
+.PHONY: all lwb-fcc lwb-etsi lwb-mfg lwb5-fcc 60 wl clean clean-all clean-nuke
