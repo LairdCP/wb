@@ -9,7 +9,7 @@ LWB_FCC_NAME := laird-lwb-firmware-fcc-$(LAIRD_RELEASE_STRING)
 LWB_ETSI_NAME := laird-lwb-firmware-etsi-$(LAIRD_RELEASE_STRING)
 LWB_MFG_NAME := laird-lwb-firmware-mfg-$(LAIRD_RELEASE_STRING)
 
-LWB5_FCC_NAME := laird-lwb5-fcc-$(LAIRD_RELEASE_STRING)
+LWB5_FCC_NAME := laird-lwb5-firmware-fcc-$(LAIRD_RELEASE_STRING)
 60_NAME := laird-sterling-60-$(LAIRD_RELEASE_STRING)
 WL_FMAC_930_0081_NAME := 930-0081-$(LAIRD_RELEASE_STRING)
 
@@ -114,18 +114,17 @@ lwb-mfg-staging: $(ST_OUT)
 	ln -sf ./bcm4343w/4343w.hcd .
 
 lwb5-fcc-staging: $(ST_OUT)
-	mkdir -p $(LWB5_FCC_OUT)/lib/firmware/brcm/bcm4339/region-fcc
-	cp -rd $(ST_BRCM_DIR)/bcm4339/* $(LWB5_FCC_OUT)/lib/firmware/brcm/bcm4339/region-fcc
-	echo $(LAIRD_RELEASE_STRING) > $(LWB5_FCC_OUT)/lib/firmware/brcm/bcm4339/region-fcc/laird-release
-	cd $(LWB5_FCC_OUT)/lib/firmware/brcm/bcm4339;\
-        ln -sf ./region-fcc ./region ;\
-	ln -sf ./region/4339.hcd . ;\
-	ln -sf ./region/brcmfmac4339-sdio.txt . ;\
-	ln -sf ./region/brcmfmac4339-sdio.bin .
-	cd $(LWB5_FCC_OUT)/lib/firmware/brcm;\
-	ln -sf ./bcm4339/4339.hcd . ;\
-	ln -sf ./bcm4339/brcmfmac4339-sdio.txt . ;\
-	ln -sf ./bcm4339/brcmfmac4339-sdio.bin .
+	mkdir -p $(LWB5_FCC_OUT)/lib/firmware/brcm/bcm4339
+	cd $(LWB5_FCC_OUT)/lib/firmware/brcm/bcm4339 ; \
+	cp $(ST_BRCM_DIR)/bcm4339/brcmfmac4339-sdio-prod.bin . ; \
+	ln -s brcmfmac4339-sdio-prod.bin brcmfmac4339-sdio.bin ; \
+	cp $(ST_BRCM_DIR)/bcm4339/brcmfmac4339-sdio-fcc.txt . ; \
+	ln -s brcmfmac4339-sdio-fcc.txt brcmfmac4339-sdio.txt ; \
+	cp $(ST_BRCM_DIR)/bcm4339/4339.hcd . ; \
+	cd $(LWB5_FCC_OUT)/lib/firmware/brcm ; \
+	ln -sf ./bcm4339/brcmfmac4339-sdio.bin . ; \
+	ln -sf ./bcm4339/brcmfmac4339-sdio.txt . ; \
+	ln -sf ./bcm4339/4339.hcd .
 
 60-staging: $(ST_OUT)
 	mkdir -p $(60_OUT)/lib/firmware/
