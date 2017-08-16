@@ -115,9 +115,9 @@ lwb-etsi-staging: $(ST_OUT)
 lwb-mfg-staging: $(ST_OUT)
 	mkdir -p $(LWB_MFG_OUT)/lib/firmware/brcm/bcm4343w
 	cd $(LWB_MFG_OUT)/lib/firmware/brcm/bcm4343w ; \
-	cp $(ST_BRCM_DIR)/bcm4343w/brcmfmac43430-sdio-mfg.bin . ; \
+	cp $(ST_BRCM_DIR)/bcm4343w/brcmfmac43430-sdio-*.bin . ; \
 	ln -s brcmfmac43430-sdio-mfg.bin brcmfmac43430-sdio.bin ; \
-	cp $(ST_BRCM_DIR)/bcm4343w/brcmfmac43430-sdio-fcc.txt . ; \
+	cp $(ST_BRCM_DIR)/bcm4343w/brcmfmac43430-sdio-*.txt . ; \
 	ln -s brcmfmac43430-sdio-fcc.txt brcmfmac43430-sdio.txt ; \
 	cp $(ST_BRCM_DIR)/bcm4343w/4343w.hcd .
 	cd $(LWB_MFG_OUT)/lib/firmware/brcm ; \
