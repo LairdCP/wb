@@ -26,6 +26,8 @@ ST_LRDMWL_DIR := $(PWD)/buildroot/package/lrd-closed-source/externals/firmware/l
 
 ST_IMAGE_DIR := images/sterling
 
+TAR_CJF := tar --owner=root --group=root -cjf
+
 all: lwb-fcc lwb-etsi lwb-mfg lwb5-fcc lwb5-mfg 60 wl
 
 #############################################################################
@@ -40,17 +42,17 @@ $(ST_IMAGE_DIR):
 
 # $(@F) is the file part of the target
 images/sterling/$(LWB_FCC_NAME).tar.bz2: $(filter-out $(wildcard $(ST_IMAGE_DIR)), $(ST_IMAGE_DIR))
-	cd $(ST_OUT)/$(LWB_FCC_NAME) ; tar -cjf ../$(@F) .
+	cd $(ST_OUT)/$(LWB_FCC_NAME) ; $(TAR_CJF) ../$(@F) .
 	cp $(ST_OUT)/$(@F) $@
 
 # $(@F) is the file part of the target
 images/sterling/$(LWB_ETSI_NAME).tar.bz2: $(filter-out $(wildcard $(ST_IMAGE_DIR)), $(ST_IMAGE_DIR))
-	cd $(ST_OUT)/$(LWB_ETSI_NAME) ; tar -cjf ../$(@F) .
+	cd $(ST_OUT)/$(LWB_ETSI_NAME) ; $(TAR_CJF) ../$(@F) .
 	cp $(ST_OUT)/$(@F) $@
 
 # $(@F) is the file part of the target
 images/sterling/$(LWB_MFG_NAME).tar.bz2: $(filter-out $(wildcard $(ST_IMAGE_DIR)), $(ST_IMAGE_DIR))
-	cd $(ST_OUT)/$(LWB_MFG_NAME) ; tar -cjf ../$(@F) .
+	cd $(ST_OUT)/$(LWB_MFG_NAME) ; $(TAR_CJF) ../$(@F) .
 	cp $(ST_OUT)/$(@F) $@
 
 # $(@F) is the file part of the target
@@ -60,12 +62,12 @@ images/sterling/480-0108-$(LAIRD_RELEASE_STRING).zip: images/sterling/$(LWB_MFG_
 
 # $(@F) is the file part of the target
 images/sterling/$(LWB5_FCC_NAME).tar.bz2: $(filter-out $(wildcard $(ST_IMAGE_DIR)), $(ST_IMAGE_DIR))
-	cd $(LWB5_FCC_OUT) ; tar -cjf $(ST_OUT)/$(@F) lib
+	cd $(LWB5_FCC_OUT) ; $(TAR_CJF) $(ST_OUT)/$(@F) lib
 	cp $(ST_OUT)/$(@F) $@
 
 # $(@F) is the file part of the target
 images/sterling/$(LWB5_MFG_NAME).tar.bz2: $(filter-out $(wildcard $(ST_IMAGE_DIR)), $(ST_IMAGE_DIR))
-	cd $(LWB5_MFG_OUT) ; tar -cjf $(ST_OUT)/$(@F) lib
+	cd $(LWB5_MFG_OUT) ; $(TAR_CJF) $(ST_OUT)/$(@F) lib
 	cp $(ST_OUT)/$(@F) $@
 
 # $(@F) is the file part of the target
@@ -80,7 +82,7 @@ images/sterling/480-0081-$(LAIRD_RELEASE_STRING).zip: images/sterling/$(LWB5_FCC
 
 # $(@F) is the file part of the target
 images/sterling/$(60_NAME).tar.bz2: $(filter-out $(wildcard $(ST_IMAGE_DIR)), $(ST_IMAGE_DIR))
-	cd $(60_OUT) ; tar -cjf $(ST_OUT)/$(@F) lib
+	cd $(60_OUT) ; $(TAR_CJF) $(ST_OUT)/$(@F) lib
 	cp $(ST_OUT)/$(@F) $@
 
 images/sterling/$(WL_FMAC_930_0081_NAME).zip: $(ST_OUT)/$(WL_FMAC_930_0081_NAME).zip | $(ST_IMAGE_DIR)
