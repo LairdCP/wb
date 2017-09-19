@@ -79,9 +79,9 @@ patches-kernel: buildroot/package/lrd-closed-source/externals/kernel
 	mkdir patches &&\
 	git format-patch -N -o patches v4.4.39.. &&\
 	cd patches/ &&\
-	rename -v 's/(.*)$$/linux-4.4.39-$$1/' * &&\
-	cp -nv * ~/projects/wb_project/wb/buildroot/board/laird/wb45n/patches/linux-4.4.39/. &&\
-	cd ../../../../../..
+	rename -v 's/(.*)$$/linux-4.4.39-$$1/' *
+	cd ../../
+	cp -nv buildroot/package/lrd-closed-source/externals/kernel/patches/* buildroot/board/laird/customers/gatwick/patches/linux-4.4.39/. &&\
 	cd buildroot/package/lrd-closed-source/externals/kernel &&\
 	rm -rf patches &&\
 	cd ../../../../..
