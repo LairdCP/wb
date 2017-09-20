@@ -31,11 +31,11 @@ $(HINT_FILE): $(OUT_DIR)
 $(OUT_DIR):
 	mkdir -p $@
 
-$(BUILD_DIR)/$(FW_PKG_LSR_PN).zip: $(BUILD_DIR)/$(FW_PKG_LSR_PN).tgz
-	cd $(BUILD_DIR); $(ZIP) $@ $(FW_PKG_LSR_PN).tgz
+$(BUILD_DIR)/$(FW_PKG_LSR_PN).zip: $(BUILD_DIR)/$(FW_PKG_LSR_PN).tar.bz2
+	cd $(BUILD_DIR); $(ZIP) $@ $(FW_PKG_LSR_PN).tar.bz2
 
-$(BUILD_DIR)/$(FW_PKG_LSR_PN).tgz: $(ARCHIVE_ROOT)/lib/firmware/brcm/brcmfmac$(BRCMFMAC_CHIP_ID)-sdio.bin $(ARCHIVE_ROOT)/lib/firmware/brcm/brcmfmac$(BRCMFMAC_CHIP_ID)-sdio.txt $(ARCHIVE_ROOT)/lib/firmware/brcm/$(CHIP_NAME).hcd | $(OUT_DIR)
-	cd $(ARCHIVE_ROOT); $(TAR_F) $@ .
+$(BUILD_DIR)/$(FW_PKG_LSR_PN).tar.bz2: $(ARCHIVE_ROOT)/lib/firmware/brcm/brcmfmac$(BRCMFMAC_CHIP_ID)-sdio.bin $(ARCHIVE_ROOT)/lib/firmware/brcm/brcmfmac$(BRCMFMAC_CHIP_ID)-sdio.txt $(ARCHIVE_ROOT)/lib/firmware/brcm/$(CHIP_NAME).hcd | $(OUT_DIR)
+	cd $(ARCHIVE_ROOT); $(TAR_F) $@ lib
 
 #
 # $(ARCHIVE_ROOT)/lib/firmware/brcm
