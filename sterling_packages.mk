@@ -74,7 +74,7 @@ $(ST_IMAGE_DIR):
 
 # $(@F) is the file part of the target
 images/sterling/$(LWB_MFG_NAME).tar.bz2: $(filter-out $(wildcard $(ST_IMAGE_DIR)), $(ST_IMAGE_DIR))
-	cd $(ST_OUT)/$(LWB_MFG_NAME) ; $(TAR_CJF) ../$(@F) .
+	cd $(ST_OUT)/$(LWB_MFG_NAME) ; $(TAR_CJF) ../$(@F) lib
 	cp $(ST_OUT)/$(@F) $@
 
 # $(@F) is the file part of the target
