@@ -54,44 +54,6 @@ source-wb50n:
 
 source: source-wb40n source-wb45n
 
-patches-bootstrap: buildroot/package/lrd-devel/at91bootstrap3
-	cd buildroot/package/lrd-devel/at91bootstrap3 &&\
-	mkdir patches &&\
-	git format-patch -N -o patches v3.7.1.. &&\
-	cd patches/ &&\
-	rename -v 's/(.*)$$/at91bootstrap3-v3.7.1-$$1/' * &&\
-	cp -nv * ../../../../board/laird/wb45n/patches/at91bootstrap3-3.7.1/. &&\
-	cd ../../../../..
-	cd buildroot/package/lrd-devel/at91bootstrap3 &&\
-	rm -rf patches &&\
-	cd ../../../..
-
-patches-uboot: buildroot/package/lrd-devel/u-boot
-	cd buildroot/package/lrd-devel/u-boot &&\
-	mkdir patches &&\
-	git format-patch -N -o patches v2014.07.. &&\
-	cd patches/ &&\
-	rename -v 's/(.*)$$/u-boot-v2014.07-$$1/' * &&\
-	cp -nv * ../../../../board/laird/wb45n/patches/uboot-2014.07/. &&\
-	cd ../../../../..
-	cd buildroot/package/lrd-devel/u-boot &&\
-	rm -rf patches &&\
-	cd ../../../..
-
-patches-kernel: buildroot/package/lrd-closed-source/externals/kernel
-	cd buildroot/package/lrd-closed-source/externals/kernel &&\
-	mkdir patches &&\
-	git format-patch -N -o patches v4.4.39.. &&\
-	cd patches/ &&\
-	rename -v 's/(.*)$$/linux-4.4.39-$$1/' * &&\
-	cp -nv * ../../../../../board/laird/wb45n/patches/linux-4.4.39/. &&\
-	cd ../../../../../..
-	cd buildroot/package/lrd-closed-source/externals/kernel &&\
-	rm -rf patches &&\
-	cd ../../../../..
-
-all-patches: patches-bootstrap patches-uboot patches-kernel
-
 clean-wb40n-lrd-pkg:
 	$(MAKE) -C buildroot O=output/wb40n sdccli-dirclean sdcsdk-dirclean sdcsupp-dirclean dhd-dirclean
 
@@ -231,7 +193,7 @@ legal-info: legal-info-wb40n legal-info-wb45n legal-info-wb50n
         msd-x86 clean-wb50n-lrd-pkg clean-wb50n_devel-lrd-pkg clean-wb50n clean-wb50n_devel clean-msd45n \
         clean-msd50n clean-msd-x86 clean-wb50n_rdvk clean-wb50n_rdvk_devel clean-reg45n clean-reg50n \
         clean-mfg60n clean-wb45n_legacy clean-wb45n_legacy_devel clean-wb50n_legacy clean-wb50n_legacy_devel \
-        patches-bootstrap patches-uboot patches-kernel all-patches prune-workspace
+        prune-workspace
 
 .PHONY: sterling_supplicant-x86 clean-sterling_supplicant-x86
 .PHONY: sterling_supplicant-arm clean-sterling_supplicant-arm
