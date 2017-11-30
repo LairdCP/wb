@@ -51,44 +51,6 @@ source-wb50n:
 
 source: source-wb40n source-wb45n
 
-patches-bootstrap: buildroot/package/lrd-devel/at91bootstrap3
-	cd buildroot/package/lrd-devel/at91bootstrap3 &&\
-	mkdir patches &&\
-	git format-patch -N -o patches v3.7.1.. &&\
-	cd patches/ &&\
-	rename -v 's/(.*)$$/at91bootstrap3-v3.7.1-$$1/' * &&\
-	cp -nv * ~/projects/wb_project/wb/buildroot/board/laird/wb45n/patches/at91bootstrap3-3.7.1/. &&\
-	cd ../../../../..
-	cd buildroot/package/lrd-devel/at91bootstrap3 &&\
-	rm -rf patches &&\
-	cd ../../../..
-
-patches-uboot: buildroot/package/lrd-devel/u-boot
-	cd buildroot/package/lrd-devel/u-boot &&\
-	mkdir patches &&\
-	git format-patch -N -o patches v2014.07.. &&\
-	cd patches/ &&\
-	rename -v 's/(.*)$$/u-boot-v2014.07-$$1/' * &&\
-	cp -nv * ~/projects/wb_project/wb/buildroot/board/laird/wb45n/patches/uboot-2014.07/. &&\
-	cd ../../../../..
-	cd buildroot/package/lrd-devel/u-boot &&\
-	rm -rf patches &&\
-	cd ../../../..
-
-patches-kernel: buildroot/package/lrd-closed-source/externals/kernel
-	cd buildroot/package/lrd-closed-source/externals/kernel &&\
-	mkdir patches &&\
-	git format-patch -N -o patches v4.4.39.. &&\
-	cd patches/ &&\
-	rename -v 's/(.*)$$/linux-4.4.39-$$1/' * &&\
-	cp -nv * ~/projects/wb_project/wb/buildroot/board/laird/wb45n/patches/linux-4.4.39/. &&\
-	cd ../../../../../..
-	cd buildroot/package/lrd-closed-source/externals/kernel &&\
-	rm -rf patches &&\
-	cd ../../../../..
-
-all-patches: patches-bootstrap patches-uboot patches-kernel
-
 clean-wb40n-lrd-pkg:
 	$(MAKE) -C buildroot O=output/wb40n sdccli-dirclean sdcsdk-dirclean sdcsupp-dirclean dhd-dirclean
 
@@ -193,8 +155,7 @@ legal-info: legal-info-wb40n legal-info-wb45n legal-info-wb50n
         clean-wb40n_devel clean-wb45n_devel clean-wb40n_devel-lrd-pkg clean-wb45n_devel-lrd-pkg \
         msd50n wb50n wb50n_devel wb50n_rdvk reg45n reg50n source-wb50n legal-info-wb50n msd-x86 \
         clean-wb50n-lrd-pkg clean-wb50n_devel-lrd-pkg clean-wb50n clean-wb50n_devel clean-msd45n \
-        clean-msd50n clean-msd-x86 clean-reg45n clean-reg50n patches-bootstrap patches-uboot \
-        patches-kernel all-patches \
+        clean-msd50n clean-msd-x86 clean-reg45n clean-reg50n \
         prune-workspace
 
 .NOTPARALLEL:
