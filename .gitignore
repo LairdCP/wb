@@ -72,6 +72,9 @@
 # /images/reg50n
 /images/reg50n/20??????
 
+# /images/mfg60n
+/images/mfg60n/20??????
+
 /images/*/latest
 
 /examples/eventmon
