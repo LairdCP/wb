@@ -34,7 +34,7 @@ The top level directory contains the folowing directories:
 
 HOW WE EXTEND BUILDROOT
 =======================
-We extend buildroot by adding new boards (wb40n, wb45n) and new packages.
+We extend buildroot by adding new boards (wb45n, wb50n) and new packages.
 The boards reside in the directories: buildroot/boards/sdc/wb4?n.
 The packages reside inside: buildroot/package/sdc
 
