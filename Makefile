@@ -7,22 +7,21 @@ ifdef BR2_DL_DIR
 LAIRD_ARCHIVES          := archive/AT91Bootstrap-v3.4.4.tar.xz \
                            archive/openssl-fips-2.0.10.tar.gz
 LAIRD_ARCHIVES_OPTIONAL := archive/msd50n-laird-$(MSD_VERSION).tar.bz2 \
-                           archive/msd45n-laird-$(MSD_VERSION).tar.bz2 \
-                           archive/msd40n-laird-$(MSD_VERSION).tar.bz2
+                           archive/msd45n-laird-$(MSD_VERSION).tar.bz2
 endif
 
 default: wb45n wb50n
 
-all: wb40n wb45n msd40n msd45n msd-x86 msd50n wb50n
+all: wb45n msd45n msd-x86 msd50n wb50n
 
-msd40n_config msd45n_config msd50n_config wb40n_config wb45n_config wb45n_devel_config wb40n_devel_config msd-x86_config wb50n_config wb50n_devel_config wb50n_rdvk_config wb50n_rdvk_devel_config reg45n_config reg50n_config mfg60n_config wb45n_legacy_config wb45n_legacy_devel_config wb50n_legacy_config wb50n_legacy_devel_config sterling_supplicant-x86_config sterling_supplicant-arm_config: unpack.stamp
+msd45n_config msd50n_config wb45n_config wb45n_devel_config msd-x86_config wb50n_config wb50n_devel_config wb50n_rdvk_config wb50n_rdvk_devel_config reg45n_config reg50n_config mfg60n_config wb45n_legacy_config wb45n_legacy_devel_config wb50n_legacy_config wb50n_legacy_devel_config sterling_supplicant-x86_config sterling_supplicant-arm_config: unpack.stamp
     # install the config file
     # $(subst _config,,$@) trims the _config part so we get clean directory and target
 	$(MAKE) O=output/$(subst _config,,$@) -C buildroot $(subst _config,,$@)_defconfig
 	# mark the operation as done.
 	touch $@
 
-msd40n msd45n wb40n wb45n wb45n_devel wb40n_devel msd-x86 msd50n wb50n_devel wb50n wb50n_rdvk wb50n_rdvk_devel reg45n reg50n mfg60n wb45n_legacy wb45n_legacy_devel wb50n_legacy wb50n_legacy_devel sterling_supplicant-x86 sterling_supplicant-arm: unpack.stamp
+msd45n wb45n wb45n_devel msd-x86 msd50n wb50n_devel wb50n wb50n_rdvk wb50n_rdvk_devel reg45n reg50n mfg60n wb45n_legacy wb45n_legacy_devel wb50n_legacy wb50n_legacy_devel sterling_supplicant-x86 sterling_supplicant-arm: unpack.stamp
 	# first check/do config, because can't use $@ in dependency
 	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
@@ -44,25 +43,16 @@ endif
         # mark operation as done
 	touch unpack.stamp
 
-source-wb40n:
-	$(MAKE) -C buildroot O=output/wb40n source
-
 source-wb45n:
 	$(MAKE) -C buildroot O=output/wb45n source
 
 source-wb50n:
 	$(MAKE) -C buildroot O=output/wb50n source
 
-source: source-wb40n source-wb45n
-
-clean-wb40n-lrd-pkg:
-	$(MAKE) -C buildroot O=output/wb40n sdccli-dirclean sdcsdk-dirclean sdcsupp-dirclean dhd-dirclean
+source: source-wb45n
 
 clean-wb45n-lrd-pkg:
 	$(MAKE) -C buildroot O=output/wb45n  sdccli-dirclean sdcsdk-dirclean sdcsupp-dirclean
-
-clean-wb40n_devel-lrd-pkg:
-	$(MAKE) -C buildroot O=output/wb40n_devel  sdccli-dirclean sdcsdk-dirclean sdcsupp-dirclean dhd-dirclean
 
 clean-wb45n_devel-lrd-pkg:
 	$(MAKE) -C buildroot O=output/wb45n_devel  sdccli-dirclean sdcsdk-dirclean sdcsupp-dirclean
@@ -73,19 +63,11 @@ clean-wb50n-lrd-pkg:
 clean-wb50n_devel-lrd-pkg:
 	$(MAKE) -C buildroot O=output/wb50n_devel  sdccli-dirclean sdcsdk-dirclean sdcsupp-dirclean
 
-clean-lrd-pkg: clean-wb40n-lrd-pkg clean-wb40n_devel-lrd-pkg clean-wb45n-lrd-pkg clean-wb45n_devel-lrd-pkg clean-wb50n-lrd-pkg clean-wb50n_devel-lrd-pkg
-
-clean-wb40n:
-	$(MAKE) -C buildroot O=output/wb40n clean
-	rm -f wb40n_config
+clean-lrd-pkg: clean-wb45n-lrd-pkg clean-wb45n_devel-lrd-pkg clean-wb50n-lrd-pkg clean-wb50n_devel-lrd-pkg
 
 clean-wb45n:
 	$(MAKE) -C buildroot O=output/wb45n clean
 	rm -f wb45n_config
-
-clean-wb40n_devel:
-	$(MAKE) -C buildroot O=output/wb40n_devel clean
-	rm -f wb40n_devel_config
 
 clean-wb45n_devel:
 	$(MAKE) -C buildroot O=output/wb45n_devel clean
@@ -151,7 +133,7 @@ clean-sterling_supplicant-x86 clean-sterling_supplicant-arm:
 	$(MAKE) -C buildroot O=output/$(subst clean-,,$@) clean
 	rm -f $(subst clean-,,$@)_config
 
-clean: clean-wb40n clean-wb40n_devel clean-wb45n clean-wb45n_devel clean-wb50n clean-wb50n_devel clean-msd45n clean-msd50n clean-msd-x86 \
+clean: clean-wb45n clean-wb45n_devel clean-wb50n clean-wb50n_devel clean-msd45n clean-msd50n clean-msd-x86 \
 	clean-sterling_supplicant-x86 clean-sterling_supplicant-arm \
 	clean-reg45n clean-reg50n clean-mfg60n clean-wb45n_legacy clean-wb45n_legacy_devel clean-wb50n_legacy clean-wb50n_legacy_devel
 
@@ -177,19 +159,15 @@ legal-info-wb45n: wb45n_config
 	$(MAKE) -C buildroot O=output/wb45n legal-info
 	$(MAKE) -C images $@
 
-legal-info-wb40n: wb40n_config
-	$(MAKE) -C buildroot O=output/wb40n legal-info
-	$(MAKE) -C images $@
-
 legal-info-wb50n: wb50n_config
 	$(MAKE) -C buildroot O=output/wb50n legal-info
 	$(MAKE) -C images $@
 
-legal-info: legal-info-wb40n legal-info-wb45n legal-info-wb50n
+legal-info: legal-info-wb45n legal-info-wb50n
 
-.PHONY: default all clean cleanall clean-wb40n clean-wb45n wb40n wb45n \
-        source source-wb40n source-wb45n clean-lrd-pkg clean-wb40n-lrd-pkg clean-wb45n-lrd-pkg \
-        clean-wb40n_devel clean-wb45n_devel clean-wb40n_devel-lrd-pkg clean-wb45n_devel-lrd-pkg \
+.PHONY: default all clean cleanall clean-wb45n wb45n \
+        source source-wb45n clean-lrd-pkg clean-wb45n-lrd-pkg \
+        clean-wb45n_devel clean-wb45n_devel-lrd-pkg \
         msd50n wb50n wb50n_devel wb50n_rdvk wb50n_rdvk_devel reg45n reg50n mfg60n source-wb50n legal-info-wb50n \
         msd-x86 clean-wb50n-lrd-pkg clean-wb50n_devel-lrd-pkg clean-wb50n clean-wb50n_devel clean-msd45n \
         clean-msd50n clean-msd-x86 clean-wb50n_rdvk clean-wb50n_rdvk_devel clean-reg45n clean-reg50n \
