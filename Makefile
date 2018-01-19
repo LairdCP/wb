@@ -10,6 +10,12 @@ LAIRD_ARCHIVES_OPTIONAL := archive/msd50n-laird-$(MSD_VERSION).tar.bz2 \
                            archive/msd45n-laird-$(MSD_VERSION).tar.bz2
 endif
 
+# Developers should not export LAIRD_RELEASE_STRING, only Jenkins should
+# 0.0.0.0 indicates that the build is for development purposes only
+ifndef LAIRD_RELEASE_STRING
+export LAIRD_RELEASE_STRING = 0.0.0.0
+endif
+
 default: wb45n wb50n
 
 all: wb45n msd45n msd-x86 msd50n wb50n
@@ -21,7 +27,25 @@ msd45n_config msd50n_config wb45n_config wb45n_devel_config msd-x86_config wb50n
 	# mark the operation as done.
 	touch $@
 
-msd45n wb45n wb45n_devel msd-x86 msd50n wb50n_devel wb50n wb50n_rdvk wb50n_rdvk_devel reg45n reg50n reglwb reglwb5 mfg60n wb45n_legacy wb45n_legacy_devel wb50n_legacy wb50n_legacy_devel sterling_supplicant-x86 sterling_supplicant-arm: unpack.stamp
+msd45n wb45n_devel msd-x86 msd50n wb50n_devel wb50n_rdvk wb50n_rdvk_devel reg45n reg50n reglwb reglwb5 mfg60n wb45n_legacy_devel wb50n_legacy_devel sterling_supplicant-x86 sterling_supplicant-arm: unpack.stamp
+	# first check/do config, because can't use $@ in dependency
+	$(MAKE) $@_config
+	$(MAKE) O=output/$@ -C buildroot
+	$(MAKE) -C images $@
+
+wb45n wb45n_legacy: unpack.stamp
+ifeq (,$(wildcard $(BR2_DL_DIR)/msd45n-laird-$(LAIRD_RELEASE_STRING).tar.bz2))
+	$(MAKE) msd45n
+endif
+	# first check/do config, because can't use $@ in dependency
+	$(MAKE) $@_config
+	$(MAKE) O=output/$@ -C buildroot
+	$(MAKE) -C images $@
+
+wb50n wb50n_legacy: unpack.stamp
+ifeq (,$(wildcard $(BR2_DL_DIR)/msd50n-laird-$(LAIRD_RELEASE_STRING).tar.bz2))
+	$(MAKE) msd50n
+endif
 	# first check/do config, because can't use $@ in dependency
 	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
@@ -65,7 +89,7 @@ clean-wb50n_devel-lrd-pkg:
 
 clean-lrd-pkg: clean-wb45n-lrd-pkg clean-wb45n_devel-lrd-pkg clean-wb50n-lrd-pkg clean-wb50n_devel-lrd-pkg
 
-clean-wb45n:
+clean-wb45n: clean-msd45n
 	$(MAKE) -C buildroot O=output/wb45n clean
 	rm -f wb45n_config
 
@@ -73,7 +97,7 @@ clean-wb45n_devel:
 	$(MAKE) -C buildroot O=output/wb45n_devel clean
 	rm -f wb45n_devel_config
 
-clean-wb45n_legacy:
+clean-wb45n_legacy: clean-msd45n
 	$(MAKE) -C buildroot O=output/wb45n_legacy clean
 	rm -f wb45n_legacy_config
 
@@ -81,11 +105,11 @@ clean-wb45n_legacy_devel:
 	$(MAKE) -C buildroot O=output/wb45n_legacy_devel clean
 	rm -f wb45n_legacy_devel_config
 
-clean-wb50n:
+clean-wb50n: clean-msd50n
 	$(MAKE) -C buildroot O=output/wb50n clean
 	rm -f wb50n_config
 
-clean-wb50n_legacy:
+clean-wb50n_legacy: clean-msd50n
 	$(MAKE) -C buildroot O=output/wb50n_legacy clean
 	rm -f wb50n_legacy_config
 
@@ -100,10 +124,12 @@ clean-wb50n_devel:
 clean-msd45n:
 	$(MAKE) -C buildroot O=output/msd45n clean
 	rm -f msd45n_config
+	rm -f $(BR2_DL_DIR)/msd45n-laird-$(LAIRD_RELEASE_STRING).tar.bz2
 
 clean-msd50n:
 	$(MAKE) -C buildroot O=output/msd50n clean
 	rm -f msd50n_config
+	rm -f $(BR2_DL_DIR)/msd50n-laird-$(LAIRD_RELEASE_STRING).tar.bz2
 
 clean-wb50n_rdvk:
 	$(MAKE) -C buildroot O=output/wb50n_rdvk clean

@@ -7,5 +7,6 @@ all:
 	cp -f ../../buildroot/output/$(PRODUCT)/images/$(PRODUCT).tar.bz2 $(DATE)/
 	rm -f latest
 	ln -s "$(DATE)" latest
+	cp latest/$(PRODUCT).tar.bz2 $(BR2_DL_DIR)/$(PRODUCT)-laird-$(LAIRD_RELEASE_STRING).tar.bz2
 
 .PHONY: all
