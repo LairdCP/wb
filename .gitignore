@@ -26,6 +26,8 @@
 !/images/wb50n_rdvk_devel
 !/images/reg45n
 !/images/reg50n
+!/images/reglwb
+!/images/reglwb5
 !/images/mfg60n
 
 # /images/msd45n/
@@ -71,6 +73,12 @@
 
 # /images/reg50n
 /images/reg50n/20??????
+
+# /images/reglwb
+/images/reglwb/20??????
+
+# /images/reglwb5
+/images/reglwb5/20??????
 
 # /images/mfg60n
 /images/mfg60n/20??????
