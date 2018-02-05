@@ -17,18 +17,14 @@
 !/images/msd45n
 !/images/msd45n-x86
 !/images/msd45n_fips
-!/images/wb45n
-!/images/wb45n_devel
 !/images/msd50n
-!/images/wb50n
-!/images/wb50n_devel
-!/images/wb50n_rdvk
-!/images/wb50n_rdvk_devel
 !/images/reg45n
 !/images/reg50n
 !/images/reglwb
 !/images/reglwb5
 !/images/mfg60n
+/images/wb45n*
+/images/wb50n*
 
 # /images/msd45n/
 /images/msd45n/20??????
