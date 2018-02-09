@@ -6,6 +6,9 @@ URL = http://$(shell hostname)/wb/$(PRODUCT)
 TOPDIR = ../../..
 IMAGES = $(TOPDIR)/buildroot/output/$(PRODUCT)/images
 
+USERBIN_EXISTS := $(shell [ -e $(IMAGES)/userfs.bin ] && echo 1 || echo 0)
+SQROOT_EXISTS := $(shell [ -e $(IMAGES)/sqroot.bin ] && echo 1 || echo 0)
+
 legal-info:
 	rsync -a --exclude=sources $(TOPDIR)/buildroot/output/$(PRODUCT)/legal-info/ ./legal-info-$(DATE)
 	tar cjf legal-info-$(DATE).tar.bz ./legal-info-$(DATE)
@@ -27,6 +30,14 @@ copyall:
 	bzip2 rootfs.tar
 
 all: copyall
+
+ifeq ($(USERBIN_EXISTS),1)
+	cp $(IMAGES)/userfs.bin .
+endif
+
+ifeq ($(SQROOT_EXISTS),1)
+	cp $(IMAGES)/sqroot.bin .
+endif
 
 .PHONY: all copyall legal-info
 
