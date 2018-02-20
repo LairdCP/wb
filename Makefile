@@ -55,6 +55,9 @@ endif
 sterling_supplicant-src:
 	$(MAKE) -C images $@
 
+lrd-network-manager-src:
+	$(MAKE) -C images $@
+
 unpack: unpack.stamp
 unpack.stamp:
 ifdef BR2_DL_DIR
@@ -184,5 +187,6 @@ legal-info: legal-info-wb45n legal-info-wb50n
 .PHONY: sterling_supplicant-x86 clean-sterling_supplicant-x86
 .PHONY: sterling_supplicant-arm clean-sterling_supplicant-arm
 .PHONY: sterling_supplicant-src
+.PHONY: lrd-network-manager-src
 
 .NOTPARALLEL:
