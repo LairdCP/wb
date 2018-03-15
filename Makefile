@@ -10,18 +10,18 @@ LAIRD_ARCHIVES_OPTIONAL := archive/msd50n-laird-$(MSD_VERSION).tar.bz2 \
                            archive/msd45n-laird-$(MSD_VERSION).tar.bz2
 endif
 
-default: wb45n wb50n
+default: wb45n_legacy wb50n_legacy
 
-all: wb45n msd45n msd-x86 msd50n wb50n
+all: wb45n_legacy msd45n msd-x86 msd50n wb50n_legacy
 
-msd45n_config msd50n_config wb45n_config msd-x86_config wb50n_config wb50n_rdvk_config reg45n_config reg50n_config reglwb_config reglwb5_config mfg60n_config wb45n_legacy_config wb50n_legacy_config sterling_supplicant-x86_config sterling_supplicant-arm_config: unpack.stamp
+msd45n_config msd50n_config msd-x86_config wb50n_rdvk_config reg45n_config reg50n_config reglwb_config reglwb5_config mfg60n_config wb45n_legacy_config wb50n_legacy_config sterling_supplicant-x86_config sterling_supplicant-arm_config: unpack.stamp
     # install the config file
     # $(subst _config,,$@) trims the _config part so we get clean directory and target
 	$(MAKE) O=output/$(subst _config,,$@) -C buildroot $(subst _config,,$@)_defconfig
 	# mark the operation as done.
 	touch $@
 
-msd45n wb45n msd-x86 msd50n wb50n wb50n_rdvk reg45n reg50n reglwb reglwb5 mfg60n wb45n_legacy wb50n_legacy sterling_supplicant-x86 sterling_supplicant-arm: unpack.stamp
+msd45n msd-x86 msd50n wb50n_rdvk reg45n reg50n reglwb reglwb5 mfg60n wb45n_legacy wb50n_legacy sterling_supplicant-x86 sterling_supplicant-arm: unpack.stamp
 	# first check/do config, because can't use $@ in dependency
 	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
@@ -43,33 +43,17 @@ endif
         # mark operation as done
 	touch unpack.stamp
 
-source-wb45n:
-	$(MAKE) -C buildroot O=output/wb45n source
+source-wb45n_legacy:
+	$(MAKE) -C buildroot O=output/wb45n_legacy source
 
-source-wb50n:
-	$(MAKE) -C buildroot O=output/wb50n source
+source-wb50n_legacy:
+	$(MAKE) -C buildroot O=output/wb50n_legacy source
 
-source: source-wb45n
-
-clean-wb45n-lrd-pkg:
-	$(MAKE) -C buildroot O=output/wb45n  sdccli-dirclean sdcsdk-dirclean sdcsupp-dirclean
-
-clean-wb50n-lrd-pkg:
-	$(MAKE) -C buildroot O=output/wb50n  sdccli-dirclean sdcsdk-dirclean sdcsupp-dirclean
-
-clean-lrd-pkg: clean-wb45n-lrd-pkg clean-wb50n-lrd-pkg
-
-clean-wb45n:
-	$(MAKE) -C buildroot O=output/wb45n clean
-	rm -f wb45n_config
+source: source-wb45n_legacy
 
 clean-wb45n_legacy:
 	$(MAKE) -C buildroot O=output/wb45n_legacy clean
 	rm -f wb45n_legacy_config
-
-clean-wb50n:
-	$(MAKE) -C buildroot O=output/wb50n clean
-	rm -f wb50n_config
 
 clean-wb50n_legacy:
 	$(MAKE) -C buildroot O=output/wb50n_legacy clean
@@ -115,7 +99,7 @@ clean-sterling_supplicant-x86 clean-sterling_supplicant-arm:
 	$(MAKE) -C buildroot O=output/$(subst clean-,,$@) clean
 	rm -f $(subst clean-,,$@)_config
 
-clean: clean-wb45n clean-wb50n clean-msd45n clean-msd50n clean-msd-x86 \
+clean:  clean-msd45n clean-msd50n clean-msd-x86 \
 	clean-sterling_supplicant-x86 clean-sterling_supplicant-arm \
 	clean-reg45n clean-reg50n clean-reglwb clean-reglwb5 clean-mfg60n clean-wb45n_legacy clean-wb50n_legacy
 
@@ -137,23 +121,20 @@ prune-workspace:
 	rm -rf archive examples doc
 	rm -rf .git
 
-legal-info-wb45n: wb45n_config
-	$(MAKE) -C buildroot O=output/wb45n legal-info
+legal-info-wb45n_legacy: wb45n_legacy_config
+	$(MAKE) -C buildroot O=output/wb45n_legacy legal-info
 	$(MAKE) -C images $@
 
-legal-info-wb50n: wb50n_config
-	$(MAKE) -C buildroot O=output/wb50n legal-info
+legal-info-wb50n_legacy: wb50n_legacy_config
+	$(MAKE) -C buildroot O=output/wb50n_legacy legal-info
 	$(MAKE) -C images $@
 
-legal-info: legal-info-wb45n legal-info-wb50n
+legal-info: legal-info-wb45n_legacy legal-info-wb50n_legacy
 
-.PHONY: default all clean cleanall clean-wb45n wb45n \
-        source-wb45n clean-lrd-pkg clean-wb45n-lrd-pkg \
-        msd50n wb50n wb50n_rdvk reg45n reg50n reglwb  reglwb5 mfg60n source-wb50n legal-info-wb50n \
-        msd-x86 clean-wb50n-lrd-pkg clean-wb50n clean-msd45n \
-        clean-msd50n clean-msd-x86 clean-wb50n_rdvk clean-reg45n clean-reg50n clean-reglwb clean-reglwb5\
-        clean-mfg60n clean-wb45n_legacy clean-wb50n_legacy \
-        prune-workspace
+.PHONY: default all clean cleanall source-wb45n_legacy msd50n wb50n_rdvk reg45n reg50n \
+	reglwb reglwb5 mfg60n source-wb50n_legacy msd-x86 clean-msd45n clean-msd50n \
+	clean-msd-x86 clean-wb50n_rdvk clean-reg45n clean-reg50n clean-reglwb clean-reglwb5 \
+	clean-mfg60n clean-wb45n_legacy clean-wb50n_legacy prune-workspace
 
 .PHONY: sterling_supplicant-x86 clean-sterling_supplicant-x86
 .PHONY: sterling_supplicant-arm clean-sterling_supplicant-arm
