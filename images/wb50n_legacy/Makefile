@@ -2,6 +2,10 @@ export PLATFORM = wb50n
 export PRODUCT = wb50n_legacy
 export DATE := $(shell date "+%Y%m%d")
 
+legal-info:
+	mkdir -p "legal-info/legal-info-$(DATE)"
+	$(MAKE) -f ../../common.mk -C "legal-info" legal-info
+
 all:
 	mkdir -p "$(DATE)"
 	$(MAKE) -f ../../common.mk -C "$(DATE)" all
