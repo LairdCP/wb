@@ -35,7 +35,7 @@ ifeq ($(SWU_EXISTS),1)
 FILES += *_$(DATE).swu
 endif
 
-ifeq ($(PRODUCT),$(filter wb50n wb45n,$(PRODUCT)))
+ifeq ($(PRODUCT),$(filter wb45n_legacy wb50n_legacy wb50n_rdvk,$(PRODUCT)))
 FILES += fw_update fw_select fw_usi fw.txt
 endif
 
