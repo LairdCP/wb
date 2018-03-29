@@ -10,6 +10,12 @@ LAIRD_ARCHIVES_OPTIONAL := archive/msd50n-laird-$(MSD_VERSION).tar.bz2 \
                            archive/msd45n-laird-$(MSD_VERSION).tar.bz2
 endif
 
+# Developers should not export LAIRD_RELEASE_STRING, only Jenkins should
+# 0.0.0.0 indicates that the build is for development purposes only
+ifndef LAIRD_RELEASE_STRING
+export LAIRD_RELEASE_STRING = 0.0.0.0
+endif
+
 default: wb45n_legacy wb50n_legacy
 
 all: wb45n_legacy msd45n msd-x86 msd50n wb50n_legacy som60 bdimx6
@@ -27,8 +33,29 @@ msd45n msd-x86 msd50n wb50n_rdvk reg45n reg50n reglwb reglwb5 mfg60n wb45n_legac
 	$(MAKE) O=output/$@ -C buildroot
 	$(MAKE) -C images $@
 
+wb45n_legacy: unpack.stamp
+ifeq (,$(wildcard $(BR2_DL_DIR)/msd45n-laird-$(LAIRD_RELEASE_STRING).tar.bz2))
+	$(MAKE) msd45n
+endif
+	# first check/do config, because can't use $@ in dependency
+	$(MAKE) $@_config
+	$(MAKE) O=output/$@ -C buildroot
+	$(MAKE) -C images $@
+
+wb50n_legacy: unpack.stamp
+ifeq (,$(wildcard $(BR2_DL_DIR)/msd50n-laird-$(LAIRD_RELEASE_STRING).tar.bz2))
+	$(MAKE) msd50n
+endif
+	# first check/do config, because can't use $@ in dependency
+	$(MAKE) $@_config
+	$(MAKE) O=output/$@ -C buildroot
+	$(MAKE) -C images $@
+
 # targets that do not require the buildroot step
 sterling_supplicant-src:
+	$(MAKE) -C images $@
+
+lrd-network-manager-src:
 	$(MAKE) -C images $@
 
 unpack: unpack.stamp
@@ -73,10 +100,12 @@ clean-som60:
 clean-msd45n:
 	$(MAKE) -C buildroot O=output/msd45n clean
 	rm -f msd45n_config
+	rm -f $(BR2_DL_DIR)/msd45n-laird-$(LAIRD_RELEASE_STRING).tar.bz2
 
 clean-msd50n:
 	$(MAKE) -C buildroot O=output/msd50n clean
 	rm -f msd50n_config
+	rm -f $(BR2_DL_DIR)/msd50n-laird-$(LAIRD_RELEASE_STRING).tar.bz2
 
 clean-wb50n_rdvk:
 	$(MAKE) -C buildroot O=output/wb50n_rdvk clean
