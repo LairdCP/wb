@@ -1,5 +1,5 @@
 
-# PRODUCT must be set to wb40n or wb45n
+# PRODUCT must be set to wb40n or wb45n or bdimx6
 
 URL = http://$(shell hostname)/wb/$(PRODUCT)
 
@@ -26,7 +26,10 @@ copyall:
 	rm -f rootfs.tar.bz2
 	bzip2 rootfs.tar
 
+bdimx6:
+	cp $(IMAGES)/sdcard.img . -fr
+
 all: copyall
 
-.PHONY: all copyall legal-info
+.PHONY: all copyall bdimx6 legal-info
 
