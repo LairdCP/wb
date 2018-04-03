@@ -23,6 +23,7 @@
 !/images/reglwb
 !/images/reglwb5
 !/images/mfg60n
+!/images/bdimx6
 /images/wb45n*
 /images/wb50n*
 
@@ -66,6 +67,9 @@
 
 # /images/mfg60n
 /images/mfg60n/20??????
+
+# /images/bdimx6
+/images/bdimx6/20??????
 
 /images/*/latest
 
