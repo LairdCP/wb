@@ -12,16 +12,16 @@ endif
 
 default: wb45n_legacy wb50n_legacy
 
-all: wb45n_legacy msd45n msd-x86 msd50n wb50n_legacy som60
+all: wb45n_legacy msd45n msd-x86 msd50n wb50n_legacy som60 bdimx6
 
-msd45n_config msd50n_config msd-x86_config wb50n_rdvk_config reg45n_config reg50n_config reglwb_config reglwb5_config mfg60n_config wb45n_legacy_config wb50n_legacy_config som60_config sterling_supplicant-x86_config sterling_supplicant-arm_config: unpack.stamp
+msd45n_config msd50n_config msd-x86_config wb50n_rdvk_config reg45n_config reg50n_config reglwb_config reglwb5_config mfg60n_config wb45n_legacy_config wb50n_legacy_config som60_config bdimx6_config sterling_supplicant-x86_config sterling_supplicant-arm_config: unpack.stamp
     # install the config file
     # $(subst _config,,$@) trims the _config part so we get clean directory and target
 	$(MAKE) O=output/$(subst _config,,$@) -C buildroot $(subst _config,,$@)_defconfig
 	# mark the operation as done.
 	touch $@
 
-msd45n msd-x86 msd50n wb50n_rdvk reg45n reg50n reglwb reglwb5 mfg60n wb45n_legacy wb50n_legacy som60 sterling_supplicant-x86 sterling_supplicant-arm: unpack.stamp
+msd45n msd-x86 msd50n wb50n_rdvk reg45n reg50n reglwb reglwb5 mfg60n wb45n_legacy wb50n_legacy som60 bdimx6 sterling_supplicant-x86 sterling_supplicant-arm: unpack.stamp
 	# first check/do config, because can't use $@ in dependency
 	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
@@ -45,6 +45,10 @@ endif
 
 source-som60:
 	$(MAKE) -C buildroot O=output/som60 source
+
+
+source-bdimx6:
+	$(MAKE) -C buildroot O=output/bdimx6 source
 
 source-wb45n_legacy:
 	$(MAKE) -C buildroot O=output/wb45n_legacy source
@@ -102,13 +106,17 @@ clean-mfg60n:
 	$(MAKE) -C buildroot O=output/mfg60n clean
 	rm -f mfg60n_config
 
+clean-bdimx6:
+	$(MAKE) -C buildroot O=output/bdimx6 clean
+	rm -f bdimx6_config
+
 clean-sterling_supplicant-x86 clean-sterling_supplicant-arm:
 	$(MAKE) -C buildroot O=output/$(subst clean-,,$@) clean
 	rm -f $(subst clean-,,$@)_config
 
 clean:  clean-msd45n clean-msd50n clean-msd-x86 \
 	clean-sterling_supplicant-x86 clean-sterling_supplicant-arm \
-	clean-reg45n clean-reg50n clean-reglwb clean-reglwb5 clean-mfg60n clean-wb45n_legacy clean-wb50n_legacy clean-som60
+	clean-reg45n clean-reg50n clean-reglwb clean-reglwb5 clean-mfg60n clean-wb45n_legacy clean-wb50n_legacy clean-bdimx6 clean-som60
 
 cleanall:
 	rm -f unpack.stamp
@@ -140,13 +148,17 @@ legal-info-som60: som60_config
 	$(MAKE) -C buildroot O=output/som60 legal-info
 	$(MAKE) -C images $@
 
-legal-info: legal-info-wb45n_legacy legal-info-wb50n_legacy legal-info-som60
+legal-info-bdimx6: bdimx6_config
+	$(MAKE) -C buildroot O=output/bdimx6 legal-info
+	$(MAKE) -C images $@
+
+legal-info: legal-info-wb45n_legacy legal-info-wb50n_legacy legal-info-som60 legal-info-bdimx6
 
 .PHONY: default all clean cleanall source-wb45n_legacy msd50n wb50n_rdvk reg45n reg50n \
 	reglwb reglwb5 mfg60n source-wb50n_legacy msd-x86 clean-msd45n clean-msd50n \
 	clean-msd-x86 clean-wb50n_rdvk clean-reg45n clean-reg50n clean-reglwb clean-reglwb5 \
 	clean-mfg60n clean-wb45n_legacy clean-wb50n_legacy prune-workspace \
-	som60 source-som60 clean-som60 legal-info-som60
+	som60 source-som60 clean-som60 legal-info-som60 clean-bdimx6 bdimx6 legal-info-bdimx6 source-bdimx6
 
 .PHONY: sterling_supplicant-x86 clean-sterling_supplicant-x86
 .PHONY: sterling_supplicant-arm clean-sterling_supplicant-arm
