@@ -133,7 +133,8 @@ lwb5-mfg-staging: $(ST_OUT)
 
 60-staging: $(ST_OUT)
 	mkdir -p $(60_OUT)/lib/firmware/
-	cp -rd $(ST_LRDMWL_DIR) $(60_OUT)/lib/firmware/
+	mkdir -p $(60_OUT)/lib/firmware/lrdmwl
+	cp -d $(ST_LRDMWL_DIR)/*.bin $(60_OUT)/lib/firmware/lrdmwl
 
 $(ST_OUT)/$(WL_FMAC_930_0081_NAME).zip: buildroot/package/lrd-closed-source/externals/wl_fmac/bin/930-0081/wl_fmac | $(ST_OUT)
 	zip --junk-paths $@ $^
