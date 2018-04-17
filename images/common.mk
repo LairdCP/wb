@@ -3,7 +3,7 @@
 
 URL = http://$(shell hostname)/wb/$(PRODUCT)
 
-TOPDIR = ../../..
+TOPDIR ?= ../../..
 IMAGES = $(TOPDIR)/buildroot/output/$(PRODUCT)/images
 
 USERBIN_EXISTS := $(shell [ -e $(IMAGES)/userfs.bin ] && echo 1 || echo 0)
