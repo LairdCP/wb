@@ -30,6 +30,7 @@
 !/images/reglwb5
 !/images/mfg60n
 !/images/bdimx6
+!/images/backports
 
 # /images/msd45n/
 /images/msd45n/20??????
@@ -86,6 +87,9 @@
 
 # /images/bdimx6
 /images/bdimx6/20??????
+
+# /images/backports
+/images/backports/20??????
 
 /images/*/latest
 

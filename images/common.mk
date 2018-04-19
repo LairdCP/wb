@@ -1,5 +1,5 @@
 
-# PRODUCT must be set to wb40n or wb45n or bdimx6
+# PRODUCT must be set to wb40n or wb45n or bdimx6 or backports
 
 URL = http://$(shell hostname)/wb/$(PRODUCT)
 
@@ -29,7 +29,9 @@ copyall:
 bdimx6:
 	cp $(IMAGES)/sdcard.img . -fr
 
+backports:
+	cp $(IMAGES)/laird-backport.tar.bz2 laird-backport-$(DATE).tar.bz2 -fr
+
 all: copyall
 
-.PHONY: all copyall bdimx6 legal-info
-
+.PHONY: all copyall bdimx6 backports legal-info
