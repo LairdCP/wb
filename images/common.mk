@@ -3,7 +3,7 @@
 
 URL = http://$(shell hostname)/wb/$(PRODUCT)
 
-TOPDIR = ../../..
+TOPDIR ?= ../../..
 IMAGES = $(TOPDIR)/buildroot/output/$(PRODUCT)/images
 
 legal-info:
