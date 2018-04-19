@@ -44,67 +44,7 @@ endif
         # mark operation as done
 	touch unpack.stamp
 
-source-wb45n_legacy:
-	$(MAKE) -C buildroot O=output/wb45n_legacy source
-
-source-wb50n_legacy:
-	$(MAKE) -C buildroot O=output/wb50n_legacy source
-
-source: source-wb45n_legacy
-
-clean-wb45n_legacy:
-	$(MAKE) -C buildroot O=output/wb45n_legacy clean
-	rm -f wb45n_legacy_config
-
-clean-wb50n_legacy:
-	$(MAKE) -C buildroot O=output/wb50n_legacy clean
-	rm -f wb50n_legacy_config
-
-clean-msd45n:
-	$(MAKE) -C buildroot O=output/msd45n clean
-	rm -f msd45n_config
-
-clean-msd50n:
-	$(MAKE) -C buildroot O=output/msd50n clean
-	rm -f msd50n_config
-
-clean-wb50n_rdvk:
-	$(MAKE) -C buildroot O=output/wb50n_rdvk clean
-	rm -f wb50n_rdvk_config
-
-clean-msd-x86:
-	$(MAKE) -C buildroot O=output/msd-x86 clean
-	rm -f msd-x86_config
-
-clean-reg45n:
-	$(MAKE) -C buildroot O=output/reg45n clean
-	rm -f reg45n_config
-
-clean-reg50n:
-	$(MAKE) -C buildroot O=output/reg50n clean
-	rm -f reg50n_config
-
-clean-reglwb:
-	$(MAKE) -C buildroot O=output/reglwb clean
-	rm -f reglwb_config
-
-clean-reglwb5:
-	$(MAKE) -C buildroot O=output/reglwb5 clean
-	rm -f reglwb5_config
-
-clean-mfg60n:
-	$(MAKE) -C buildroot O=output/mfg60n clean
-	rm -f mfg60n_config
-
-clean-bdimx6:
-	$(MAKE) -C buildroot O=output/bdimx6 clean
-	rm -f bdimx6_config
-
-clean-backports:
-	$(MAKE) -C buildroot O=output/backports clean
-	rm -f backports_config
-
-clean-sterling_supplicant-x86 clean-sterling_supplicant-arm:
+clean-wb45n_legacy clean-wb50n_legacy clean-msd45n clean-msd50n clean-wb50n_rdvk clean-msd-x86 clean-reg45n clean-reg50n clean-reglwb clean-reglwb5 clean-mfg60n clean-bdimx6 clean-backports clean-sterling_supplicant-x86 clean-sterling_supplicant-arm:
 	$(MAKE) -C buildroot O=output/$(subst clean-,,$@) clean
 	rm -f $(subst clean-,,$@)_config
 
@@ -130,24 +70,10 @@ prune-workspace:
 	rm -rf archive examples doc
 	rm -rf .git
 
-legal-info-wb45n_legacy: wb45n_legacy_config
-	$(MAKE) -C buildroot O=output/wb45n_legacy legal-info
-	$(MAKE) -C images $@
-
-legal-info-wb50n_legacy: wb50n_legacy_config
-	$(MAKE) -C buildroot O=output/wb50n_legacy legal-info
-	$(MAKE) -C images $@
-
-legal-info-bdimx6: bdimx6_config
-	$(MAKE) -C buildroot O=output/bdimx6 legal-info
-	$(MAKE) -C images $@
-
-legal-info: legal-info-wb45n_legacy legal-info-wb50n_legacy
-
 .PHONY: default all clean cleanall source-wb45n_legacy msd50n wb50n_rdvk reg45n reg50n \
-	reglwb reglwb5 mfg60n bdimx6 source-wb50n_legacy msd-x86 clean-msd45n clean-msd50n \
+	reglwb reglwb5 mfg60n bdimx6 source-wb50n_legacy msd-x86 backports clean-msd45n clean-msd50n \
 	clean-msd-x86 clean-wb50n_rdvk clean-reg45n clean-reg50n clean-reglwb clean-reglwb5 \
-	clean-mfg60n clean-wb45n_legacy clean-wb50n_legacy clean-bdimx6 prune-workspace
+	clean-mfg60n clean-wb45n_legacy clean-wb50n_legacy clean-bdimx6 clean-backports prune-workspace
 
 .PHONY: sterling_supplicant-x86 clean-sterling_supplicant-x86
 .PHONY: sterling_supplicant-arm clean-sterling_supplicant-arm

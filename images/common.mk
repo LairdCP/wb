@@ -6,13 +6,6 @@ URL = http://$(shell hostname)/wb/$(PRODUCT)
 TOPDIR ?= ../../..
 IMAGES = $(TOPDIR)/buildroot/output/$(PRODUCT)/images
 
-legal-info:
-	rsync -a --exclude=sources $(TOPDIR)/buildroot/output/$(PRODUCT)/legal-info/ ./legal-info-$(DATE)
-	tar cjf legal-info-$(DATE).tar.bz ./legal-info-$(DATE)
-	rm -f latest.tar.bz
-	ln -s legal-info-$(DATE).tar.bz latest.tar.bz
-	rm -rf ./legal-info-$(DATE)
-
 copyall:
 	cp $(IMAGES)/at91bs.bin .
 	cp $(IMAGES)/u-boot.bin .
@@ -34,4 +27,4 @@ backports:
 
 all: copyall
 
-.PHONY: all copyall bdimx6 backports legal-info
+.PHONY: all copyall bdimx6 backports
