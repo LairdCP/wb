@@ -7,21 +7,22 @@ ifdef BR2_DL_DIR
 LAIRD_ARCHIVES          := archive/AT91Bootstrap-v3.4.4.tar.xz \
                            archive/openssl-fips-2.0.10.tar.gz
 LAIRD_ARCHIVES_OPTIONAL := archive/msd50n-laird-$(MSD_VERSION).tar.bz2 \
-                           archive/msd45n-laird-$(MSD_VERSION).tar.bz2
+                           archive/msd45n-laird-$(MSD_VERSION).tar.bz2 \
+                           archive/laird-backport-$(MSD_VERSION).tar.bz2
 endif
 
 default: wb45n_legacy wb50n_legacy
 
-all: wb45n_legacy msd45n msd-x86 msd50n wb50n_legacy som60 bdimx6
+all: wb45n_legacy msd45n msd-x86 msd50n wb50n_legacy bdimx6 backports
 
-msd45n_config msd50n_config msd-x86_config wb50n_rdvk_config reg45n_config reg50n_config reglwb_config reglwb5_config mfg60n_config wb45n_legacy_config wb50n_legacy_config som60_config bdimx6_config sterling_supplicant-x86_config sterling_supplicant-arm_config: unpack.stamp
+msd45n_config msd50n_config msd-x86_config wb50n_rdvk_config reg45n_config reg50n_config reglwb_config reglwb5_config mfg60n_config wb45n_legacy_config wb50n_legacy_config bdimx6_config sterling_supplicant-x86_config sterling_supplicant-arm_config backports_config: unpack.stamp
     # install the config file
     # $(subst _config,,$@) trims the _config part so we get clean directory and target
 	$(MAKE) O=output/$(subst _config,,$@) -C buildroot $(subst _config,,$@)_defconfig
 	# mark the operation as done.
 	touch $@
 
-msd45n msd-x86 msd50n wb50n_rdvk reg45n reg50n reglwb reglwb5 mfg60n wb45n_legacy wb50n_legacy som60 bdimx6 sterling_supplicant-x86 sterling_supplicant-arm: unpack.stamp
+msd45n msd-x86 msd50n wb50n_rdvk reg45n reg50n reglwb reglwb5 mfg60n wb45n_legacy wb50n_legacy bdimx6 backports sterling_supplicant-x86 sterling_supplicant-arm: unpack.stamp
 	# first check/do config, because can't use $@ in dependency
 	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
@@ -115,7 +116,7 @@ clean-sterling_supplicant-x86 clean-sterling_supplicant-arm:
 	rm -f $(subst clean-,,$@)_config
 
 clean:  clean-msd45n clean-msd50n clean-msd-x86 \
-	clean-sterling_supplicant-x86 clean-sterling_supplicant-arm \
+	clean-sterling_supplicant-x86 clean-sterling_supplicant-arm clean-backports\
 	clean-reg45n clean-reg50n clean-reglwb clean-reglwb5 clean-mfg60n clean-wb45n_legacy clean-wb50n_legacy clean-bdimx6 clean-som60
 
 cleanall:
@@ -155,9 +156,9 @@ legal-info-bdimx6: bdimx6_config
 legal-info: legal-info-wb45n_legacy legal-info-wb50n_legacy legal-info-som60 legal-info-bdimx6
 
 .PHONY: default all clean cleanall source-wb45n_legacy msd50n wb50n_rdvk reg45n reg50n \
-	reglwb reglwb5 mfg60n source-wb50n_legacy msd-x86 clean-msd45n clean-msd50n \
+	reglwb reglwb5 mfg60n bdimx6 source-wb50n_legacy msd-x86 clean-msd45n clean-msd50n \
 	clean-msd-x86 clean-wb50n_rdvk clean-reg45n clean-reg50n clean-reglwb clean-reglwb5 \
-	clean-mfg60n clean-wb45n_legacy clean-wb50n_legacy prune-workspace \
+	clean-mfg60n clean-wb45n_legacy clean-wb50n_legacy prune-workspace clean-bdimx6\
 	som60 source-som60 clean-som60 legal-info-som60 clean-bdimx6 bdimx6 legal-info-bdimx6 source-bdimx6
 
 .PHONY: sterling_supplicant-x86 clean-sterling_supplicant-x86
