@@ -59,4 +59,4 @@ backports:
 
 all: copyall
 
-.PHONY: all copyall bdimx6 backports legal-info
+.PHONY: all copyall bdimx6 backports
