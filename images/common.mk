@@ -12,6 +12,11 @@ BOOTSTRAP_EXISTS := $(shell [ -e $(IMAGES)/at91bs.bin ] && echo 1 || echo 0)
 UBOOT_EXISTS := $(shell [ -e $(IMAGES)/u-boot.bin ] && echo 1 || echo 0)
 SWU_EXISTS := $(shell [ -e $(IMAGES)/*_$(DATE).swu ] && echo 1 || echo 0)
 
+FW_UPDATE_EXISTS := $(shell [ -e $(IMAGES)/fw_update ] && echo 1 || echo 0)
+FW_SELECT_EXISTS := $(shell [ -e $(IMAGES)/fw_select ] && echo 1 || echo 0)
+FW_USI_EXISTS := $(shell [ -e $(IMAGES)/fw_usi ] && echo 1 || echo 0)
+FW_TXT_EXISTS := $(shell [ -e $(IMAGES)/fw.txt ] && echo 1 || echo 0)
+
 # General files
 FILES := kernel.bin rootfs.bin rootfs.tar
 
@@ -35,8 +40,20 @@ ifeq ($(SWU_EXISTS),1)
 FILES += *_$(DATE).swu
 endif
 
-ifeq ($(PRODUCT),$(filter wb45n_legacy wb50n_legacy wb50n_rdvk,$(PRODUCT)))
-FILES += fw_update fw_select fw_usi fw.txt
+ifeq ($(FW_UPDATE_EXISTS),1)
+FILES += fw_update
+endif
+
+ifeq ($(FW_SELECT_EXISTS),1)
+FILES += fw_select
+endif
+
+ifeq ($(FW_USI_EXISTS),1)
+FILES += fw_usi
+endif
+
+ifeq ($(FW_TXT_EXISTS),1)
+FILES += fw.txt
 endif
 
 legal-info:
