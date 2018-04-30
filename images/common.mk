@@ -1,5 +1,5 @@
 
-# PRODUCT must be set to wb40n or wb45n or bdimx6 or backports
+# PRODUCT must be set to bdimx6 or backports
 
 URL = http://$(shell hostname)/wb/$(PRODUCT)
 
