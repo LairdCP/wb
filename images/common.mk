@@ -1,5 +1,5 @@
 
-# PRODUCT must be set to wb40n or wb45n or bdimx6 or backports
+# PRODUCT must be set to wb40n or wb45n or bdimx6 or backports or firmware
 
 URL = http://$(shell hostname)/wb/$(PRODUCT)
 
@@ -73,6 +73,10 @@ bdimx6:
 
 backports:
 	cp $(IMAGES)/laird-backport.tar.bz2 laird-backport-$(DATE).tar.bz2 -fr
+
+firmware:
+	cp $(IMAGES)/*.zip . -fr
+	cp $(IMAGES)/laird-sterling*.tar.bz2 . -fr
 
 all: copyall
 
