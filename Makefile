@@ -55,10 +55,7 @@ clean:  clean-msd45n clean-msd50n clean-msd-x86 \
 cleanall:
 	rm -f unpack.stamp
 	rm -f *_config
-	cd buildroot; git clean -d -f -e "package/lrd-closed-source/externals/" \
-	                              -e "package/lrd-devel/" \
-	                              -e "configs/" \
-	                              -e "board/laird/customers/*" -x
+	cd buildroot; rm output/ -fr; git clean -df
 
 # The prune-workspace target is intended for CI systems to cleanup after a
 # successful build. It isn't intended for users to use.
