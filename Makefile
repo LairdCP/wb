@@ -15,7 +15,7 @@ default: wb45n_legacy wb50n_legacy
 
 all: wb45n_legacy msd45n msd-x86 msd50n wb50n_legacy som60 bdimx6 backports
 
-msd45n_config msd50n_config msd-x86_config wb50n_rdvk_config reg45n_config reg50n_config reglwb_config reglwb5_config mfg60n_config wb45n_legacy_config wb50n_legacy_config som60sd_mfg bdimx6_config sterling_supplicant-x86_config sterling_supplicant-arm_config backports_config: unpack.stamp
+msd45n_config msd50n_config msd-x86_config wb50n_rdvk_config reg50n_config reglwb_config reglwb5_config mfg60n_config wb50n_legacy_config som60_config som60sd_mfg_config bdimx6_config sterling_supplicant-x86_config sterling_supplicant-arm_config backports_config: unpack.stamp
     # install the config file
     # $(subst _config,,$@) trims the _config part so we get clean directory and target
 	$(MAKE) O=output/$(subst _config,,$@) -C buildroot $(subst _config,,$@)_defconfig
