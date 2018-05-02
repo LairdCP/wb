@@ -1,6 +1,8 @@
 # Creates a package of required firmware and board support files for the
 # Sterling series radios.
 
+$(error firmware building on this branch is deprecated.)
+
 ST_OUT := $(PWD)/buildroot/output/sterling
 
 LAIRD_RELEASE_STRING ?= $(shell date +%Y%m%d)
