@@ -72,7 +72,7 @@ bdimx6:
 	cp $(IMAGES)/sdcard.img . -fr
 
 backports:
-	cp $(IMAGES)/laird-backport.tar.bz2 laird-backport-$(DATE).tar.bz2 -fr
+	cp $(IMAGES)/laird-backport-*.tar.bz2 laird-backport-$(DATE).tar.bz2 -fr
 
 firmware:
 	cp $(IMAGES)/*.zip . -fr
