@@ -16,16 +16,16 @@ endif
 
 default: wb50n_legacy
 
-all: msd-x86 msd50n wb50n_legacy som60 bdimx6 backports
+all: msd-x86 msd50n wb50n_legacy som60 bdimx6 backports firmware
 
-msd50n_config msd-x86_config wb50n_rdvk_config reg50n_config reglwb_config reglwb5_config mfg60n_config wb50n_legacy_config som60_config som60sd_mfg_config bdimx6_config sterling_supplicant-x86_config sterling_supplicant-arm_config backports_config: unpack.stamp
+msd50n_config msd-x86_config wb50n_rdvk_config reg50n_config reglwb_config reglwb5_config mfg60n_config wb50n_legacy_config som60_config som60sd_mfg_config bdimx6_config sterling_supplicant-x86_config sterling_supplicant-arm_config backports_config firmware_config: unpack.stamp
     # install the config file
     # $(subst _config,,$@) trims the _config part so we get clean directory and target
 	$(MAKE) O=output/$(subst _config,,$@) -C buildroot $(subst _config,,$@)_defconfig
 	# mark the operation as done.
 	touch $@
 
-msd-x86 msd50n wb50n_rdvk reg50n reglwb reglwb5 mfg60n wb50n_legacy som60 som60sd_mfg bdimx6 backports sterling_supplicant-x86 sterling_supplicant-arm: unpack.stamp
+msd-x86 msd50n wb50n_rdvk reg50n reglwb reglwb5 mfg60n wb50n_legacy som60 som60sd_mfg bdimx6 backports firmware sterling_supplicant-x86 sterling_supplicant-arm: unpack.stamp
 	# first check/do config, because can't use $@ in dependency
 	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
@@ -59,11 +59,11 @@ endif
         # mark operation as done
 	touch unpack.stamp
 
-clean-wb50n_legacy clean-msd50n clean-wb50n_rdvk clean-msd-x86 clean-reg50n clean-reglwb clean-reglwb5 clean-mfg60n clean-som60 clean-som60sd_mfg clean-bdimx6 clean-backports clean-sterling_supplicant-x86 clean-sterling_supplicant-arm:
+clean-wb50n_legacy clean-msd50n clean-wb50n_rdvk clean-msd-x86 clean-reg50n clean-reglwb clean-reglwb5 clean-mfg60n clean-som60 clean-som60sd_mfg clean-bdimx6 clean-backports clean-firmware clean-sterling_supplicant-x86 clean-sterling_supplicant-arm:
 	$(MAKE) -C buildroot O=output/$(subst clean-,,$@) clean
 	rm -f $(subst clean-,,$@)_config
 
-clean: clean-msd50n clean-msd-x86 clean-sterling_supplicant-x86 clean-sterling_supplicant-arm clean-backports\
+clean: clean-msd50n clean-msd-x86 clean-sterling_supplicant-x86 clean-sterling_supplicant-arm clean-backports clean-firmware \
 	clean-reg50n clean-reglwb clean-reglwb5 clean-mfg60n clean-wb50n_legacy clean-bdimx6 clean-som60 clean-som60sd_mfg
 
 cleanall:
@@ -84,7 +84,7 @@ prune-workspace:
 .PHONY: default all clean cleanall msd50n wb50n_rdvk reg50n \
 	reglwb reglwb5 mfg60n bdimx6 msd-x86 clean-msd50n \
 	clean-msd-x86 clean-wb50n_rdvk clean-reg50n clean-reglwb clean-reglwb5 \
-	clean-mfg60n clean-wb50n_legacy prune-workspace clean-bdimx6\
+	clean-mfg60n clean-wb50n_legacy prune-workspace clean-bdimx6 clean-firmware\
 	som60 clean-som60 som60sd_mfg clean-som60sd_mfg bdimx6 backports
 
 .PHONY: sterling_supplicant-x86 clean-sterling_supplicant-x86

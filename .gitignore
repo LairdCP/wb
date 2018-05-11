@@ -27,6 +27,7 @@
 !/images/backports
 /images/wb45n*
 /images/wb50n*
+!/images/firmware
 
 # /images/msd45n/
 /images/msd45n/20??????
