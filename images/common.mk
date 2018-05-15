@@ -28,6 +28,7 @@ backports:
 firmware:
 	cp $(IMAGES)/*.zip . -fr
 	cp $(IMAGES)/laird-sterling*.tar.bz2 . -fr
+	cp $(IMAGES)/laird-lwb*.tar.bz2 . -fr
 
 all: copyall
 
