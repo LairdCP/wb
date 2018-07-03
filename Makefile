@@ -25,7 +25,7 @@ msd50n_config msd-x86_config wb50n_rdvk_config reg50n_config reglwb_config reglw
 	# mark the operation as done.
 	touch $@
 
-msd-x86 msd50n wb50n_rdvk reg50n reglwb reglwb5 mfg60n mfg60n-x86 wb50n_legacy som60 som60sd som60sd_mfg bdimx6 backports firmware sterling_supplicant-x86 sterling_supplicant-arm: unpack.stamp
+msd-x86 msd50n wb50n_rdvk reg50n reglwb reglwb5 mfg60n mfg60n-x86 som60 som60sd som60sd_mfg bdimx6 backports firmware sterling_supplicant-x86 sterling_supplicant-arm: unpack.stamp
 	# first check/do config, because can't use $@ in dependency
 	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
