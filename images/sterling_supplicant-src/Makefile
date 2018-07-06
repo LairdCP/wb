@@ -6,20 +6,15 @@ LAIRD_RELEASE_STRING := $(DATE)
 endif
 GITDIR=../../buildroot/package/lrd/externals/sterling_supplicant
 
-all: git-archive
+all:
+	echo LAIRD_RELEASE_STRING: $(LAIRD_RELEASE_STRING)
+	echo GITDIR: $(GITDIR)
 	mkdir -p $(DATE)
-	tar --transform "s,^,$(PRODUCT)-$(LAIRD_RELEASE_STRING)/," \
-	-cf "$(DATE)/$(PRODUCT).tar" $(PRODUCT).tar
-	bzip2 -f "$(DATE)/$(PRODUCT).tar"
+	git -C $(GITDIR) archive --format=tar.gz \
+	--prefix=sterling_supplicant-$(LAIRD_RELEASE_STRING)/ HEAD \
+	README COPYING CONTRIBUTIONS src wpa_supplicant hs20 laird \
+	> "$(DATE)/$(PRODUCT).tar.gz"
 	rm -f latest
 	ln -s "$(DATE)" latest
 
-git-archive:
-	echo LAIRD_RELEASE_STRING: $(LAIRD_RELEASE_STRING)
-	echo GITDIR: $(GITDIR)
-	git -C $(GITDIR) archive --format=tar \
-	--prefix=sterling_supplicant/ HEAD \
-	README COPYING CONTRIBUTIONS src wpa_supplicant hostapd hs20 laird \
-	> $(PRODUCT).tar
-
-.PHONY: all git-archive
+.PHONY: all
