@@ -7,3 +7,4 @@ all:
 	$(MAKE) -f ../../common.mk -C "$(DATE)" firmware
 	rm -f latest
 	ln -s "$(DATE)" latest
+	cp latest/* $(BR2_DL_DIR)/ -fr
