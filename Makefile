@@ -8,7 +8,7 @@ LAIRD_ARCHIVES          := archive/AT91Bootstrap-v3.4.4.tar.xz \
                            archive/openssl-fips-2.0.10.tar.gz
 LAIRD_ARCHIVES_OPTIONAL := archive/msd50n-laird-$(MSD_VERSION).tar.bz2 \
                            archive/msd45n-laird-$(MSD_VERSION).tar.bz2 \
-                           archive/laird-backport-$(MSD_VERSION).tar.bz2 \
+                           archive/backports-laird-$(MSD_VERSION).tar.bz2 \
                            archive/480-0108-$(MSD_VERSION).zip\
                            archive/480-0109-$(MSD_VERSION).zip\
                            archive/laird-sterling-60-$(MSD_VERSION).tar.bz2
@@ -36,6 +36,22 @@ sterling_supplicant-src:
 	$(MAKE) -C images $@
 
 lrd-network-manager-src:
+	$(MAKE) -C images $@
+
+bdimx6: unpack.stamp
+ifeq (,$(wildcard $(BR2_DL_DIR)/backports-laird-$(MSD_VERSION).tar.bz2))
+	$(MAKE) backports
+endif
+ifeq (,$(wildcard $(BR2_DL_DIR)/laird-lwb-firmware-mfg-$(MSD_VERSION).tar.bz2))
+	$(MAKE) firmware
+else (,$(wildcard $(BR2_DL_DIR)/laird-lwb5-firmware-mfg-$(MSD_VERSION).tar.bz2))
+	$(MAKE) firmware
+else (,$(wildcard $(BR2_DL_DIR)/laird-sterling-60-$(MSD_VERSION).tar.bz2))
+	$(MAKE) firmware
+endif
+	# first check/do config, because can't use $@ in dependency
+	$(MAKE) $@_config
+	$(MAKE) O=output/$@ -C buildroot
 	$(MAKE) -C images $@
 
 unpack: unpack.stamp
