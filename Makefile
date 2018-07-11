@@ -32,6 +32,9 @@ msd45n msd-x86 msd50n wb50n_rdvk reg45n reg50n reglwb reglwb5 mfg60n mfg60n-x86 
 sterling_supplicant-src:
 	$(MAKE) -C images $@
 
+lrd-network-manager-src:
+	$(MAKE) -C images $@
+
 unpack: unpack.stamp
 unpack.stamp:
 ifdef BR2_DL_DIR
