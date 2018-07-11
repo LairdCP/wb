@@ -6,19 +6,14 @@ LAIRD_RELEASE_STRING := $(DATE)
 endif
 GITDIR=../../buildroot/package/lrd/externals/lrd-network-manager
 
-all: git-archive
+all:
 	mkdir -p $(DATE)
-	tar --transform "s,^,$(PRODUCT)-$(LAIRD_RELEASE_STRING)/," \
-	-cf "$(DATE)/$(PRODUCT).tar" $(PRODUCT).tar
-	bzip2 -f "$(DATE)/$(PRODUCT).tar"
-	rm -f latest
-	ln -s "$(DATE)" latest
-
-git-archive:
 	echo LAIRD_RELEASE_STRING: $(LAIRD_RELEASE_STRING)
 	echo GITDIR: $(GITDIR)
 	git -C $(GITDIR) archive --format=tar \
-	--prefix=lrd-network-manager/ HEAD \
-	> $(PRODUCT).tar
+	--prefix=lrd-network-manager-$(LAIRD_RELEASE_STRING)/ HEAD \
+	| xz -z > "$(DATE)/$(PRODUCT).tar.xz"
+	rm -f latest
+	ln -s "$(DATE)" latest
 
-.PHONY: all git-archive
+.PHONY: all
