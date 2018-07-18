@@ -18,14 +18,14 @@ default: wb45n_legacy wb50n_legacy
 
 all: wb45n_legacy msd45n msd-x86 msd50n wb50n_legacy som60 ig60 bdimx6 backports firmware
 
-msd45n_config msd50n_config msd-x86_config wb50n_rdvk_config reg50n_config reg45n_config reglwb_config reglwb5_config mfg60n_config mfg60n-x86_config wb45n_legacy_config wb50n_legacy_config som60_config som60sd_config som60sd_mfg_config ig60_config bdimx6_config sterling_supplicant-x86_config sterling_supplicant-arm_config backports_config firmware_config: unpack.stamp
+msd45n_config msd50n_config msd-x86_config wb50n_rdvk_config reg50n_config reg45n_config reglwb_config reglwb5_config mfg60n_config mfg60n-x86_config wb45n_legacy_config wb50n_legacy_config som60_config som60sd_config som60sd_mfg_config ig60_config bdimx6_config sterling_supplicant-x86_config sterling_supplicant-arm_config backports_config firmware_config summit_supplicant-arm_config summit_supplicant-x86_config: unpack.stamp
     # install the config file
     # $(subst _config,,$@) trims the _config part so we get clean directory and target
 	$(MAKE) O=output/$(subst _config,,$@) -C buildroot $(subst _config,,$@)_defconfig
 	# mark the operation as done.
 	touch $@
 
-msd45n msd-x86 msd50n wb50n_rdvk reg45n reg50n reglwb reglwb5 mfg60n mfg60n-x86 wb45n_legacy wb50n_legacy som60 som60sd som60sd_mfg ig60 backports firmware sterling_supplicant-x86 sterling_supplicant-arm: unpack.stamp
+msd45n msd-x86 msd50n wb50n_rdvk reg45n reg50n reglwb reglwb5 mfg60n mfg60n-x86 wb45n_legacy wb50n_legacy som60 som60sd som60sd_mfg ig60 backports firmware sterling_supplicant-x86 sterling_supplicant-arm summit_supplicant-arm summit_supplicant-x86: unpack.stamp
 	# first check/do config, because can't use $@ in dependency
 	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
@@ -34,6 +34,7 @@ msd45n msd-x86 msd50n wb50n_rdvk reg45n reg50n reglwb reglwb5 mfg60n mfg60n-x86 
 # targets that do not require the buildroot step
 sterling_supplicant-src:
 	$(MAKE) -C images $@
+# NOTE, summit_supplicant is *NOT* released as source
 
 lrd-network-manager-src:
 	$(MAKE) -C images $@
@@ -68,12 +69,13 @@ endif
         # mark operation as done
 	touch unpack.stamp
 
-clean-wb45n_legacy clean-wb50n_legacy clean-msd45n clean-msd50n clean-wb50n_rdvk clean-msd-x86 clean-reg45n clean-reg50n clean-reglwb clean-reglwb5 clean-mfg60n clean-mfg60n-x86 clean-som60 clean-som60sd clean-som60sd_mfg clean-ig60 clean-bdimx6 clean-backports clean-firmware clean-sterling_supplicant-x86 clean-sterling_supplicant-arm:
+clean-wb45n_legacy clean-wb50n_legacy clean-msd45n clean-msd50n clean-wb50n_rdvk clean-msd-x86 clean-reg45n clean-reg50n clean-reglwb clean-reglwb5 clean-mfg60n clean-mfg60n-x86 clean-som60 clean-som60sd clean-som60sd_mfg clean-ig60 clean-bdimx6 clean-backports clean-firmware clean-sterling_supplicant-x86 clean-sterling_supplicant-arm clean-summit_supplicant-arm clean-summit_supplicant-x86:
 	$(MAKE) -C buildroot O=output/$(subst clean-,,$@) clean
 	rm -f $(subst clean-,,$@)_config
 
 clean:  clean-msd45n clean-msd50n clean-msd-x86 clean-firmware \
 	clean-sterling_supplicant-x86 clean-sterling_supplicant-arm clean-backports\
+	clean-summit_supplicant-arm clean-summit_supplicant-x86 \
 	clean-reg45n clean-reg50n clean-reglwb clean-reglwb5 clean-mfg60n clean-mfg60n-x86 clean-wb45n_legacy \
 	clean-wb50n_legacy clean-som60 clean-som60sd clean-som60sd_mfg clean-ig60 clean-bdimx6
 
@@ -101,5 +103,7 @@ prune-workspace:
 .PHONY: sterling_supplicant-x86 clean-sterling_supplicant-x86
 .PHONY: sterling_supplicant-arm clean-sterling_supplicant-arm
 .PHONY: sterling_supplicant-src
+.PHONY: summit_supplicant-x86 clean-summit_supplicant-x86
+.PHONY: summit_supplicant-arm clean-summit_supplicant-arm
 
 .NOTPARALLEL:
