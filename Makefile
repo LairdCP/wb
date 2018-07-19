@@ -25,7 +25,7 @@ msd45n_config msd50n_config msd-x86_config wb50n_rdvk_config reg45n_config reg50
 	# mark the operation as done.
 	touch $@
 
-msd45n msd-x86 msd50n wb50n_rdvk reg45n reg50n reglwb reglwb5 mfg60n mfg60n-x86 wb45n_legacy wb50n_legacy bdimx6 backports firmware sterling_supplicant-x86 sterling_supplicant-arm: unpack.stamp
+msd45n msd-x86 msd50n wb50n_rdvk reg45n reg50n reglwb reglwb5 mfg60n mfg60n-x86 wb45n_legacy wb50n_legacy backports firmware sterling_supplicant-x86 sterling_supplicant-arm: unpack.stamp
 	# first check/do config, because can't use $@ in dependency
 	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
@@ -44,9 +44,11 @@ ifeq (,$(wildcard $(BR2_DL_DIR)/backports-laird-$(MSD_VERSION).tar.bz2))
 endif
 ifeq (,$(wildcard $(BR2_DL_DIR)/laird-lwb-firmware-mfg-$(MSD_VERSION).tar.bz2))
 	$(MAKE) firmware
-else (,$(wildcard $(BR2_DL_DIR)/laird-lwb5-firmware-mfg-$(MSD_VERSION).tar.bz2))
+endif
+ifeq (,$(wildcard $(BR2_DL_DIR)/laird-lwb5-firmware-mfg-$(MSD_VERSION).tar.bz2))
 	$(MAKE) firmware
-else (,$(wildcard $(BR2_DL_DIR)/laird-sterling-60-$(MSD_VERSION).tar.bz2))
+endif
+ifeq (,$(wildcard $(BR2_DL_DIR)/laird-sterling-60-$(MSD_VERSION).tar.bz2))
 	$(MAKE) firmware
 endif
 	# first check/do config, because can't use $@ in dependency
