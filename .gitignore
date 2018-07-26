@@ -26,6 +26,7 @@
 !/images/bdimx6
 !/images/backports
 !/images/som60sd
+!/images/som60sd_mfg
 /images/wb45n*
 /images/wb50n*
 !/images/firmware
@@ -79,6 +80,9 @@
 
 # /images/som60sd
 /images/som60sd/20??????
+
+# /images/som60sd_mfg
+/images/som60sd_mfg/20??????
 
 /images/*/latest
 
