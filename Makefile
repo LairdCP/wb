@@ -11,7 +11,7 @@ LAIRD_ARCHIVES_OPTIONAL := archive/msd50n-laird-$(MSD_VERSION).tar.bz2 \
                            archive/backports-laird-$(MSD_VERSION).tar.bz2 \
                            archive/480-0108-$(MSD_VERSION).zip\
                            archive/480-0109-$(MSD_VERSION).zip\
-                           archive/laird-sterling-60-$(MSD_VERSION).tar.bz2
+                           archive/60-$(MSD_VERSION).tar.bz2
 endif
 
 default: wb45n_legacy wb50n_legacy
@@ -49,7 +49,7 @@ endif
 ifeq (,$(wildcard $(BR2_DL_DIR)/laird-lwb5-firmware-mfg-$(MSD_VERSION).tar.bz2))
 	$(MAKE) firmware
 endif
-ifeq (,$(wildcard $(BR2_DL_DIR)/laird-sterling-60-$(MSD_VERSION).tar.bz2))
+ifeq (,$(wildcard $(BR2_DL_DIR)/60-$(MSD_VERSION).tar.bz2))
 	$(MAKE) firmware
 endif
 	# first check/do config, because can't use $@ in dependency
