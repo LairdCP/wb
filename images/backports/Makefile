@@ -1,3 +1,5 @@
+include ../../laird_version.mk
+
 export PLATFORM = backports
 export PRODUCT = backports
 export DATE := $(shell date "+%Y%m%d")
