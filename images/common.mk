@@ -49,8 +49,7 @@ backports:
 
 firmware:
 	cp $(IMAGES)/*.zip . -fr
-	cp $(IMAGES)/laird-60-radio-firmware-*.tar.bz2 . -fr
-	cp $(IMAGES)/laird-lwb*.tar.bz2 . -fr
+	cp $(IMAGES)/laird-*.tar.bz2 . -fr
 
 all: copyall
 
