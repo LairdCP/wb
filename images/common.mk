@@ -7,7 +7,8 @@ TOPDIR ?= ../../..
 IMAGES = $(TOPDIR)/buildroot/output/$(PRODUCT)/images
 
 # General files
-FILES := kernel.bin kernel.itb rootfs.bin rootfs.tar rootfs.tar.bz2
+# EXTRA_FILES could include files specified in a targets Makefile
+FILES := kernel.bin kernel.itb rootfs.bin rootfs.tar rootfs.tar.bz2 $(EXTRA_FILES)
 
 # At91bootstrap
 FILES += at91bs.bin
