@@ -19,7 +19,7 @@ endif
 
 default: wb50n_legacy
 
-all: msd-x86 msd50n wb50n_legacy som60 bdimx6 backports firmware
+all: msd-x86 msd50n wb50n_legacy som60 bdimx6 backports firmware linux-docs
 
 msd50n_config msd-x86_config wb50n_rdvk_config reg50n_config reglwb_config reglwb5_config mfg60n_config mfg60n-x86_config wb50n_legacy_config som60_config som60sd_config som60sd_mfg_config bdimx6_config sterling_supplicant-x86_config sterling_supplicant-arm_config backports_config firmware_config summit_supplicant-arm_config summit_supplicant-x86_config: unpack.stamp
     # install the config file
@@ -46,6 +46,10 @@ endif
 # targets that do not require the buildroot step
 sterling_supplicant-src:
 	$(MAKE) -C images $@
+
+linux-docs:
+	$(MAKE) -C images $@
+
 # NOTE, summit_supplicant is *NOT* released as source
 
 lrd-network-manager-src:
@@ -103,7 +107,7 @@ prune-workspace:
 	rm -rf archive examples doc
 	rm -rf .git
 
-.PHONY: default all clean cleanall msd50n wb50n_rdvk reg50n \
+.PHONY: default all clean cleanall msd50n wb50n_rdvk reg50n linux-docs\
 	reglwb reglwb5 mfg60n mfg60n-x86 bdimx6 msd-x86 clean-msd50n \
 	clean-msd-x86 clean-wb50n_rdvk clean-reg50n clean-reglwb clean-reglwb5 \
 	clean-mfg60n clean-mfg60n-x86 clean-wb50n_legacy prune-workspace clean-bdimx6 clean-firmware\
