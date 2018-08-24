@@ -30,6 +30,7 @@
 /images/wb45n*
 /images/wb50n*
 !/images/firmware
+!/images/linux-docs
 
 # /images/msd45n/
 /images/msd45n/20??????
@@ -86,6 +87,9 @@
 
 # /images/som60sd_mfg
 /images/som60sd_mfg/20??????
+
+# /images/linux-docs
+/images/linux-docs/20??????
 
 /images/*/latest
 
