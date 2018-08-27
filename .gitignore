@@ -10,6 +10,12 @@
 # /buildroot/
 /buildroot
 
+# /cve-checker
+/cve-checker
+
+# /linux_docs
+/linux_docs
+
 *.mk
 /images/*/
 /images/*.mk
