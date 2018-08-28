@@ -3,7 +3,7 @@ export PRODUCT = som60sd
 export DATE := $(shell date "+%Y%m%d")
 
 # Have ../../common.mk copy some extra files we want in this specific build
-export EXTRA_FILES := mksdcard.sh mksdimg.sh u-boot-spl.bin
+export EXTRA_FILES := mksdcard.sh mksdimg.sh u-boot-spl.bin rootfs.tar
 
 legal-info:
 	mkdir -p "legal-info/legal-info-$(DATE)"
