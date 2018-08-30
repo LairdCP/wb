@@ -31,6 +31,8 @@ msd45n msd-x86 msd50n wb50n_rdvk reg45n reg50n reglwb reglwb5 mfg60n mfg60n-x86 
 	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
 	$(MAKE) -C images $@
+	$(MAKE) O=output/$@ sbom-gen -C buildroot
+	@cd cve-checker; ./check_cve.sh $@
 
 # targets that do not require the buildroot step
 sterling_supplicant-src:
