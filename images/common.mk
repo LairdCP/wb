@@ -42,6 +42,10 @@ copyall:
 	$(foreach FILE,$(FILES), $(shell [ -e $(IMAGES)/$(FILE) ] && cp $(IMAGES)/$(FILE) .))
 	$(shell [ -e rootfs.tar.bz2 ] && rm -f rootfs.tar.bz2 && bzip2 rootfs.tar;)
 
+sdk:
+	make -C $(TOPDIR)/buildroot/output/$(PRODUCT) sdk
+	tar -cjf $(PRODUCT)-sdk.tar.bz2 -C $(TOPDIR)/buildroot/output/$(PRODUCT)/host .
+
 bdimx6:
 	cp $(IMAGES)/sdcard.img . -fr
 

@@ -9,6 +9,7 @@ legal-info:
 all:
 	mkdir -p "$(DATE)"
 	$(MAKE) -f ../../common.mk -C "$(DATE)" all
+	$(MAKE) -f ../../common.mk -C "$(DATE)" sdk
 	rm -f latest
 	ln -s "$(DATE)" latest
 
