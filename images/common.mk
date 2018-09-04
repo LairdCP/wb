@@ -40,7 +40,7 @@ legal-info:
 
 copyall:
 	$(foreach FILE,$(FILES), $(shell [ -e $(IMAGES)/$(FILE) ] && cp $(IMAGES)/$(FILE) .))
-	$(shell [ -e rootfs.tar.bz2 ] && rm -f rootfs.tar.bz2 && bzip2 rootfs.tar;)
+	$(shell [ -e rootfs.tar.bz2 ] && rm -f rootfs.tar.bz2 && bzip2 -k rootfs.tar;)
 
 sdk:
 	make -C $(TOPDIR)/buildroot/output/$(PRODUCT) sdk
