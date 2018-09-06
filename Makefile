@@ -5,10 +5,12 @@ ifdef BR2_DL_DIR
 LAIRD_ARCHIVES          := archive/AT91Bootstrap-v3.4.4.tar.xz \
                            archive/openssl-fips-2.0.10.tar.gz
 LAIRD_ARCHIVES_OPTIONAL := archive/msd50n-laird-$(MSD_VERSION).tar.bz2 \
+       
                            archive/backports-laird-$(MSD_VERSION).tar.bz2 \
-                           archive/480-0108-$(MSD_VERSION).zip\
-                           archive/480-0109-$(MSD_VERSION).zip\
-                           archive/laird-60-radio-firmware-$(MSD_VERSION).tar.bz2
+                           archive/480-0108-$(MSD_VERSION).zip \
+                           archive/480-0109-$(MSD_VERSION).zip \
+                           archive/laird-60-radio-firmware-$(MSD_VERSION).tar.bz2 \
+                           archive/summit_supplicant-arm-$(MSD_VERSION).tar.bz2
 endif
 
 # Developers should not export LAIRD_RELEASE_STRING, only Jenkins should
@@ -28,7 +30,7 @@ msd50n_config msd-x86_config wb50n_rdvk_config reg50n_config reglwb_config reglw
 	# mark the operation as done.
 	touch $@
 
-msd-x86 msd50n wb50n_rdvk reg50n reglwb reglwb5 mfg60n mfg60n-x86 som60 som60sd som60sd_mfg backports firmware sterling_supplicant-x86 sterling_supplicant-arm summit_supplicant-arm summit_supplicant-x86: unpack.stamp
+msd-x86 msd50n wb50n_rdvk reg50n reglwb reglwb5 mfg60n mfg60n-x86 som60sd_mfg backports firmware sterling_supplicant-x86 sterling_supplicant-arm summit_supplicant-arm summit_supplicant-x86: unpack.stamp
 	# first check/do config, because can't use $@ in dependency
 	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
@@ -53,6 +55,15 @@ linux-docs:
 # NOTE, summit_supplicant is *NOT* released as source
 
 lrd-network-manager-src:
+	$(MAKE) -C images $@
+
+som60 som60sd:unpack.stamp
+ifeq (,$(wildcard $(BR2_DL_DIR)/summit_supplicant-arm-$(MSD_VERSION).tar.bz2))
+	$(MAKE) summit_supplicant-arm
+endif
+	# first check/do config, because can't use $@ in dependency
+	$(MAKE) $@_config
+	$(MAKE) O=output/$@ -C buildroot
 	$(MAKE) -C images $@
 
 bdimx6: unpack.stamp
