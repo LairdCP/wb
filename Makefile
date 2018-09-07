@@ -5,7 +5,6 @@ ifdef BR2_DL_DIR
 LAIRD_ARCHIVES          := archive/AT91Bootstrap-v3.4.4.tar.xz \
                            archive/openssl-fips-2.0.10.tar.gz
 LAIRD_ARCHIVES_OPTIONAL := archive/msd50n-laird-$(MSD_VERSION).tar.bz2 \
-       
                            archive/backports-laird-$(MSD_VERSION).tar.bz2 \
                            archive/480-0108-$(MSD_VERSION).zip \
                            archive/480-0109-$(MSD_VERSION).zip \
