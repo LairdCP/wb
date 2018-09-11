@@ -49,7 +49,13 @@ sterling_supplicant-src:
 	$(MAKE) -C images $@
 
 linux-docs:
-	$(MAKE) -C images $@
+	$(MAKE) -C images $@; \
+	if [ $$? -ne 0 ]; \
+	then \
+		echo "ERROR: linux-docs build failed"; \
+		echo "INFO: have you run \"sudo ./linux_docs/setup-latex.sh\""; \
+		false; \
+	fi
 
 # NOTE, summit_supplicant is *NOT* released as source
 
