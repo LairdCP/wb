@@ -1,5 +1,5 @@
-export PLATFORM = summit_supplicant-arm
-export PRODUCT = summit_supplicant-arm
+export PLATFORM = summit_supplicant-arm-eabi
+export PRODUCT = summit_supplicant-arm-eabi
 export DATE := $(shell date "+%Y%m%d")
 
 all:
