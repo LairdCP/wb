@@ -37,6 +37,7 @@
 /images/wb50n*
 !/images/firmware
 !/images/linux-docs
+!/images/summit_supplicant-arm-eabi
 
 # /images/msd45n/
 /images/msd45n/20??????
@@ -101,6 +102,9 @@
 
 /examples/eventmon
 /examples/sdk_wf_pil
+
+# /images/summit_supplicant-arm-eabi
+/images/summit_supplicant-arm-eabi/20??????
 
 .*.swp
 *~
