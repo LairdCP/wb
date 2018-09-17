@@ -38,7 +38,6 @@
 !/images/firmware
 !/images/linux-docs
 !/images/summit_supplicant-arm-eabi
-!/images/summit_supplicant-arm-eabihf
 
 # /images/msd45n/
 /images/msd45n/20??????
@@ -107,8 +106,6 @@
 # /images/summit_supplicant-arm-eabi
 /images/summit_supplicant-arm-eabi/20??????
 
-# /images/summit_supplicant-arm-eabihf
-/images/summit_supplicant-arm-eabihf/20??????
 .*.swp
 *~
 
