@@ -82,8 +82,6 @@ ifdef BR2_DL_DIR
 	    test -f $$i && cp -n $$i $(BR2_DL_DIR)/ || true; \
 	done
 endif
-        # mark operation as done
-	touch unpack.stamp
 
 clean-wb45n_legacy clean-wb50n_legacy clean-msd45n clean-msd50n clean-wb50n_rdvk clean-msd-x86 clean-reg45n clean-reg50n clean-reglwb clean-reglwb5 clean-mfg60n clean-mfg60n-x86 clean-som60 clean-som60sd clean-som60sd_mfg clean-ig60 clean-bdimx6 clean-backports clean-firmware clean-sterling_supplicant-x86 clean-sterling_supplicant-arm clean-summit_supplicant-arm clean-summit_supplicant-x86:
 	$(MAKE) -C buildroot O=output/$(subst clean-,,$@) clean
@@ -121,5 +119,6 @@ prune-workspace:
 .PHONY: sterling_supplicant-src
 .PHONY: summit_supplicant-x86 clean-summit_supplicant-x86
 .PHONY: summit_supplicant-arm clean-summit_supplicant-arm
+.PHONY: unpack.stamp
 
 .NOTPARALLEL:
