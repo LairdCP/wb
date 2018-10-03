@@ -19,6 +19,8 @@
 *.mk
 /images/*/
 /images/*.mk
+!/images/ig60
+!/images/ig60sd_mfg
 !/images/Makefile
 !/images/msd45n
 !/images/msd45n-x86
@@ -37,6 +39,12 @@
 /images/wb50n*
 !/images/firmware
 !/images/linux-docs
+
+# /images/ig60
+/images/ig60/20??????
+
+# /images/ig60sd_mfg
+/images/ig60sd_mfg/20??????
 
 # /images/msd45n/
 /images/msd45n/20??????
