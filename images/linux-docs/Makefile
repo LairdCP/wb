@@ -3,6 +3,7 @@ ifndef LAIRD_RELEASE_STRING
 LAIRD_RELEASE_STRING := $(DATE)
 endif
 GITDIR=../../linux_docs
+BR2_DL_DIR ?= ../../archive
 
 all:
 	mkdir -p $(DATE)
@@ -19,8 +20,4 @@ all:
 	rm latex_templates -fr
 	rm -f latest
 	ln -s "$(DATE)" latest
-ifeq ($(BR2_DL_DIR),)
-	cp latest/* ../../archive/ -fr
-else
 	cp latest/* $(BR2_DL_DIR)/ -fr
-endif
