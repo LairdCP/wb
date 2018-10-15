@@ -4,6 +4,8 @@ export PLATFORM = backports
 export PRODUCT = backports
 export DATE := $(shell date "+%Y%m%d")
 
+BR2_DL_DIR ?= ../../archive
+
 all:
 	mkdir -p "$(DATE)"
 	$(MAKE) -f ../../common.mk -C "$(DATE)" backports
