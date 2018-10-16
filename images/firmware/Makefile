@@ -10,4 +10,3 @@ all:
 	rm -f latest
 	ln -s "$(DATE)" latest
 	cp latest/* $(BR2_DL_DIR)/ -fr
-endif
