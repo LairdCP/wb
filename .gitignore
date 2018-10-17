@@ -28,7 +28,7 @@
 !/images/reg50n
 !/images/reglwb
 !/images/reglwb5
-!/images/mfg60n
+!/images/mfg60n-arm-eabi
 !/images/bdimx6
 !/images/backports
 !/images/som60sd
@@ -76,8 +76,8 @@
 # /images/reglwb5
 /images/reglwb5/20??????
 
-# /images/mfg60n
-/images/mfg60n/20??????
+# /images/mfg60n-arm-eabi
+/images/mfg60n-arm-eabi/20??????
 
 # /images/firmware
 /images/firmware/20??????
