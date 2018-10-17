@@ -1,4 +1,4 @@
-export PRODUCT = mfg60n
+export PRODUCT = mfg60n-arm-eabi
 export DATE := $(shell date "+%Y%m%d")
 
 all:
