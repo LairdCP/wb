@@ -29,6 +29,7 @@
 !/images/reglwb
 !/images/reglwb5
 !/images/mfg60n-arm-eabi
+!/images/mfg60n-arm-eabihf
 !/images/bdimx6
 !/images/backports
 !/images/som60sd
@@ -78,6 +79,9 @@
 
 # /images/mfg60n-arm-eabi
 /images/mfg60n-arm-eabi/20??????
+
+# /images/mfg60n-arm-eabihf
+/images/mfg60n-arm-eabihf/20??????
 
 # /images/firmware
 /images/firmware/20??????
