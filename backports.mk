@@ -1,14 +1,11 @@
 # Coccinelle requires:
-# sudo apt-get install ocaml ocaml-findlib libpycaml-ocaml-dev
-# sudo apt-get install menhir libmenhir-ocaml-dev
-# sudo apt-get install libpcre-ocaml-dev
+# sudo apt-get install coccinelle
 #
 # Backports addtionally requires:
-# sudo apt-get install libncurses-dev
-#    Note that libncurses-dev is required by the WB build, so you probably already have it
+# sudo apt-get install libncurses5-dev
+#    Note that libncurses5-dev is required by the WB build, so you probably already have it
 
 BP_OUT := $(PWD)/buildroot/output/backport
-BP_COCCINELLE_URL = https://github.com/coccinelle/coccinelle.git
 
 SPATCH_PATH := /usr/local/bin/spatch
 
@@ -17,7 +14,6 @@ LAIRD_RELEASE_STRING ?= $(shell date +%Y%m%d)
 
 BP_TREE :=  $(BP_OUT)/laird-backport-tree
 BP_TREE_WORKING :=  $(BP_OUT)/laird-backport-tree-working
-BP_SPATCH := $(BP_OUT)/staging/bin/spatch
 BP_LINUX_DIR :=  $(PWD)/buildroot/package/lrd/externals/kernel
 BP_LINUX_BUILT:= $(PWD)/buildroot/output/wb50n/build/linux-4.1.13
 BP_TEST_TARGET:= $(PWD)/buildroot/output/wb50n/target
@@ -32,24 +28,12 @@ all: backport image
 $(BP_OUT):
 	mkdir -p $(BP_OUT)/staging
 
-$(BP_SPATCH): $(BP_OUT)/coccinelle
-	cd $(BP_OUT)/coccinelle ; ./configure --prefix=$(BP_OUT)/staging
-	cd $(BP_OUT)/coccinelle ; make
-	cd $(BP_OUT)/coccinelle ; make install
-
-$(BP_OUT)/coccinelle: $(filter-out $(wildcard $(BP_OUT)), $(BP_OUT))
-	git clone --depth 1 -b ubuntu/15.04-vivid/1.0.2 $(BP_COCCINELLE_URL) $(BP_OUT)/coccinelle
-
 #############################################################################
 # Backports components
 backports:
 	$(error backports clone was not found, please retrieve via `repo sync`)
 
-ifeq ("$(wildcard $(SPATCH_PATH))","")
-SPATCH_PRE=$(BP_SPATCH)
-endif
-
-$(BP_TREE): $(SPATCH_PRE) backports $(filter-out $(wildcard $(BP_OUT)), $(BP_OUT))
+$(BP_TREE): backports $(filter-out $(wildcard $(BP_OUT)), $(BP_OUT))
 	./backports/gentree.py --clean --copy-list ./backports/copy-list \
 			       $(BP_LINUX_DIR) \
 			       $(BP_TREE_WORKING)
