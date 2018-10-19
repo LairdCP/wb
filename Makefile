@@ -22,7 +22,7 @@ default: wb50n_legacy
 
 all: msd-x86 msd50n wb50n_legacy som60 bdimx6 backports firmware linux-docs
 
-msd50n_config msd-x86_config wb50n_rdvk_config reg50n_config reglwb_config reglwb5_config mfg60n-arm-eabi_config mfg60n-x86_config wb50n_legacy_config som60_config som60sd_config som60sd_mfg_config bdimx6_config sterling_supplicant-x86_config sterling_supplicant-arm_config backports_config firmware_config summit_supplicant-arm-eabi_config summit_supplicant-x86_config summit_supplicant-arm-eabihf_config mfg60n-arm-eabihf_config: unpack.stamp
+msd50n_config msd-x86_config wb50n_rdvk_config reg50n_config reglwb_config reglwb5_config mfg60n-arm-eabi_config mfg60n-x86_config wb50n_legacy_config som60_config som60sd_config som60sd_mfg_config bdimx6_config ig60_config sterling_supplicant-x86_config sterling_supplicant-arm_config backports_config firmware_config summit_supplicant-arm-eabi_config summit_supplicant-x86_config summit_supplicant-arm-eabihf_config mfg60n-arm-eabihf_config: unpack.stamp
     # install the config file
     # $(subst _config,,$@) trims the _config part so we get clean directory and target
 	$(MAKE) O=output/$(subst _config,,$@) -C buildroot $(subst _config,,$@)_defconfig
@@ -64,7 +64,7 @@ linux-docs:
 lrd-network-manager-src:
 	$(MAKE) -C images $@
 
-som60 som60sd:unpack.stamp
+som60 som60sd ig60:unpack.stamp
 ifeq (,$(wildcard $(BR2_DL_DIR)/summit_supplicant-arm-eabihf-$(MSD_VERSION).tar.bz2))
 	$(MAKE) summit_supplicant-arm-eabihf
 endif
@@ -103,12 +103,12 @@ endif
         # mark operation as done
 	touch unpack.stamp
 
-clean-wb50n_legacy clean-msd50n clean-wb50n_rdvk clean-msd-x86 clean-reg50n clean-reglwb clean-reglwb5 clean-mfg60n-arm-eabi clean-mfg60n-x86 clean-som60 clean-som60sd clean-som60sd_mfg clean-bdimx6 clean-backports clean-firmware clean-sterling_supplicant-x86 clean-sterling_supplicant-arm clean-summit_supplicant-arm-eabi clean-summit_supplicant-x86 clean-summit_supplicant-arm-eabihf clean-mfg60n-arm-eabihf:
+clean-wb50n_legacy clean-msd50n clean-wb50n_rdvk clean-msd-x86 clean-reg50n clean-reglwb clean-reglwb5 clean-mfg60n-arm-eabi clean-mfg60n-x86 clean-som60 clean-som60sd clean-som60sd_mfg clean-bdimx6 clean-ig60 clean-backports clean-firmware clean-sterling_supplicant-x86 clean-sterling_supplicant-arm clean-summit_supplicant-arm-eabi clean-summit_supplicant-x86 clean-summit_supplicant-arm-eabihf clean-mfg60n-arm-eabihf:
 	$(MAKE) -C buildroot O=output/$(subst clean-,,$@) clean
 	rm -f $(subst clean-,,$@)_config
 
 clean: clean-msd50n clean-msd-x86 clean-sterling_supplicant-x86 clean-sterling_supplicant-arm clean-backports clean-firmware \
-	clean-reg50n clean-reglwb clean-reglwb5 clean-mfg60n-arm-eabi clean-mfg60n-x86 clean-wb50n_legacy clean-bdimx6 clean-som60 clean-som60sd clean-som60sd_mfg clean-mfg60n-arm-eabihf
+	clean-reg50n clean-reglwb clean-reglwb5 clean-mfg60n-arm-eabi clean-mfg60n-x86 clean-wb50n_legacy clean-bdimx6 clean-som60 clean-som60sd clean-som60sd_mfg clean-mfg60n-arm-eabihf clean-ig60
 
 cleanall:
 	rm -f unpack.stamp
@@ -129,7 +129,7 @@ prune-workspace:
 	reglwb reglwb5 mfg60n-arm-eabi mfg60n-x86 bdimx6 msd-x86 clean-msd50n \
 	clean-msd-x86 clean-wb50n_rdvk clean-reg50n clean-reglwb clean-reglwb5 \
 	clean-mfg60n-arm-eabi clean-mfg60n-x86 clean-wb50n_legacy prune-workspace clean-bdimx6 clean-firmware\
-	som60 clean-som60 som60sd clean-som60sd som60sd_mfg clean-som60sd_mfg bdimx6 backports clean-mfg60n-arm-eabihf mfg60n-arm-eabihf
+	som60 clean-som60 som60sd clean-som60sd som60sd_mfg clean-som60sd_mfg bdimx6 backports clean-mfg60n-arm-eabihf mfg60n-arm-eabihf clean-ig60
 
 .PHONY: sterling_supplicant-x86 clean-sterling_supplicant-x86
 .PHONY: sterling_supplicant-arm clean-sterling_supplicant-arm

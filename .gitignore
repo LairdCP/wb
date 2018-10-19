@@ -34,6 +34,7 @@
 !/images/backports
 !/images/som60sd
 !/images/som60sd_mfg
+!/images/ig60
 /images/wb45n*
 /images/wb50n*
 !/images/firmware
