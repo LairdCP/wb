@@ -33,9 +33,8 @@ msd-x86 msd50n wb50n_rdvk reg50n reglwb reglwb5 mfg60n-arm-eabi mfg60n-x86 som60
 	# first check/do config, because can't use $@ in dependency
 	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
+	$(MAKE) O=output/$@ cve-check -C buildroot
 	$(MAKE) -C images $@
-	$(MAKE) O=output/$@ sbom-gen -C buildroot
-	@cd cve-checker; ./check_cve.sh $@
 
 wb50n_legacy: unpack.stamp
 ifeq (,$(wildcard $(BR2_DL_DIR)/msd50n-laird-$(LAIRD_RELEASE_STRING).tar.bz2))
@@ -44,6 +43,7 @@ endif
 	# first check/do config, because can't use $@ in dependency
 	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
+	$(MAKE) O=output/$@ cve-check -C buildroot
 	$(MAKE) -C images $@
 
 # targets that do not require the buildroot step
@@ -71,7 +71,9 @@ endif
 	# first check/do config, because can't use $@ in dependency
 	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
+	$(MAKE) O=output/$@ cve-check -C buildroot
 	$(MAKE) -C images $@
+
 
 bdimx6: unpack.stamp
 ifeq (,$(wildcard $(BR2_DL_DIR)/backports-laird-$(MSD_VERSION).tar.bz2))
