@@ -26,6 +26,7 @@ msd40n msd45n wb40n wb45n wb45n_devel wb40n_devel msd-x86 msd50n wb50n_devel wb5
 	# first check/do config, because can't use $@ in dependency
 	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
+	$(MAKE) O=output/$@ cve-check -C buildroot
 	$(MAKE) -C images $@
 
 unpack: unpack.stamp
