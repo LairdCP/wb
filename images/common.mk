@@ -31,6 +31,16 @@ FILES += $(PRODUCT)_$(DATE).swu
 # FW_update files
 FILES += fw_update fw_select fw_usi fw.txt
 
+# SBOM and CVE-CHECKER files
+SBOM_FILES = host-sbom target-sbom
+CVE_FILES =  host-cve.xml target-cve.xml
+
+cve:
+	$(foreach FILE,$(CVE_FILES), $(shell [ -e $(IMAGES)/$(FILE) ] && cp $(IMAGES)/$(FILE) $(subst .xml,"-$(DATE).xml", $(PRODUCT)-$(FILE)) ))
+
+sbom:
+	$(foreach FILE,$(SBOM_FILES), $(shell [ -e $(IMAGES)/$(FILE) ] && cp $(IMAGES)/$(FILE) $(PRODUCT)-$(FILE)-$(DATE)))
+
 legal-info:
 	rsync -a --exclude=sources $(TOPDIR)/buildroot/output/$(PRODUCT)/legal-info/ ./legal-info-$(DATE)
 	tar cjf legal-info-$(DATE).tar.bz ./legal-info-$(DATE)
