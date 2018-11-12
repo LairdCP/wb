@@ -29,7 +29,7 @@ msd50n_config msd-x86_config wb50n_rdvk_config reg50n_config reglwb_config reglw
 	# mark the operation as done.
 	touch $@
 
-msd-x86 msd50n wb50n_rdvk reg50n reglwb reglwb5 mfg60n-arm-eabi mfg60n-x86 som60sd_mfg backports firmware sterling_supplicant-x86 sterling_supplicant-arm summit_supplicant-arm-eabi summit_supplicant-arm-eabihf summit_supplicant-x86 mfg60n-arm-eabihf: unpack.stamp
+msd-x86 msd50n wb50n_rdvk reg50n reglwb reglwb5 mfg60n-arm-eabi mfg60n-x86 som60 som60sd ig60 som60sd_mfg backports firmware sterling_supplicant-x86 sterling_supplicant-arm summit_supplicant-arm-eabi summit_supplicant-arm-eabihf summit_supplicant-x86 mfg60n-arm-eabihf: unpack.stamp
 	# first check/do config, because can't use $@ in dependency
 	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
@@ -64,29 +64,9 @@ linux-docs:
 lrd-network-manager-src:
 	$(MAKE) -C images $@
 
-som60 som60sd ig60:unpack.stamp
-ifeq (,$(wildcard $(BR2_DL_DIR)/summit_supplicant-arm-eabihf-$(MSD_VERSION).tar.bz2))
-	$(MAKE) summit_supplicant-arm-eabihf
-endif
-	# first check/do config, because can't use $@ in dependency
-	$(MAKE) $@_config
-	$(MAKE) O=output/$@ -C buildroot
-	$(MAKE) O=output/$@ cve-check -C buildroot
-	$(MAKE) -C images $@
-
-
 bdimx6: unpack.stamp
 ifeq (,$(wildcard $(BR2_DL_DIR)/backports-laird-$(MSD_VERSION).tar.bz2))
 	$(MAKE) backports
-endif
-ifeq (,$(wildcard $(BR2_DL_DIR)/laird-lwb-firmware-mfg-$(MSD_VERSION).tar.bz2))
-	$(MAKE) firmware
-endif
-ifeq (,$(wildcard $(BR2_DL_DIR)/laird-lwb5-firmware-mfg-$(MSD_VERSION).tar.bz2))
-	$(MAKE) firmware
-endif
-ifeq (,$(wildcard $(BR2_DL_DIR)/laird-60-radio-firmware-$(MSD_VERSION).tar.bz2))
-	$(MAKE) firmware
 endif
 	# first check/do config, because can't use $@ in dependency
 	$(MAKE) $@_config
