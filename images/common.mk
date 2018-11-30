@@ -26,10 +26,10 @@ FILES += userfs.bin
 FILES += sqroot.bin
 
 # SW Update file
-FILES += $(PRODUCT)_$(DATE).swu
+FILES += $(PRODUCT).swu
 
 # FW_update files
-FILES += fw_update fw_select fw_usi fw.txt
+FILES += fw_update fw_select fw_usi fw.txt prep_nand_for_update
 
 # SBOM and CVE-CHECKER files
 SBOM_FILES = host-sbom target-sbom
