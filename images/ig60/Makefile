@@ -1,6 +1,10 @@
 export PLATFORM = som60
 export PRODUCT = ig60
 export DATE := $(shell date "+%Y%m%d")
+# Have ../../common.mk copy some extra files we want in this specific build
+export EXTRA_FILES := pmecc.bin u-boot-spl.dtb u-boot-spl-nodtb.bin u-boot.dtb \
+                      u-boot-nodtb.bin u-boot.its kernel-nosig.itb sw-description \
+                      fdtget fdtput mkimage genimage
 
 legal-info:
 	mkdir -p "legal-info/legal-info-$(DATE)"
