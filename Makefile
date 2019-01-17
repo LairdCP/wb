@@ -111,7 +111,8 @@ prune-workspace:
 	reglwb reglwb5 mfg60n-arm-eabi mfg60n-x86 bdimx6 msd-x86 clean-msd50n \
 	clean-msd-x86 clean-wb50n_rdvk clean-reg50n clean-reglwb clean-reglwb5 \
 	clean-mfg60n-arm-eabi clean-mfg60n-x86 clean-wb50n_legacy prune-workspace clean-bdimx6 clean-firmware\
-	som60 clean-som60 som60sd clean-som60sd som60sd_mfg clean-som60sd_mfg bdimx6 backports clean-mfg60n-arm-eabihf mfg60n-arm-eabihf clean-ig60 mfg60n-arm-eabiaarch64
+	som60 clean-som60 som60sd clean-som60sd som60sd_mfg clean-som60sd_mfg bdimx6 backports clean-mfg60n-arm-eabihf mfg60n-arm-eabihf clean-ig60\
+	clean-mfg60n-arm-eabiaarch64 mfg60n-arm-eabiaarch64
 
 .PHONY: sterling_supplicant-x86 clean-sterling_supplicant-x86
 .PHONY: sterling_supplicant-arm clean-sterling_supplicant-arm
