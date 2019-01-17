@@ -37,7 +37,7 @@ msd-x86 msd50n wb50n_rdvk reg50n reglwb reglwb5 mfg60n-arm-eabi mfg60n-x86 som60
 	$(MAKE) -C images $@
 
 wb50n_legacy: unpack.stamp
-ifeq (,$(wildcard $(BR2_DL_DIR)/msd50n-laird-$(LAIRD_RELEASE_STRING).tar.bz2))
+ifeq (,$(wildcard $(BR2_DL_DIR)/msd50n-laird-$(MSD_VERSION).tar.bz2))
 	$(MAKE) msd50n
 endif
 	# first check/do config, because can't use $@ in dependency
