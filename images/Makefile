@@ -3,4 +3,4 @@ msd-x86 msd50n wb50n_rdvk reg50n reglwb reglwb5 mfg60n-arm-eabi mfg60n-x86 wb50n
 
 .PHONY: msd-x86 sterling_supplicant-x86 sterling_supplicant-arm lrd-network-manager-src linux-docs\
 	sterling_supplicant-src wb50n_rdvk reg50n reglwb reglwb5 mfg60n-arm-eabi mfg60n-x86 wb50n_legacy msd50n bdimx6 som60 som60sd som60sd_mfg ig60 backports firmware
-.PHONY: summit_supplicant-arm-eabi summit_supplicant-x86 summit_supplicant-arm-eabihf  mfg60n-arm-eabihf
+.PHONY: summit_supplicant-arm-eabi summit_supplicant-x86 summit_supplicant-arm-eabihf  mfg60n-arm-eabihf mfg60n-arm-eabiaarch64
