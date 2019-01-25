@@ -1,7 +1,7 @@
 TARGETS = \
 	bdimx6 backports firmware linux-docs \
 	msd-x86 msd50n reg50n \
-	wb50n_rdvk wb50n_legacy \
+	wb50n_rdvk wb50n_legacy wb50n_sysd wb50nsd_sysd \
 	reglwb reglwb5 \
 	mfg60n-arm-eabi mfg60n-x86 mfg60n-arm-eabihf mfg60n-arm-eabiaarch64 \
 	som60 som60sd som60sd_mfg ig60 \
