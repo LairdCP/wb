@@ -18,18 +18,34 @@ ifndef LAIRD_RELEASE_STRING
 export LAIRD_RELEASE_STRING = 0.0.0.0
 endif
 
+TARGETS = \
+	msd-x86 msd50n reg50n \
+	wb50n_rdvk \
+	reglwb reglwb5 \
+	mfg60n-arm-eabi mfg60n-x86 mfg60n-arm-eabihf mfg60n-arm-eabiaarch64 \
+	som60 som60sd som60sd_mfg ig60 \
+	backports firmware \
+	sterling_supplicant-x86 sterling_supplicant-arm summit_supplicant-arm-eabi \
+	summit_supplicant-arm-eabihf summit_supplicant-x86
+
+TARGETS_UNIQUE = wb50n_legacy bdimx6
+TARGETS_SRC = linux-docs sterling_supplicant-src lrd-network-manager-src
+
+TARGETS_CONFIG = $(addsuffix _config, $(TARGETS) $(TARGETS_UNIQUE))
+TARGETS_CLEAN  = $(addprefix clean-,  $(TARGETS) $(TARGETS_UNIQUE))
+
 default: wb50n_legacy
 
 all: msd-x86 msd50n wb50n_legacy som60 bdimx6 backports firmware linux-docs
 
-msd50n_config msd-x86_config wb50n_rdvk_config reg50n_config reglwb_config reglwb5_config mfg60n-arm-eabi_config mfg60n-x86_config wb50n_legacy_config som60_config som60sd_config som60sd_mfg_config bdimx6_config ig60_config sterling_supplicant-x86_config sterling_supplicant-arm_config backports_config firmware_config summit_supplicant-arm-eabi_config summit_supplicant-x86_config summit_supplicant-arm-eabihf_config mfg60n-arm-eabihf_config mfg60n-arm-eabiaarch64_config: unpack.stamp
+$(TARGETS_CONFIG): unpack.stamp
     # install the config file
     # $(subst _config,,$@) trims the _config part so we get clean directory and target
 	$(MAKE) O=output/$(subst _config,,$@) -C buildroot $(subst _config,,$@)_defconfig
 	# mark the operation as done.
 	touch $@
 
-msd-x86 msd50n wb50n_rdvk reg50n reglwb reglwb5 mfg60n-arm-eabi mfg60n-x86 som60 som60sd ig60 som60sd_mfg backports firmware sterling_supplicant-x86 sterling_supplicant-arm summit_supplicant-arm-eabi summit_supplicant-arm-eabihf summit_supplicant-x86 mfg60n-arm-eabihf mfg60n-arm-eabiaarch64: unpack.stamp
+$(TARGETS): unpack.stamp
 	# first check/do config, because can't use $@ in dependency
 	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
@@ -85,12 +101,11 @@ endif
         # mark operation as done
 	touch unpack.stamp
 
-clean-wb50n_legacy clean-msd50n clean-wb50n_rdvk clean-msd-x86 clean-reg50n clean-reglwb clean-reglwb5 clean-mfg60n-arm-eabi clean-mfg60n-x86 clean-som60 clean-som60sd clean-som60sd_mfg clean-bdimx6 clean-ig60 clean-backports clean-firmware clean-sterling_supplicant-x86 clean-sterling_supplicant-arm clean-summit_supplicant-arm-eabi clean-summit_supplicant-x86 clean-summit_supplicant-arm-eabihf clean-mfg60n-arm-eabihf clean-mfg60n-arm-eabiaarch64:
+$(TARGETS_CLEAN):
 	$(MAKE) -C buildroot O=output/$(subst clean-,,$@) clean
 	rm -f $(subst clean-,,$@)_config
 
-clean: clean-msd50n clean-msd-x86 clean-sterling_supplicant-x86 clean-sterling_supplicant-arm clean-backports clean-firmware \
-	clean-reg50n clean-reglwb clean-reglwb5 clean-mfg60n-arm-eabi clean-mfg60n-x86 clean-wb50n_legacy clean-bdimx6 clean-som60 clean-som60sd clean-som60sd_mfg clean-mfg60n-arm-eabihf clean-ig60 clean-mfg60n-arm-eabiaarch64
+clean: $(TARGETS_CLEAN)
 
 cleanall:
 	rm -f unpack.stamp
@@ -107,18 +122,7 @@ prune-workspace:
 	rm -rf archive examples doc
 	rm -rf .git
 
-.PHONY: default all clean cleanall msd50n wb50n_rdvk reg50n linux-docs\
-	reglwb reglwb5 mfg60n-arm-eabi mfg60n-x86 bdimx6 msd-x86 clean-msd50n \
-	clean-msd-x86 clean-wb50n_rdvk clean-reg50n clean-reglwb clean-reglwb5 \
-	clean-mfg60n-arm-eabi clean-mfg60n-x86 clean-wb50n_legacy prune-workspace clean-bdimx6 clean-firmware\
-	som60 clean-som60 som60sd clean-som60sd som60sd_mfg clean-som60sd_mfg bdimx6 backports clean-mfg60n-arm-eabihf mfg60n-arm-eabihf clean-ig60\
-	clean-mfg60n-arm-eabiaarch64 mfg60n-arm-eabiaarch64
-
-.PHONY: sterling_supplicant-x86 clean-sterling_supplicant-x86
-.PHONY: sterling_supplicant-arm clean-sterling_supplicant-arm
-.PHONY: sterling_supplicant-src
-.PHONY: summit_supplicant-x86 clean-summit_supplicant-x86
-.PHONY: summit_supplicant-arm-eabi clean-summit_supplicant-arm-eabi
-.PHONY: summit_supplicant-arm-eabihf clean-summit_supplicant-arm-eabihf
+.PHONY: default all clean cleanall
+.PHONY: $(TARGETS) $(TARGETS_UNIQUE) $(TARGETS_SRC) $(TARGETS_CLEAN)
 
 .NOTPARALLEL:

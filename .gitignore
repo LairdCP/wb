@@ -17,103 +17,12 @@
 /linux_docs
 
 *.mk
-/images/*/
-/images/*.mk
-!/images/Makefile
-!/images/msd45n
-!/images/msd45n-x86
-!/images/msd45n_fips
-!/images/msd50n
-!/images/reg45n
-!/images/reg50n
-!/images/reglwb
-!/images/reglwb5
-!/images/mfg60n-arm-eabi
-!/images/mfg60n-arm-eabihf
-!/images/bdimx6
-!/images/backports
-!/images/som60sd
-!/images/som60sd_mfg
-!/images/ig60
-/images/wb45n*
-/images/wb50n*
-!/images/firmware
-!/images/linux-docs
-!/images/summit_supplicant-arm-eabi
-!/images/summit_supplicant-arm-eabihf
-
-# /images/msd45n/
-/images/msd45n/20??????
-
-# /images/msd45n_fips/
-/images/msd45n_fips/20??????
-
-# /images/msd45n-x86/
-/images/msd45n-x86/20??????
-
-# /images/msd50n/
-/images/msd50n/20??????
-
-# /images/wb45n/
-/images/wb45n/20??????
-/images/wb45n/fw.txt
-/images/wb45n/legal-info
-
-# /images/wb50n/
-/images/wb50n/20??????
-/images/wb50n/fw.txt
-/images/wb50n/legal-info
-
-# /images/wb50n_rdvk
-/images/wb50n_rdvk/20??????
-/images/wb50n_rdvk/fw.txt
-
-# /images/reg45n
-/images/reg45n/20??????
-
-# /images/reg50n
-/images/reg50n/20??????
-
-# /images/reglwb
-/images/reglwb/20??????
-
-# /images/reglwb5
-/images/reglwb5/20??????
-
-# /images/mfg60n-arm-eabi
-/images/mfg60n-arm-eabi/20??????
-
-# /images/mfg60n-arm-eabihf
-/images/mfg60n-arm-eabihf/20??????
-
-# /images/firmware
-/images/firmware/20??????
-
-# /images/bdimx6
-/images/bdimx6/20??????
-
-# /images/backports
-/images/backports/20??????
-
-# /images/som60sd
-/images/som60sd/20??????
-
-# /images/som60sd_mfg
-/images/som60sd_mfg/20??????
-
-# /images/linux-docs
-/images/linux-docs/20??????
-
-/images/*/latest
+/images/*/*
+!/images/*/Makefile
 
 /examples/eventmon
 /examples/sdk_wf_pil
 
-# /images/summit_supplicant-arm-eabi
-/images/summit_supplicant-arm-eabi/20??????
-
-# /images/summit_supplicant-arm-eabihf
-/images/summit_supplicant-arm-eabihf/20??????
 .*.swp
 *~
 
