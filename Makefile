@@ -4,8 +4,7 @@ include laird_version.mk
 ifdef BR2_DL_DIR
 LAIRD_ARCHIVES          := archive/AT91Bootstrap-v3.4.4.tar.xz \
                            archive/openssl-fips-2.0.10.tar.gz
-LAIRD_ARCHIVES_OPTIONAL := archive/msd50n-laird-$(MSD_VERSION).tar.bz2 \
-                           archive/backports-laird-$(MSD_VERSION).tar.bz2 \
+LAIRD_ARCHIVES_OPTIONAL := archive/backports-laird-$(MSD_VERSION).tar.bz2 \
                            archive/480-0108-$(MSD_VERSION).zip \
                            archive/480-0109-$(MSD_VERSION).zip \
                            archive/laird-60-radio-firmware-$(MSD_VERSION).tar.bz2 \
@@ -20,7 +19,7 @@ endif
 
 TARGETS = \
 	msd-x86 msd50n reg50n \
-	wb50n_rdvk wb50n_sysd wb50nsd_sysd \
+	wb50n_rdvk wb50n_sysd wb50nsd_sysd wb50n_legacy \
 	reglwb reglwb5 \
 	mfg60n-arm-eabi mfg60n-x86 mfg60n-arm-eabihf mfg60n-arm-eabiaarch64 \
 	som60 som60sd som60sd_mfg ig60 \
@@ -28,7 +27,7 @@ TARGETS = \
 	sterling_supplicant-x86 sterling_supplicant-arm summit_supplicant-arm-eabi \
 	summit_supplicant-arm-eabihf summit_supplicant-x86
 
-TARGETS_UNIQUE = wb50n_legacy bdimx6
+TARGETS_UNIQUE = bdimx6
 TARGETS_SRC = linux-docs sterling_supplicant-src lrd-network-manager-src
 
 TARGETS_CONFIG = $(addsuffix _config, $(TARGETS) $(TARGETS_UNIQUE))
@@ -46,16 +45,6 @@ $(TARGETS_CONFIG): unpack.stamp
 	touch $@
 
 $(TARGETS): unpack.stamp
-	# first check/do config, because can't use $@ in dependency
-	$(MAKE) $@_config
-	$(MAKE) O=output/$@ -C buildroot
-	$(MAKE) O=output/$@ cve-check -C buildroot
-	$(MAKE) -C images $@
-
-wb50n_legacy: unpack.stamp
-ifeq (,$(wildcard $(BR2_DL_DIR)/msd50n-laird-$(MSD_VERSION).tar.bz2))
-	$(MAKE) msd50n
-endif
 	# first check/do config, because can't use $@ in dependency
 	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
