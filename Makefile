@@ -24,11 +24,13 @@ TARGETS = \
 	mfg60n-arm-eabi mfg60n-x86 mfg60n-arm-eabihf mfg60n-arm-eabiaarch64 \
 	som60 som60sd som60sd_mfg ig60 \
 	backports firmware \
-	sterling_supplicant-x86 sterling_supplicant-arm summit_supplicant-arm-eabi \
-	summit_supplicant-arm-eabihf summit_supplicant-x86
+	sterling_supplicant-x86 sterling_supplicant-arm \
+	summit_supplicant-x86 summit_supplicant-arm-eabi summit_supplicant-arm-eabihf
 
 TARGETS_UNIQUE = bdimx6
-TARGETS_SRC = linux-docs sterling_supplicant-src lrd-network-manager-src
+
+# NOTE, summit_supplicant is *NOT* released as source
+TARGETS_SRC = sterling_supplicant-src lrd-network-manager-src
 
 TARGETS_CONFIG = $(addsuffix _config, $(TARGETS) $(TARGETS_UNIQUE))
 TARGETS_CLEAN  = $(addprefix clean-,  $(TARGETS) $(TARGETS_UNIQUE))
@@ -52,7 +54,7 @@ $(TARGETS): unpack.stamp
 	$(MAKE) -C images $@
 
 # targets that do not require the buildroot step
-sterling_supplicant-src:
+$(TARGETS_SRC):
 	$(MAKE) -C images $@
 
 linux-docs:
@@ -63,11 +65,6 @@ linux-docs:
 		echo "INFO: have you run \"sudo ./linux_docs/setup-latex.sh\""; \
 		false; \
 	fi
-
-# NOTE, summit_supplicant is *NOT* released as source
-
-lrd-network-manager-src:
-	$(MAKE) -C images $@
 
 bdimx6: unpack.stamp
 ifeq (,$(wildcard $(BR2_DL_DIR)/backports-laird-$(MSD_VERSION).tar.bz2))
@@ -111,7 +108,7 @@ prune-workspace:
 	rm -rf archive examples doc
 	rm -rf .git
 
-.PHONY: default all clean cleanall
+.PHONY: default all clean cleanall linux-docs
 .PHONY: $(TARGETS) $(TARGETS_UNIQUE) $(TARGETS_SRC) $(TARGETS_CLEAN)
 
 .NOTPARALLEL:
