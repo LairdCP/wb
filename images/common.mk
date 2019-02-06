@@ -1,71 +1,70 @@
-
-# PRODUCT must be set to bdimx6 or backports or firmware
-
-URL = http://$(shell hostname)/wb/$(PRODUCT)
-
 TOPDIR ?= ../../..
 IMAGES = $(TOPDIR)/buildroot/output/$(PRODUCT)/images
+LEGAL_INFOS = $(TOPDIR)/buildroot/output/$(PRODUCT)/legal-info
 
-# General files
-# EXTRA_FILES could include files specified in a targets Makefile
-FILES := kernel.bin kernel.itb rootfs.bin rootfs.tar rootfs.tar.bz2 $(EXTRA_FILES)
+export DATE ?= $(shell date "+%Y%m%d")
 
-# At91bootstrap
-FILES += at91bs.bin
+FEATURES += copyall
 
-# U-Boot SPL
-FILES += boot.bin
+ifeq ($(BULID_TYPE), legacy)
 
-# U-Boot propper
-FILES += u-boot.bin u-boot.itb
+FILES += at91bs.bin kernel.bin rootfs.bin rootfs.tar.bz2 \
+	userfs.bin sqroot.bin \
+	fw_update fw_select fw_usi fw.txt prep_nand_for_update
 
-# RW User filesystem
-FILES += userfs.bin
+FEATURES += legal-info
 
-# RO Squashfs root
-FILES += sqroot.bin
+else ifeq ($(BULID_TYPE), sd60)
 
-# SW Update file
-FILES += $(PRODUCT).swu
+FILES += u-boot-spl.bin u-boot.itb kernel.itb rootfs.tar \
+	mksdcard.sh mksdimg.sh
 
-# FW_update files
-FILES += fw_update fw_select fw_usi fw.txt prep_nand_for_update
+FEATURES += sdk legal-info
+
+else ifeq ($(BULID_TYPE), nand60)
+
+FILES += boot.bin u-boot.itb kernel.itb rootfs.bin $(PRODUCT).swu
+
+FEATURES += sdk legal-info
+
+else ifeq ($(BULID_TYPE), pkg)
+
+FILES += *.tar.* *.zip *.sh *.sha
+FILES_EXCLUDE += rootfs.%
+
+endif
 
 # SBOM and CVE-CHECKER files
 SBOM_FILES = host-sbom target-sbom
 CVE_FILES =  host-cve.xml target-cve.xml
 
-cve:
-	$(foreach FILE,$(CVE_FILES), $(shell [ -e $(IMAGES)/$(FILE) ] && cp $(IMAGES)/$(FILE) $(subst .xml,"-$(DATE).xml", $(PRODUCT)-$(FILE)) ))
+FILES += $(SBOM_FILES) $(CVE_FILES)
 
-sbom:
-	$(foreach FILE,$(SBOM_FILES), $(shell [ -e $(IMAGES)/$(FILE) ] && cp $(IMAGES)/$(FILE) $(PRODUCT)-$(FILE)-$(DATE)))
+FILES_EXIST = $(filter-out $(FILES_EXCLUDE),$(notdir $(wildcard $(addprefix $(IMAGES)/,$(FILES)))))
 
-legal-info:
-	rsync -a --exclude=sources $(TOPDIR)/buildroot/output/$(PRODUCT)/legal-info/ ./legal-info-$(DATE)
-	tar cjf legal-info-$(DATE).tar.bz ./legal-info-$(DATE)
-	rm -f latest.tar.bz
-	ln -s legal-info-$(DATE).tar.bz latest.tar.bz
-	rm -rf ./legal-info-$(DATE)
+all: module
 
 copyall:
-	$(foreach FILE,$(FILES), $(shell [ -e $(IMAGES)/$(FILE) ] && cp $(IMAGES)/$(FILE) .))
-	$(shell [ -e rootfs.tar.bz2 ] && rm -f rootfs.tar.bz2 && bzip2 -k rootfs.tar;)
+ifneq ($(FILES_EXIST),)
+	cp -t . $(addprefix $(IMAGES)/,$(FILES_EXIST));
+	$(foreach FILE,$(filter $(SBOM_FILES),$(FILES_EXIST)), mv -f $(FILE) $(PRODUCT)-$(FILE)-$(DATE);)
+	$(foreach FILE,$(filter $(CVE_FILES),$(FILES_EXIST)), mv -f $(FILE) $(patsubst %.xml,%-$(DATE).xml,$(FILE));)
+endif
 
 sdk:
 	make -C $(TOPDIR)/buildroot/output/$(PRODUCT) sdk
 	tar -cjf $(PRODUCT)-sdk.tar.bz2 -C $(TOPDIR)/buildroot/output/$(PRODUCT)/host .
 
-bdimx6:
-	cp $(IMAGES)/sdcard.img . -fr
+legal-info:
+	tar --exclude=*sources -C $(LEGAL_INFOS)/ -cjf legal-info-$(DATE).tar.bz2 .
 
-backports:
-	cp $(IMAGES)/laird-backport-*.tar.bz2 laird-backport-$(DATE).tar.bz2 -fr
+module:
+	mkdir -p "$(DATE)"
+	$(MAKE) -f ../../common.mk -C "$(DATE)" $(FEATURES)
+	rm -f latest
+	ln -rsf "$(DATE)" latest
+ifeq ($(BULID_TYPE), legacy)
+	ln -rsf "$(DATE)/fw.txt" fw.txt
+endif
 
-firmware:
-	cp $(IMAGES)/*.zip . -fr
-	cp $(IMAGES)/laird-*.tar.bz2 . -fr
-
-all: copyall
-
-.PHONY: all copyall bdimx6 backports
+.PHONY: all copyall sdk legal-info module

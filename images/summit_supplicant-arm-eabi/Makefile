@@ -1,13 +1,6 @@
-export PLATFORM = summit_supplicant-arm-eabi
+export PLATFORM = summit_supplicant
 export PRODUCT = summit_supplicant-arm-eabi
-export DATE := $(shell date "+%Y%m%d")
 
-all:
-	mkdir -p $(DATE)
-	cp -f ../../buildroot/output/$(PRODUCT)/images/$(PRODUCT).tar.bz2 $(DATE)/
-	$(MAKE) -f ../../common.mk -C "$(DATE)" sbom
-	$(MAKE) -f ../../common.mk -C "$(DATE)" cve
-	rm -f latest
-	ln -s "$(DATE)" latest
+export BULID_TYPE = pkg
 
-.PHONY: all
+include ../common.mk

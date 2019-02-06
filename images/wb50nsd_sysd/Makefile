@@ -1,18 +1,6 @@
 export PLATFORM = wb50n
 export PRODUCT = wb50nsd_sysd
-export DATE := $(shell date "+%Y%m%d")
 
-legal-info:
-	mkdir -p "legal-info/legal-info-$(DATE)"
-	$(MAKE) -f ../../common.mk -C "legal-info" legal-info
+export BULID_TYPE = sd60
 
-all:
-	mkdir -p "$(DATE)"
-	$(MAKE) -f ../../common.mk -C "$(DATE)" all
-	$(MAKE) -f ../../common.mk -C "$(DATE)" sdk
-	$(MAKE) -f ../../common.mk -C "$(DATE)" sbom
-	$(MAKE) -f ../../common.mk -C "$(DATE)" cve
-	rm -f latest
-	ln -s "$(DATE)" latest
-
-.PHONY: all
+include ../common.mk

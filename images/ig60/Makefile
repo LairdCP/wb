@@ -1,21 +1,11 @@
 export PLATFORM = som60
 export PRODUCT = ig60
-export DATE := $(shell date "+%Y%m%d")
+
+export BULID_TYPE = nand60
+
 # Have ../../common.mk copy some extra files we want in this specific build
-export EXTRA_FILES := pmecc.bin u-boot-spl.dtb u-boot-spl-nodtb.bin u-boot.dtb \
-                      u-boot-nodtb.bin u-boot.its kernel-nosig.itb sw-description \
-                      fdtget fdtput mkimage genimage
+export FILES = pmecc.bin u-boot-spl.dtb u-boot-spl-nodtb.bin u-boot.dtb \
+               u-boot-nodtb.bin u-boot.its kernel-nosig.itb sw-description \
+               fdtget fdtput mkimage genimage
 
-legal-info:
-	mkdir -p "legal-info/legal-info-$(DATE)"
-	$(MAKE) -f ../../common.mk -C "legal-info" legal-info
-
-all:
-	mkdir -p "$(DATE)"
-	$(MAKE) -f ../../common.mk -C "$(DATE)" all
-	$(MAKE) -f ../../common.mk -C "$(DATE)" sbom
-	$(MAKE) -f ../../common.mk -C "$(DATE)" cve
-	rm -f latest
-	ln -s "$(DATE)" latest
-
-.PHONY: all legal-info
+include ../common.mk

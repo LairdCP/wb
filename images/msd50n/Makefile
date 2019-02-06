@@ -1,16 +1,11 @@
 export PLATFORM = msd50n
 export PRODUCT = msd50n
-export DATE := $(shell date "+%Y%m%d")
+
+export BULID_TYPE = pkg
+
+include ../common.mk
 
 BR2_DL_DIR ?= ../../archive
 
 all:
-	mkdir -p $(DATE)
-	cp -f ../../buildroot/output/$(PRODUCT)/images/$(PRODUCT).tar.bz2 $(DATE)/
-	$(MAKE) -f ../../common.mk -C "$(DATE)" sbom
-	$(MAKE) -f ../../common.mk -C "$(DATE)" cve
-	rm -f latest
-	ln -s "$(DATE)" latest
 	cp latest/$(PRODUCT).tar.bz2 $(BR2_DL_DIR)/$(PRODUCT)-laird-$(LAIRD_RELEASE_STRING).tar.bz2
-
-.PHONY: all
