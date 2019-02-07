@@ -1,6 +1,34 @@
-TARGETS = $(patsubst %/,%,$(wildcard */))
+TARGETS = $(patsubst %/Makefile,%,$(wildcard */Makefile))
 
-$(TARGETS):
-	make -C $@ all
+force:
 
-.PHONY: $(TARGETS)
+$(TARGETS): force
+	$(MAKE) -C $@ all
+
+define BUILD_template
+	mkdir -p $@
+	$(MAKE) -f ../common.mk -C $@ all PRODUCT=$@ BULID_TYPE=$(1)
+endef
+
+#make does not allow to mix pattern and non-pattern rules, so seprate them
+summit_supplicant% sterling_supplicant% mfg60n% msd% reg%: force
+	$(call BUILD_template,pkg)
+
+backports firmware: force
+	$(call BUILD_template,pkg)
+
+wb50n_legacy wb50n_rdvk: force
+	$(call BUILD_template,legacy)
+
+som60sd som60sd_mfg wb60sd wb50nsd_sysd: force
+	$(call BUILD_template,sd60)
+
+som60 wb60 wb50n_sysd: force
+	$(call BUILD_template,nand60)
+
+ig60: force
+	$(call BUILD_template,nand60-secure)
+
+bdimx6: force
+	mkdir -p $@
+	$(MAKE) -f ../common.mk -C $@ all PRODUCT=$@ EXTRA_FILES=sdcard.img

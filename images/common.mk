@@ -1,10 +1,13 @@
 TOPDIR ?= ../../..
+
 IMAGES = $(TOPDIR)/buildroot/output/$(PRODUCT)/images
 LEGAL_INFOS = $(TOPDIR)/buildroot/output/$(PRODUCT)/legal-info
+BR2_DL_DIR ?= $(TOPDIR)/archive
 
 export DATE ?= $(shell date "+%Y%m%d")
 
-FEATURES += copyall
+FEATURES = copyall
+FILES =
 
 ifeq ($(BULID_TYPE), legacy)
 
@@ -27,6 +30,15 @@ FILES += boot.bin u-boot.itb kernel.itb rootfs.bin $(PRODUCT).swu
 
 FEATURES += sdk legal-info
 
+else ifeq ($(BULID_TYPE), nand60-secure)
+
+FILES += boot.bin u-boot.itb kernel.itb rootfs.bin $(PRODUCT).swu \
+	pmecc.bin u-boot-spl.dtb u-boot-spl-nodtb.bin u-boot.dtb \
+	u-boot-nodtb.bin u-boot.its kernel-nosig.itb sw-description \
+	fdtget fdtput mkimage genimage
+
+FEATURES += sdk legal-info
+
 else ifeq ($(BULID_TYPE), pkg)
 
 FILES += *.tar.* *.zip *.sh *.sha
@@ -38,7 +50,7 @@ endif
 SBOM_FILES = host-sbom target-sbom
 CVE_FILES =  host-cve.xml target-cve.xml
 
-FILES += $(SBOM_FILES) $(CVE_FILES)
+FILES += $(SBOM_FILES) $(CVE_FILES) $(EXTRA_FILES)
 
 FILES_EXIST = $(filter-out $(FILES_EXCLUDE),$(notdir $(wildcard $(addprefix $(IMAGES)/,$(FILES)))))
 
@@ -49,10 +61,13 @@ ifneq ($(FILES_EXIST),)
 	cp -t . $(addprefix $(IMAGES)/,$(FILES_EXIST));
 	$(foreach FILE,$(filter $(SBOM_FILES),$(FILES_EXIST)), mv -f $(FILE) $(PRODUCT)-$(FILE)-$(DATE);)
 	$(foreach FILE,$(filter $(CVE_FILES),$(FILES_EXIST)), mv -f $(FILE) $(patsubst %.xml,%-$(DATE).xml,$(FILE));)
+ifeq ($(BULID_TYPE), pkg)
+	cp -t $(BR2_DL_DIR) $(filter %.zip %.bz2 %.xz %.gz %.sha,$(FILES_EXIST))
+endif
 endif
 
 sdk:
-	make -C $(TOPDIR)/buildroot/output/$(PRODUCT) sdk
+	$(MAKE) -C $(TOPDIR)/buildroot/output/$(PRODUCT) sdk
 	tar -cjf $(PRODUCT)-sdk.tar.bz2 -C $(TOPDIR)/buildroot/output/$(PRODUCT)/host .
 
 legal-info:
