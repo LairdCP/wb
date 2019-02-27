@@ -35,7 +35,7 @@ else ifeq ($(BULID_TYPE), nand60-secure)
 FILES += boot.bin u-boot.itb kernel.itb rootfs.bin $(PRODUCT).swu \
 	pmecc.bin u-boot-spl.dtb u-boot-spl-nodtb.bin u-boot.dtb \
 	u-boot-nodtb.bin u-boot.its kernel-nosig.itb sw-description \
-	fdtget fdtput mkimage genimage
+	fdtget fdtput mkimage genimage rodata.tar.bz2 rodata-encrypt
 
 FEATURES += sdk legal-info
 
