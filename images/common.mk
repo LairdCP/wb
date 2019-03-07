@@ -11,7 +11,7 @@ FILES =
 
 ifeq ($(BULID_TYPE), legacy)
 
-FILES += at91bs.bin kernel.bin rootfs.bin rootfs.tar.bz2 \
+FILES += at91bs.bin u-boot.bin kernel.bin rootfs.bin rootfs.tar.bz2 \
 	userfs.bin sqroot.bin \
 	fw_update fw_select fw_usi fw.txt prep_nand_for_update
 
