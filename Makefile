@@ -50,7 +50,7 @@ $(TARGETS): unpack.stamp
 	# first check/do config, because can't use $@ in dependency
 	$(MAKE) $@_config
 	$(MAKE) O=output/$@ -C buildroot
-	$(MAKE) O=output/$@ cve-check -C buildroot
+	$(MAKE) O=output/$@ sbom-gen -C buildroot
 	$(MAKE) -C images $@
 
 # targets that do not require the buildroot step
