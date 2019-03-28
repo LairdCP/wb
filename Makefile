@@ -18,7 +18,7 @@ export LAIRD_RELEASE_STRING = 0.0.0.0
 endif
 
 TARGETS = \
-	msd-x86 msd50n reg50n \
+	msd-x86 msd50n reg50n reg50n-arm-eabihf \
 	wb50n_rdvk wb50n_sysd wb50nsd_sysd wb50n_legacy \
 	reglwb reglwb5 \
 	mfg60n-arm-eabi mfg60n-x86 mfg60n-arm-eabihf mfg60n-arm-eabiaarch64 \
