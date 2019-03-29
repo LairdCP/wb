@@ -20,7 +20,7 @@ backports firmware: force
 wb50n_legacy wb50n_rdvk: force
 	$(call BUILD_template,legacy)
 
-som60sd som60sd_mfg wb60sd wb50nsd_sysd: force
+som60sd som60sd_mfg wb60sd wb50nsd_sysd ig60sd: force
 	$(call BUILD_template,sd60)
 
 som60 wb60 wb50n_sysd: force
