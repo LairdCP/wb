@@ -11,7 +11,7 @@ define BUILD_template
 endef
 
 #make does not allow to mix pattern and non-pattern rules, so seprate them
-summit_supplicant% sterling_supplicant% mfg60n% msd% reg%: force
+summit_supplicant% sterling_supplicant% mfg60n% msd% reg% adaptive_ww%: force
 	$(call BUILD_template,pkg)
 
 backports firmware: force

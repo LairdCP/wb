@@ -8,7 +8,8 @@ LAIRD_ARCHIVES_OPTIONAL := archive/backports-laird-$(MSD_VERSION).tar.bz2 \
                            archive/480-0108-$(MSD_VERSION).zip \
                            archive/480-0109-$(MSD_VERSION).zip \
                            archive/laird-60-radio-firmware-$(MSD_VERSION).tar.bz2 \
-                           archive/summit_supplicant-arm-eabihf-$(MSD_VERSION).tar.bz2
+                           archive/summit_supplicant-arm-eabihf-$(MSD_VERSION).tar.bz2 \
+                           archive/adaptive_ww-arm-eabihf-$(MSD_VERSION).tar.bz2
 endif
 
 # Developers should not export LAIRD_RELEASE_STRING, only Jenkins should
@@ -26,7 +27,8 @@ TARGETS = \
 	backports firmware \
 	sterling_supplicant-x86 sterling_supplicant-arm \
 	summit_supplicant-x86 summit_supplicant-arm-eabi summit_supplicant-arm-eabihf \
-	summit_supplicant-aarch64-eabihf
+	summit_supplicant-aarch64-eabihf \
+	adaptive_ww-arm-eabi adaptive_ww-arm-eabihf adaptive_ww-x86 adaptive_ww-arm-eabiaarch64 adaptive_ww-powerpc-e5500
 
 TARGETS_UNIQUE = bdimx6
 
