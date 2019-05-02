@@ -6,6 +6,7 @@
 
 # /archive/
 /archive/*
+!/archive/openssl-fips*
 
 # /buildroot/
 /buildroot
