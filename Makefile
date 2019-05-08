@@ -25,7 +25,8 @@ TARGETS = \
 	som60 som60sd som60sd_mfg ig60 ig60sd ig60sd-wbx3 wb60 wb60sd \
 	backports firmware \
 	sterling_supplicant-x86 sterling_supplicant-arm \
-	summit_supplicant-x86 summit_supplicant-arm-eabi summit_supplicant-arm-eabihf
+	summit_supplicant-x86 summit_supplicant-arm-eabi summit_supplicant-arm-eabihf \
+	summit_supplicant-aarch64-eabihf
 
 TARGETS_UNIQUE = bdimx6
 
