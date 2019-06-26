@@ -62,8 +62,11 @@ ifneq ($(FILES_EXIST),)
 	cp -t . $(addprefix $(IMAGES)/,$(FILES_EXIST));
 	$(foreach FILE,$(filter $(SBOM_FILES),$(FILES_EXIST)), mv -f $(FILE) $(PRODUCT)-$(FILE)-$(DATE);)
 	$(foreach FILE,$(filter $(CVE_FILES),$(FILES_EXIST)), mv -f $(FILE) $(patsubst %.xml,%-$(DATE).xml,$(FILE));)
-ifeq ($(BULID_TYPE), pkg)
-	cp -t $(BR2_DL_DIR) $(filter %.zip %.bz2 %.xz %.gz %.sha,$(FILES_EXIST))
+ifeq ($(BR2_LRD_DEVEL_BUILD), y)
+ifeq ($(PRODUCT), backports)
+	mkdir -p $(BR2_DL_DIR)/linux-backports
+	cp -t $(BR2_DL_DIR)/linux-backports $(filter %.zip %.bz2 %.xz %.gz %.sha,$(FILES_EXIST))
+endif
 endif
 endif
 
