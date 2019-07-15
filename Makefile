@@ -25,9 +25,10 @@ TARGETS = bdimx6 \
 
 # NOTE, summit_supplicant is *NOT* released as source
 TARGETS_SRC = sterling_supplicant-src lrd-network-manager-src
+TARGETS_TEST = backports-test
 
-TARGETS_CONFIG = $(addsuffix _config, $(TARGETS))
-TARGETS_CLEAN  = $(addprefix clean-,  $(TARGETS))
+TARGETS_CONFIG = $(addsuffix _config, $(TARGETS) $(TARGETS_TEST))
+TARGETS_CLEAN  = $(addprefix clean-,  $(TARGETS) $(TARGETS_TEST))
 
 default: wb50n_legacy
 
@@ -46,6 +47,11 @@ $(TARGETS):
 	$(MAKE) O=output/$@ -C buildroot
 	$(MAKE) O=output/$@ sbom-gen -C buildroot
 	$(MAKE) -C images $@
+
+# targets that do not require images
+$(TARGETS_TEST):
+	$(MAKE) $@_config
+	$(MAKE) O=output/$@ -C buildroot
 
 # targets that do not require the buildroot step
 $(TARGETS_SRC):
@@ -81,6 +87,6 @@ prune-workspace:
 	rm -rf .git
 
 .PHONY: default all clean cleanall linux-docs
-.PHONY: $(TARGETS) $(TARGETS_SRC) $(TARGETS_CLEAN)
+.PHONY: $(TARGETS) $(TARGETS_SRC) $(TARGETS_TEST) $(TARGETS_CLEAN)
 
 .NOTPARALLEL:
