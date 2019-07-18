@@ -11,7 +11,7 @@ define BUILD_template
 endef
 
 #make does not allow to mix pattern and non-pattern rules, so seprate them
-summit_supplicant% sterling_supplicant% mfg60n% msd% reg% adaptive_ww%: force
+summit_supplicant% sterling_supplicant% mfg60n% msd% reg% adaptive_ww% laird_openssl_fips%: force
 	$(call BUILD_template,pkg)
 
 backports firmware: force
@@ -20,10 +20,10 @@ backports firmware: force
 wb50n_legacy wb50n_rdvk: force
 	$(call BUILD_template,legacy)
 
-som60sd som60sd_mfg som60x2sd som60x2sd_mfg wb60sd wb50nsd_sysd ig60llsd ig60sd-wbx3: force
+som60sd som60sd_fips som60sd_mfg som60x2sd som60x2sd_mfg wb60sd wb50nsd_sysd wb50nsd_sysd_fips ig60llsd ig60sd-wbx3: force
 	$(call BUILD_template,sd60)
 
-som60 som60x2 wb60 wb50n_sysd: force
+som60 som60_fips som60x2 wb60 wb50n_sysd wb50n_sysd_fips: force
 	$(call BUILD_template,nand60)
 
 ig60: force

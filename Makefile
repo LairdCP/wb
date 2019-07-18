@@ -9,6 +9,7 @@ endif
 TARGETS = bdimx6 \
 	msd-x86 msd50n reg50n reg50n-arm-eabihf \
 	wb50n_rdvk wb50n_sysd wb50nsd_sysd wb50n_legacy \
+	wb50n_sysd_fips wb50nsd_sysd_fips \
 	regCypress-arm-eabi regCypress-arm-eabihf regCypress-arm-eabiaarch64 \
 	mfg60n-arm-eabi mfg60n-x86 mfg60n-arm-eabihf mfg60n-arm-eabiaarch64 mfg60n-powerpc-e5500\
 	som60 som60sd som60sd_mfg som60x2 som60x2sd som60x2sd_mfg \
@@ -20,6 +21,8 @@ TARGETS = bdimx6 \
 	summit_supplicant-aarch64-eabihf summit_supplicant_openssl_1_0_2-arm-eabihf \
 	summit_supplicant_openssl_1_0_2-aarch64-eabihf summit_supplicant_openssl_1_0_2-arm-eabi \
 	summit_supplicant_openssl_1_0_2-x86 \
+	summit_supplicant_fips-arm-eabihf \
+	laird_openssl_fips-arm-eabihf \
 	adaptive_ww-arm-eabi adaptive_ww-arm-eabihf adaptive_ww-x86 adaptive_ww-arm-eabiaarch64 adaptive_ww-powerpc-e5500 \
 	adaptive_ww_openssl_1_0_2-arm-eabi adaptive_ww_openssl_1_0_2-arm-eabihf adaptive_ww_openssl_1_0_2-x86 \
 	adaptive_ww_openssl_1_0_2-arm-eabiaarch64 adaptive_ww_openssl_1_0_2-powerpc-e5500
