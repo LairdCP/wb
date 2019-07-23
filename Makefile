@@ -13,6 +13,7 @@ TARGETS = bdimx6 \
 	mfg60n-arm-eabi mfg60n-x86 mfg60n-arm-eabihf mfg60n-arm-eabiaarch64 mfg60n-powerpc-e5500\
 	som60 som60sd som60sd_mfg som60x2 som60x2sd som60x2sd_mfg \
 	ig60 ig60llsd ig60sd-wbx3 wb60 wb60sd \
+	som60_fips som60sd_fips \
 	backports firmware \
 	sterling_supplicant-x86 sterling_supplicant-arm \
 	summit_supplicant-x86 summit_supplicant-arm-eabi summit_supplicant-arm-eabihf \
