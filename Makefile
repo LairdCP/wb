@@ -1,10 +1,6 @@
-include laird_version.mk
-
 # Developers should not export LAIRD_RELEASE_STRING, only Jenkins should
 # 0.0.0.0 indicates that the build is for development purposes only
-ifndef LAIRD_RELEASE_STRING
-export LAIRD_RELEASE_STRING = 0.0.0.0
-endif
+export LAIRD_RELEASE_STRING ?= 0.0.0.0
 
 TARGETS = bdimx6 \
 	msd-x86 msd50n reg50n reg50n-arm-eabihf \
