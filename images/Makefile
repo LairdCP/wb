@@ -11,7 +11,7 @@ define BUILD_template
 endef
 
 #make does not allow to mix pattern and non-pattern rules, so seprate them
-summit_supplicant% sterling_supplicant% mfg60n% msd% reg% adaptive_ww% laird_openssl_fips%: force
+summit_supplicant% sterling_supplicant% mfg60n% reg% adaptive_ww% laird_openssl_fips%: force
 	$(call BUILD_template,pkg)
 
 backports firmware: force

@@ -3,7 +3,7 @@
 export LAIRD_RELEASE_STRING ?= 0.0.0.0
 
 TARGETS = bdimx6 \
-	msd-x86 msd50n reg50n reg50n-arm-eabihf \
+	reg50n reg50n-arm-eabihf \
 	wb50n_rdvk wb50n_sysd wb50nsd_sysd wb50n_legacy \
 	wb50n_sysd_fips wb50nsd_sysd_fips \
 	regCypress-arm-eabi regCypress-arm-eabihf regCypress-arm-eabiaarch64 \
@@ -16,8 +16,8 @@ TARGETS = bdimx6 \
 	summit_supplicant-x86 summit_supplicant-arm-eabi summit_supplicant-arm-eabihf \
 	summit_supplicant-aarch64-eabihf summit_supplicant_openssl_1_0_2-arm-eabihf \
 	summit_supplicant_openssl_1_0_2-aarch64-eabihf summit_supplicant_openssl_1_0_2-arm-eabi \
-	summit_supplicant_openssl_1_0_2-x86 \
-	summit_supplicant_fips-arm-eabihf \
+	summit_supplicant_openssl_1_0_2-x86 summit_supplicant_fips-arm-eabihf \
+	summit_supplicant_legacy-arm-eabi \
 	laird_openssl_fips-arm-eabihf \
 	adaptive_ww-arm-eabi adaptive_ww-arm-eabihf adaptive_ww-x86 adaptive_ww-arm-eabiaarch64 adaptive_ww-powerpc-e5500 \
 	adaptive_ww_openssl_1_0_2-arm-eabi adaptive_ww_openssl_1_0_2-arm-eabihf adaptive_ww_openssl_1_0_2-x86 \
