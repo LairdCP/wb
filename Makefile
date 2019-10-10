@@ -67,7 +67,7 @@ linux-docs:
 	fi
 
 $(TARGETS_CLEAN):
-	$(MAKE) -C buildroot O=output/$(subst clean-,,$@) clean
+	$(MAKE) -C buildroot O=output/$(subst clean-,,$@) distclean
 	rm -f $(subst clean-,,$@)_config
 
 clean: $(TARGETS_CLEAN)

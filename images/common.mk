@@ -66,6 +66,7 @@ ifeq ($(BR2_LRD_DEVEL_BUILD), y)
 ifeq ($(PRODUCT), backports)
 	mkdir -p $(BR2_DL_DIR)/linux-backports
 	cp -t $(BR2_DL_DIR)/linux-backports $(filter %.zip %.bz2 %.xz %.gz %.sha,$(FILES_EXIST))
+	cp -t $(BR2_DL_DIR)/backports-test $(filter %.zip %.bz2 %.xz %.gz %.sha,$(FILES_EXIST))
 endif
 endif
 endif
