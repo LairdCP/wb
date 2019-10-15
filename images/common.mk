@@ -67,6 +67,10 @@ ifeq ($(PRODUCT), backports)
 	mkdir -p $(BR2_DL_DIR)/linux-backports
 	cp -t $(BR2_DL_DIR)/linux-backports $(filter %.zip %.bz2 %.xz %.gz %.sha,$(FILES_EXIST))
 	cp -t $(BR2_DL_DIR)/backports-test $(filter %.zip %.bz2 %.xz %.gz %.sha,$(FILES_EXIST))
+else ifeq ($(PRODUCT), laird_openssl_fips-arm-eabihf)
+	mkdir -p $(BR2_DL_DIR)/laird_openssl_fips-binaries
+	cp laird_openssl_fips-arm-eabihf.tar.bz2 \
+		$(BR2_DL_DIR)/laird_openssl_fips-binaries/laird_openssl_fips-arm-eabihf-$(LAIRD_RELEASE_STRING).tar.bz2
 endif
 endif
 endif
