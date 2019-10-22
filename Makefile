@@ -2,9 +2,9 @@
 # 0.0.0.0 indicates that the build is for development purposes only
 export LAIRD_RELEASE_STRING ?= 0.0.0.0
 
-TARGETS = bdimx6 \
+TARGETS = bdimx6 bdimx6_rdvk \
 	reg50n reg50n-arm-eabihf \
-	wb50n_rdvk wb50n_sysd wb50nsd_sysd wb50n_legacy \
+	wb50n_rdvk wb50n_sysd wb50n_sysd_rdvk wb50nsd_sysd wb50n_legacy \
 	wb50n_sysd_fips wb50nsd_sysd_fips \
 	regCypress-arm-eabi regCypress-arm-eabihf regCypress-arm-eabiaarch64 \
 	mfg60n-arm-eabi mfg60n-x86 mfg60n-arm-eabihf mfg60n-arm-eabiaarch64 mfg60n-powerpc-e5500\
@@ -32,7 +32,7 @@ TARGETS_CLEAN  = $(addprefix clean-,  $(TARGETS) $(TARGETS_TEST))
 
 default: wb50n_legacy
 
-all: msd-x86 msd50n wb50n_legacy som60 bdimx6 backports firmware linux-docs
+all: msd-x86 msd50n wb50n_legacy som60 bdimx6_rdvk backports firmware linux-docs
 
 $(TARGETS_CONFIG):
     # install the config file
