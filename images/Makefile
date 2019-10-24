@@ -31,4 +31,4 @@ ig60: force
 
 bdimx6 bdimx6_rdvk: force
 	mkdir -p $@
-	$(MAKE) -f ../common.mk -C $@ all PRODUCT=$@ EXTRA_FILES=sdcard.img
+	$(MAKE) -f ../common.mk -C $@ all PRODUCT=$@ EXTRA_FILES="sdcard.img bdimx6_rdvk.swu"
