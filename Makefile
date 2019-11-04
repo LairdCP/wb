@@ -13,6 +13,7 @@ TARGETS = bdimx6 bdimx6_rdvk \
 	som60_fips som60sd_fips \
 	backports firmware \
 	sterling_supplicant-x86 sterling_supplicant-arm \
+	summit_supplicant-powerpc-e5500 summit_supplicant_openssl_1_0_2-powerpc-e5500 \
 	summit_supplicant-x86 summit_supplicant-arm-eabi summit_supplicant-arm-eabihf \
 	summit_supplicant-aarch64-eabihf summit_supplicant_openssl_1_0_2-arm-eabihf \
 	summit_supplicant_openssl_1_0_2-aarch64-eabihf summit_supplicant_openssl_1_0_2-arm-eabi \
