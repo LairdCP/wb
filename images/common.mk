@@ -24,6 +24,16 @@ FILES += u-boot-spl.bin u-boot.itb kernel.itb rootfs.tar \
 
 FEATURES += sdk legal-info
 
+else ifeq ($(BULID_TYPE), sd60_mfg)
+
+FILES += u-boot-spl.bin u-boot.itb kernel.itb rootfs.tar \
+	mksdcard.sh mksdimg.sh
+
+else ifeq ($(BULID_TYPE), wbx3)
+
+FILES += u-boot-spl.bin u-boot.itb \
+	mksdcard.sh mksdimg.sh
+
 else ifeq ($(BULID_TYPE), nand60)
 
 FILES += boot.bin u-boot.itb kernel.itb rootfs.bin $(PRODUCT).swu
