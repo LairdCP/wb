@@ -7,7 +7,7 @@ TARGETS = bdimx6 bdimx6_rdvk \
 	wb50n_rdvk wb50n_sysd wb50n_sysd_rdvk wb50nsd_sysd wb50n_legacy \
 	wb50n_sysd_fips wb50nsd_sysd_fips \
 	regCypress-arm-eabi regCypress-arm-eabihf regCypress-arm-eabiaarch64 \
-	mfg60n-arm-eabi mfg60n-x86 mfg60n-arm-eabihf mfg60n-arm-eabiaarch64 mfg60n-powerpc-e5500\
+	mfg60n-arm-eabi mfg60n-x86 mfg60n-x86-64 mfg60n-arm-eabihf mfg60n-arm-eabiaarch64 mfg60n-powerpc-e5500\
 	som60 som60sd som60sd_mfg som60x2 som60x2sd som60x2sd_mfg \
 	ig60 ig60llsd ig60sd-wbx3 wb60 wb60sd \
 	som60_fips som60sd_fips \
