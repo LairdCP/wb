@@ -4,7 +4,7 @@ export LAIRD_RELEASE_STRING ?= 0.0.0.0
 
 TARGETS = bdimx6 bdimx6_rdvk \
 	reg50n reg50n-arm-eabihf \
-	wb50n_rdvk wb50n_sysd wb50n_sysd_rdvk wb50nsd_sysd wb50n_legacy \
+	wb50n_rdvk wb50n_sysd wb50n_sysd_rdvk wb50nsd_sysd wb50n_legacy wb45n_legacy \
 	wb50n_sysd_fips wb50nsd_sysd_fips wb50nsd_sysd-wbx3 \
 	regCypress-arm-eabi regCypress-arm-eabihf regCypress-arm-eabiaarch64 \
 	mfg60n-arm-eabi mfg60n-x86 mfg60n-x86-64 mfg60n-arm-eabihf mfg60n-arm-eabiaarch64 mfg60n-powerpc-e5500\

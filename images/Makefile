@@ -17,7 +17,7 @@ summit_supplicant% sterling_supplicant% mfg60n% reg% adaptive_ww% laird_openssl_
 backports firmware: force
 	$(call BUILD_template,pkg)
 
-wb50n_legacy wb50n_rdvk: force
+wb50n_legacy wb50n_rdvk wb45n_legacy: force
 	$(call BUILD_template,legacy)
 
 som60sd som60sd_fips som60x2sd wb60sd wb50nsd_sysd wb50nsd_sysd_fips ig60llsd: force
